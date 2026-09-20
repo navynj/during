@@ -59,13 +59,23 @@ export function stateOpacity(state: WaveState): number | undefined {
  * The 1px inset at each end is what keeps the round cap from clipping.
  */
 export const WAVE_HEIGHT = 4;
-export const WAVE_STROKE = 2;
+/**
+ * The drawn weight. Finer than the export's 2px: waves sit among 14px text on
+ * the timeline, and the full-weight pen read louder than the notes beside it.
+ * Only the pen — the path below is the exported geometry, untouched.
+ */
+export const WAVE_STROKE = 1.5;
 /** Constant pitch between lines: only the count varies with duration. */
 export const WAVE_GAP = 2;
 const MIDLINE = WAVE_HEIGHT / 2;
 const CONTROL_OFFSET = 4 / 3;
 const SEGMENT = 5;
-const INSET = WAVE_STROKE / 2;
+/**
+ * The export's end inset, which happens to be half of the 2px pen it was
+ * drawn with. It is part of the geometry, not a function of the current
+ * stroke: deriving it would move the path every time the weight changed.
+ */
+const INSET = 1;
 
 /** Figma writes 5 decimals; matching that keeps diffs against the export readable. */
 function round(value: number): string {

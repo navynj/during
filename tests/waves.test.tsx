@@ -81,7 +81,9 @@ describe('WaveBundle', () => {
     const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
     const paths = container.querySelectorAll('path');
 
-    expect(paths).toHaveLength(7);
+    // Seven counted lines plus the two-line trail, and the trail travels with
+    // them: it is the same water, not a separate ornament.
+    expect(paths).toHaveLength(9);
     expect(container.querySelectorAll('path.wave-travel')).toHaveLength(paths.length);
   });
 
@@ -111,7 +113,8 @@ describe('reduced motion (law 3)', () => {
     setReducedMotion(true);
     const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
 
-    expect(container.querySelectorAll('svg')).toHaveLength(7);
+    // Seven counted lines plus the trail: nothing is withheld, only the motion.
+    expect(container.querySelectorAll('svg')).toHaveLength(9);
   });
 });
 
@@ -171,5 +174,48 @@ describe('CommitRing ring opacity', () => {
     const ringGroup = container.querySelector('span[aria-hidden]') as HTMLElement;
 
     expect(ringGroup.style.opacity).toBe('');
+  });
+});
+
+describe('the trail on a live record', () => {
+  it('adds two fading lines below an in-progress bundle', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+    const trail = [...container.querySelectorAll('[data-trail]')] as HTMLElement[];
+
+    expect(trail).toHaveLength(2);
+    // Each fainter than the one above it, and never at full strength.
+    const opacities = trail.map((el) => Number(el.style.opacity));
+    expect(opacities[0]).toBeLessThan(1);
+    expect(opacities[1]).toBeLessThan(opacities[0]);
+  });
+
+  it('draws the trail below the bundle, not among it', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+    const children = [...container.querySelectorAll('[data-lines] > *')];
+    const firstTrail = children.findIndex((el) => el.hasAttribute('data-trail'));
+
+    expect(firstTrail).toBe(7);
+    expect(children).toHaveLength(9);
+  });
+
+  it('leaves the counted lines at full strength', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+    expect(container.querySelector('[data-lines]')?.getAttribute('data-lines')).toBe('7');
+  });
+
+  it('gives a finished or planned record no trail', () => {
+    for (const state of ['done', 'planned'] as const) {
+      const { container } = render(<WaveBundle durationMinutes={120} state={state} />);
+      expect(container.querySelectorAll('[data-trail]')).toHaveLength(0);
+      cleanup();
+    }
+  });
+
+  it('keeps the trail under reduced motion, since it is state and not motion', () => {
+    setReducedMotion(true);
+    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
+
+    expect(container.querySelectorAll('[data-trail]')).toHaveLength(2);
+    expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
   });
 });

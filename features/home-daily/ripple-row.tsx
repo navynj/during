@@ -11,12 +11,6 @@ import {
 import { ROPE, ROW_GRID } from './row-grid';
 
 const PLANNED_OPACITY = 0.35;
-/**
- * Finer than the export's 2px. On the timeline the waves sit among text at
- * 14px, and a 2px stroke reads heavier than the notes beside it; at the chip
- * scale the same geometry needs the thicker pen.
- */
-const TIMELINE_STROKE = 1.25;
 
 /** `08:00`, from the stored author-local wall clock. */
 function clock(time: string): string {
@@ -84,16 +78,11 @@ export function RippleRow({
           {kind === 'timed' ? (
             // The bundle fades itself, badge included, so the fade is not
             // applied here as well — twice would land it at 0.12.
-            <WaveBundle
-              durationMinutes={duration}
-              state={state}
-              strokeWidth={TIMELINE_STROKE}
-              emoji={emoji}
-            />
+            <WaveBundle durationMinutes={duration} state={state} emoji={emoji} />
           ) : (
             <span className="flex flex-col items-center" style={{ opacity: fade }}>
               {emoji ? <Badge emoji={emoji} /> : null}
-              <WaveLine strokeWidth={TIMELINE_STROKE} />
+              <WaveLine />
             </span>
           )}
         </span>

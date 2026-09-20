@@ -18,12 +18,6 @@ export type WaveLineProps = {
   className?: string;
   /** Set by WaveBundle on an in-progress record; still otherwise. */
   travelling?: boolean;
-  /**
-   * Overridable because the export's 2px is drawn at the chip scale, and the
-   * timeline wants a finer line at the same geometry. The path is unchanged:
-   * only the pen changes, so the waveform stays the exported one.
-   */
-  strokeWidth?: number;
 };
 
 /**
@@ -37,7 +31,6 @@ export function WaveLine({
   width = WAVE_WIDTH,
   className = '',
   travelling = false,
-  strokeWidth = WAVE_STROKE,
 }: WaveLineProps) {
   // A travelling line is drawn long and clipped by the viewBox, so the water
   // moves through a fixed window instead of the waveform being distorted
@@ -48,7 +41,7 @@ export function WaveLine({
     <path
       d={waveLinePath(pathWidth)}
       stroke="currentColor"
-      strokeWidth={strokeWidth}
+      strokeWidth={WAVE_STROKE}
       strokeLinecap="round"
       strokeLinejoin="round"
       // Law 3: only living things move. Transform only — never layout.

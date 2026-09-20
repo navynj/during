@@ -5,6 +5,16 @@ import type { WaveState } from './wave-math';
 import { usePrefersReducedMotion } from './use-reduced-motion';
 import { WaveLine, WAVE_WIDTH } from './wave-line';
 
+/**
+ * The trail on a live record: two more lines below the bundle, each fainter
+ * than the last, as the ripple spreading past what has already happened.
+ *
+ * Wave lines rather than rings — the ring figure belongs to the commit, and
+ * reusing it here would say "something just landed" about a record that has
+ * been running for an hour. These are the same water, carrying on.
+ */
+const TRAIL_OPACITY = [0.4, 0.16];
+
 export type WaveBundleProps = {
   /** Drives the line count, and through it the bundle's height. */
   durationMinutes: number;
@@ -12,8 +22,6 @@ export type WaveBundleProps = {
   width?: number;
   /** Constant pitch between lines; only the count varies with duration. */
   gap?: number;
-  /** Passed through to every line; see WaveLine. */
-  strokeWidth?: number;
   /** Category emoji — the single allowed off-palette element (H4). */
   emoji?: string;
   className?: string;
@@ -32,7 +40,6 @@ export function WaveBundle({
   state = 'done',
   width = WAVE_WIDTH,
   gap = WAVE_GAP,
-  strokeWidth,
   emoji,
   className = '',
 }: WaveBundleProps) {
@@ -56,8 +63,19 @@ export function WaveBundle({
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine key={index} width={width} strokeWidth={strokeWidth} travelling={isTravelling} />
+          <WaveLine key={index} width={width} travelling={isTravelling} />
         ))}
+
+        {/* The trail belongs to the record's state, not to its motion, so it
+            is drawn under reduced motion too: it is how a still page says
+            this one is still running. */}
+        {state === 'active'
+          ? TRAIL_OPACITY.map((opacity, index) => (
+              <span key={`trail-${index}`} style={{ opacity }} data-trail={index + 1}>
+                <WaveLine width={width} travelling={isTravelling} />
+              </span>
+            ))
+          : null}
       </div>
     </div>
   );
