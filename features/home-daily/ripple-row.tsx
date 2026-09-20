@@ -87,7 +87,10 @@ export function RippleRow({
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 pt-1.5" style={{ opacity: fade }}>
+      {/* Baseline, not stretch: the grid stretches this cell to the row
+          height, and a flex child with a background would grow with it —
+          the chip is a label sitting on the note's baseline, not a panel. */}
+      <div className="flex flex-wrap items-baseline gap-2 pt-1.25" style={{ opacity: fade }}>
         <p className="text-ink text-sm">{ripple.note}</p>
         {kind === 'timed' ? (
           ripple.ended_at === null ? (

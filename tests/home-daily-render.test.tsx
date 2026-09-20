@@ -273,3 +273,17 @@ describe('one tone (H9a)', () => {
     }
   });
 });
+
+describe('the note row does not stretch', () => {
+  it('aligns the duration chip to the baseline rather than the row height', () => {
+    // jsdom computes no layout, so this pins the rule rather than the pixels:
+    // the grid stretches the cell, and a flex child with a background grows
+    // with it unless the alignment says otherwise.
+    const { container, getByText } = row();
+    const noteRow = getByText('spec rewrite').parentElement!;
+
+    expect(noteRow.className).toContain('items-baseline');
+    expect(noteRow.className).not.toContain('items-stretch');
+    expect(container.querySelector('.text-main-400')?.parentElement).toBe(noteRow);
+  });
+});
