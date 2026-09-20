@@ -25,15 +25,12 @@ export function NowBand({
   clock,
   elapsedMinutes,
   startedAt,
-  calm,
   openBreakId,
 }: {
   ripple: RippleWithCategory;
   clock: string;
   elapsedMinutes: number;
   startedAt: string;
-  /** Stretches spent on something else; drawn as calm water (H15a2). */
-  calm?: { from: number; to: number }[];
   openBreakId?: string | null;
 }) {
   return (
@@ -52,7 +49,7 @@ export function NowBand({
             {ripple.category?.icon}
           </span>
           {/* Same bundle as any timed record; only the ink inverts (H15c). */}
-          <WaveBundle durationMinutes={elapsedMinutes} state="active" calm={calm} />
+          <WaveBundle durationMinutes={elapsedMinutes} state="active" />
         </span>
 
         <p className="text-sm text-white">

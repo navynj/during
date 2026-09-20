@@ -208,38 +208,27 @@ describe('the stopwatch', () => {
 describe('a break, on the surfaces (H15a2)', () => {
   const running = ripple({ ended_at: null });
 
-  it('leaves the calm stretch of a bundle undrawn, without breaking its outline', () => {
-    const { container } = axis([ripple()]);
-    const before = container.querySelectorAll('[data-lines] > *').length;
+  it('does not thin the bundle: a break is not drawn in the wave grammar', () => {
+    // Reversed after looking at it: a bundle's count is already an impression,
+    // so a gap inside it reads as a rendering defect rather than as rest.
+    const plain = axis([ripple()]);
+    const lines = plain.container.querySelectorAll('[data-lines] path').length;
     cleanup();
 
-    const calm = render(
+    const withBreak = render(
       <InputSheetProvider>
-        <TimeAxis
-          ripples={[ripple()]}
-          timeZone={TZ}
-          now={NOW}
-          calmByRipple={{ r1: [{ from: 0.4, to: 0.8 }] }}
-        />
+        <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} openBreakByRipple={{ r1: 'b1' }} />
       </InputSheetProvider>,
     );
 
-    // Same number of slots, fewer waves: the height holds, the water calms.
-    expect(calm.container.querySelectorAll('[data-lines] > *')).toHaveLength(before);
-    expect(calm.container.querySelectorAll('[data-calm]').length).toBeGreaterThan(0);
-    expect(calm.container.querySelectorAll('path').length).toBeLessThan(before);
+    expect(withBreak.container.querySelectorAll('[data-lines] path')).toHaveLength(lines);
+    expect(withBreak.container.querySelectorAll('[data-calm]')).toHaveLength(0);
   });
 
   it('says it is on a break on the band, and offers no net time', () => {
     const { container } = render(
       <InputSheetProvider>
-        <TimeAxis
-          ripples={[running]}
-          timeZone={TZ}
-          now={NOW}
-          openBreakByRipple={{ r1: 'b1' }}
-          calmByRipple={{ r1: [{ from: 0.8, to: 1 }] }}
-        />
+        <TimeAxis ripples={[running]} timeZone={TZ} now={NOW} openBreakByRipple={{ r1: 'b1' }} />
       </InputSheetProvider>,
     );
 

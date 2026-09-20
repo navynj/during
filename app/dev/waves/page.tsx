@@ -7,7 +7,7 @@ import {
   WaveBundle,
   WaveLine,
 } from '@/components/ui/waves';
-import { CALM_CASES, DURATIONS, SEED_ROWS, STATES } from './fixtures';
+import { DURATIONS, SEED_ROWS, STATES } from './fixtures';
 
 export const metadata = { title: 'Waves · fixture' };
 
@@ -63,25 +63,6 @@ export default function WavesFixturePage() {
               <figcaption className="text-pool-500 text-center text-xs">
                 {formatDuration(minutes)} · {bundleLineCount(minutes)}
               </figcaption>
-            </figure>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="Calm water"
-        hint="A break inside a session leaves its stretch undrawn while the bundle keeps its height — rest is the same channel at its low value (F2, H15a2)."
-      >
-        <div className="border-pool-200 flex flex-wrap items-start gap-12 border-t pt-6">
-          {CALM_CASES.map((example) => (
-            <figure key={example.label} className="flex w-32 flex-col items-center gap-3">
-              <WaveBundle
-                durationMinutes={example.minutes}
-                state={example.state}
-                calm={example.calm}
-                emoji="🔍"
-              />
-              <figcaption className="text-pool-500 text-center text-xs">{example.label}</figcaption>
             </figure>
           ))}
         </div>

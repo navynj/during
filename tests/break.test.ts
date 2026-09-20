@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { calmSpans, getInnerRipples, runningBreak } from '@/lib/queries/compose';
+import { getInnerRipples, runningBreak } from '@/lib/queries/compose';
 import { asAdmin } from './as-user';
 
 /**
@@ -12,7 +12,6 @@ import { asAdmin } from './as-user';
 const DAY = '2027-05-04';
 const FOCUS = '0e000000-0000-0000-0000-0000000000e1';
 let author: string;
-let breakCategory: string | null = null;
 
 /** Vancouver is UTC-7 in May, so 09:00 local is 16:00Z. */
 function utc(hhmm: string): string {
@@ -70,18 +69,6 @@ async function insert(row: {
     .select('id, started_at, ended_at, parent_ripple_id');
 }
 
-/** The lazily created Break category, made once and reused. */
-async function ensureBreakCategory(): Promise<string> {
-  if (breakCategory) return breakCategory;
-  const { data } = await asAdmin()
-    .from('my_categories')
-    .insert({ user_id: author, name: 'Break', default_mode: 'timed', position: 1 })
-    .select('id')
-    .single();
-  breakCategory = data!.id;
-  return breakCategory;
-}
-
 describe('a break is an inner ripple', () => {
   it('lies within the parent span and keeps off the top-level axis', async () => {
     const session = await insert({ time: '09:00' });
@@ -89,7 +76,6 @@ describe('a break is an inner ripple', () => {
       time: '09:20',
       endedAt: utc('09:35'),
       parent: session.data![0].id,
-      category: await ensureBreakCategory(),
     });
 
     expect(inside.error).toBeNull();
@@ -109,22 +95,56 @@ describe('a break is an inner ripple', () => {
       time: '11:00',
       endedAt: utc('11:10'),
       parent: session.data![0].id,
-      category: await ensureBreakCategory(),
     });
 
     expect(outside.error?.message).toMatch(/within its parent/i);
   });
 
-  it('reuses the Break category rather than making a second one', async () => {
-    const first = await ensureBreakCategory();
-    const { data } = await asAdmin()
-      .from('my_categories')
-      .select('id')
-      .eq('user_id', author)
-      .eq('name', 'Break');
+  it("carries the parent session's category, having none of its own", async () => {
+    const session = await insert({ time: '09:00' });
+    const child = await insert({
+      time: '09:20',
+      endedAt: utc('09:35'),
+      parent: session.data![0].id,
+    });
 
-    expect(data).toHaveLength(1);
-    expect(data![0].id).toBe(first);
+    const { data } = await asAdmin()
+      .from('ripples')
+      .select('category_id')
+      .eq('id', child.data![0].id)
+      .single();
+
+    expect(data!.category_id).toBe(FOCUS);
+  });
+
+  it('leaves no Break category behind anywhere', async () => {
+    // A category that had to be hidden from category surfaces was the wrong
+    // shape; identity is structural now (H15a2).
+    const { data } = await asAdmin().from('my_categories').select('id').eq('name', 'Break');
+    expect(data).toEqual([]);
+  });
+
+  it('is distinguishable by its span, which is what a detail sheet needs', async () => {
+    const session = await insert({ time: '09:00' });
+    const brk = await insert({ time: '09:20', endedAt: utc('09:35'), parent: session.data![0].id });
+    const note = await insert({
+      time: '09:40',
+      endedAt: utc('09:40'),
+      parent: session.data![0].id,
+    });
+
+    const { data } = await asAdmin()
+      .from('ripples')
+      .select('id, started_at, ended_at')
+      .in('id', [brk.data![0].id, note.data![0].id]);
+
+    const asBreak = data!.find((r) => r.id === brk.data![0].id)!;
+    const asDrop = data!.find((r) => r.id === note.data![0].id)!;
+
+    // Inner composition is Drop-only, so a timed child is a break and a
+    // point-in-time child is anything else.
+    expect(asBreak.ended_at).not.toBe(asBreak.started_at);
+    expect(asDrop.ended_at).toBe(asDrop.started_at);
   });
 });
 
@@ -134,7 +154,6 @@ describe('one running break at a time', () => {
     const open = await insert({
       time: '09:20',
       parent: session.data![0].id,
-      category: await ensureBreakCategory(),
     });
 
     const inner = await getInnerRipples(
@@ -151,7 +170,6 @@ describe('one running break at a time', () => {
       time: '09:20',
       endedAt: utc('09:40'),
       parent: session.data![0].id,
-      category: await ensureBreakCategory(),
     });
 
     const inner = await getInnerRipples(
@@ -168,7 +186,6 @@ describe('stopping during a break', () => {
     const open = await insert({
       time: '09:20',
       parent: session.data![0].id,
-      category: await ensureBreakCategory(),
     });
 
     const admin = asAdmin();
@@ -202,7 +219,6 @@ describe('the parent keeps gross time', () => {
       time: '09:20',
       endedAt: utc('09:40'),
       parent: session.data![0].id,
-      category: await ensureBreakCategory(),
     });
 
     const { data } = await asAdmin()
@@ -215,36 +231,5 @@ describe('the parent keeps gross time', () => {
     // app subtracts, it has started keeping score (H15a2).
     const minutes = (Date.parse(data!.ended_at!) - Date.parse(data!.started_at!)) / 60_000;
     expect(minutes).toBe(60);
-  });
-});
-
-describe('calm water', () => {
-  it('maps a break onto the fraction of the session it covered', () => {
-    const spans = calmSpans(utc('09:00'), utc('10:00'), new Date(), [
-      {
-        started_at: utc('09:15'),
-        ended_at: utc('09:30'),
-      } as never,
-    ]);
-
-    expect(spans).toEqual([{ from: 0.25, to: 0.5 }]);
-  });
-
-  it('runs a still-open break to now, so the tail goes flat', () => {
-    const now = new Date(Date.parse(utc('09:40')));
-    const spans = calmSpans(utc('09:00'), null, now, [
-      { started_at: utc('09:20'), ended_at: null } as never,
-    ]);
-
-    expect(spans[0].from).toBeCloseTo(0.5, 5);
-    expect(spans[0].to).toBe(1);
-  });
-
-  it('ignores a drop, which is a point and not a stretch', () => {
-    const spans = calmSpans(utc('09:00'), utc('10:00'), new Date(), [
-      { started_at: utc('09:15'), ended_at: utc('09:15') } as never,
-    ]);
-
-    expect(spans).toEqual([]);
   });
 });

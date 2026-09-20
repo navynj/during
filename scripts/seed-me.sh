@@ -126,29 +126,21 @@ begin
     end;
   end if;
 
-  -- Calm water, so the grammar can be judged without waiting for real time:
-  -- a Break in the middle third of the finished session, and one already
-  -- ended near the head of the running one (H15a2).
-  select id into parent_id from public.my_categories
-   where user_id = me and name = 'Break';
-  if parent_id is null then
-    insert into public.my_categories (user_id, name, icon, default_mode, position)
-    values (me, 'Break', '🌊', 'timed', 9)
-    returning id into parent_id;
-  end if;
-
+  -- A break inside the finished session, and one already ended inside the
+  -- running one. A break is a timed inner ripple carrying its parent's
+  -- category (H15a2) — there is no Break category to look up.
   for row_spec in
     select *
       from (values
-        ('brk-past', md5(me::text || ':focus-am')::uuid, interval '-255 minutes', interval '-235 minutes'),
-        ('brk-live', md5(me::text || ':live')::uuid,     interval '-45 minutes',  interval '-35 minutes')
-      ) as v(slug, parent, starts, ends)
+        ('brk-past', md5(me::text || ':focus-am')::uuid, focus, interval '-255 minutes', interval '-235 minutes'),
+        ('brk-live', md5(me::text || ':live')::uuid,     focus, interval '-45 minutes',  interval '-35 minutes')
+      ) as v(slug, parent, category, starts, ends)
   loop
     begin
       if exists (select 1 from public.ripples where id = row_spec.parent) then
         insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
         values (
-          md5(me::text || ':' || row_spec.slug)::uuid, me, parent_id, null,
+          md5(me::text || ':' || row_spec.slug)::uuid, me, row_spec.category, null,
           (local_now + row_spec.starts)::date,
           (local_now + row_spec.starts)::time,
           (local_now + row_spec.ends) at time zone tz,

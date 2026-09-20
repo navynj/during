@@ -125,12 +125,9 @@ select 'b1000000-0000-0000-0000-000000000008',
        'b1000000-0000-0000-0000-000000000001'
   from day;
 
--- A finished two-hour session with a twenty-minute Break in its middle third,
--- so today's timeline shows calm water inside an unbroken outline (H15a2).
-insert into public.my_categories (id, user_id, name, icon, default_mode, position)
-values ('a1000000-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'Break', '🌊', 'timed', 4)
-on conflict (user_id, name) do nothing;
-
+-- A finished two-hour session with a twenty-minute break inside it, and a
+-- break already ended inside the running one. A break is a timed inner ripple
+-- carrying its parent's category (H15a2) — there is no Break category.
 with day as (select (now() at time zone 'America/Vancouver')::date as d)
 insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
 select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note, day.d, v.at,
@@ -140,7 +137,7 @@ select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note, day.d, 
          ('b1000000-0000-0000-0000-000000000009'::uuid, 'a1000000-0000-0000-0000-000000000001'::uuid,
           'long afternoon', '16:30'::time, '18:30'::time, null::uuid),
          -- Middle third: the calm stretch sits inside the bundle, not at an end.
-         ('b1000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-000000000005',
+         ('b1000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-000000000001',
           null, '17:10', '17:30', 'b1000000-0000-0000-0000-000000000009')
        ) as v(id, category, note, at, ends, parent);
 
@@ -150,7 +147,7 @@ with day as (select (now() at time zone 'America/Vancouver')::date as d)
 insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
 select 'b1000000-0000-0000-0000-00000000000b',
        '11111111-1111-1111-1111-111111111111',
-       'a1000000-0000-0000-0000-000000000005',
+       'a1000000-0000-0000-0000-000000000001',
        null, day.d, '20:05',
        (day.d + '20:15'::time) at time zone 'America/Vancouver',
        'b1000000-0000-0000-0000-000000000005'

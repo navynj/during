@@ -1,6 +1,6 @@
 'use client';
 
-import { bundleLineCount, stateOpacity, WAVE_GAP, WAVE_HEIGHT } from './wave-math';
+import { bundleLineCount, stateOpacity, WAVE_GAP } from './wave-math';
 import type { WaveState } from './wave-math';
 import { usePrefersReducedMotion } from './use-reduced-motion';
 import { WaveLine, WAVE_WIDTH } from './wave-line';
@@ -22,13 +22,6 @@ export type WaveBundleProps = {
   width?: number;
   /** Constant pitch between lines; only the count varies with duration. */
   gap?: number;
-  /**
-   * Stretches of the span spent on something else, as fractions of it. Those
-   * lines are left out: undulation is activity, so rest is the same channel
-   * at its low value (F2, H15a2). The bundle keeps its height, so the outline
-   * is unbroken and only the water is calm.
-   */
-  calm?: { from: number; to: number }[];
   /** Category emoji — the single allowed off-palette element (H4). */
   emoji?: string;
   /**
@@ -54,7 +47,6 @@ export function WaveBundle({
   width = WAVE_WIDTH,
   gap,
   density = 'default',
-  calm,
   emoji,
   className = '',
 }: WaveBundleProps) {
@@ -79,14 +71,9 @@ export function WaveBundle({
     >
       {emoji ? <BundleHead emoji={emoji} compact={compact} /> : null}
       <div className="flex flex-col items-center" style={{ gap: pitch, width }} data-lines={lines}>
-        {Array.from({ length: lines }, (_, index) => {
-          // A line stands for its own slice of the span, so a calm stretch
-          // simply leaves those slices undrawn.
-          if (isCalmAt(calm, (index + 0.5) / lines)) {
-            return <span key={index} data-calm style={{ height: WAVE_HEIGHT }} />;
-          }
-          return <WaveLine key={index} width={width} travelling={isTravelling} />;
-        })}
+        {Array.from({ length: lines }, (_, index) => (
+          <WaveLine key={index} width={width} travelling={isTravelling} />
+        ))}
 
         {/* The trail belongs to the record's state, not to its motion, so it
             is drawn under reduced motion too: it is how a still page says
@@ -114,9 +101,4 @@ function BundleHead({ emoji, compact }: { emoji: string; compact: boolean }) {
       {emoji}
     </span>
   );
-}
-
-function isCalmAt(calm: { from: number; to: number }[] | undefined, at: number): boolean {
-  if (!calm) return false;
-  return calm.some((span) => at >= span.from && at < span.to);
 }
