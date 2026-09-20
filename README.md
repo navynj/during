@@ -34,7 +34,9 @@ pnpm dev                # http://localhost:3000
 
 Use **http://127.0.0.1:3000** in the browser, not `localhost:3000`. They are two
 different origins to Supabase's redirect allowlist, and the app builds every OAuth
-return URL from `NEXT_PUBLIC_SITE_URL`.
+return URL from `NEXT_PUBLIC_SITE_URL`. `pnpm dev` binds to that host for the same
+reason: Next blocks dev resources requested cross-origin, and a page served to the
+other spelling renders but never hydrates, so its buttons do nothing.
 
 Sign-in needs Google OAuth credentials. Create an OAuth client in the
 [Google Cloud console](https://console.cloud.google.com/apis/credentials) with
