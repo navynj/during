@@ -14,7 +14,8 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
     "check:tokens": "./scripts/check-tokens.sh",
-    "predev": "./scripts/check-stack.sh"
+    "predev": "./scripts/check-stack.sh",
+    "seed:me": "./scripts/seed-me.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
