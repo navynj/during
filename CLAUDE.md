@@ -20,7 +20,7 @@ When the spec is silent, choose the smallest implementation consistent with DECI
 
 ## Current scope: P1 (solo-complete)
 
-Scope is cut into phases, solo-first (H15). **P1 makes the app complete for one person, before anyone is invited.** Build in roughly this order:
+Scope is cut into phases, solo-first (H11). **P1 makes the app complete for one person, before anyone is invited.** Build in roughly this order:
 
 1. Auth (social login) and profile bootstrap (category seed from preset) — done
 2. Wave system, Home Daily read view — done

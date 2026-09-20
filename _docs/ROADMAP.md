@@ -2,7 +2,7 @@
 
 Session-sized milestones. One session = one Claude Code working block with a demoable definition of done. Order within a phase is dependency order; do not pull later sessions forward. The tab bar grows with scope: a tab appears only when its screen ships.
 
-Scope is cut into **phases**, solo-first (H15). The app becomes complete for one person before anyone is invited: the founding constraint is that a user is complete with zero pools, and friends' onboarding is a one-shot resource that should not be spent on a build which has not yet proven it is worth opening daily.
+Scope is cut into **phases**, solo-first (H11). The app becomes complete for one person before anyone is invited: the founding constraint is that a user is complete with zero pools, and friends' onboarding is a one-shot resource that should not be spent on a build which has not yet proven it is worth opening daily.
 
 *Mapping from the old labels, stated once:* v1a splits across P1 and P2; v1b's Lanes matrix moves into P1 and its Spotify suggestion into P1.5; v1.5 becomes P3. The v1a/v1b/v1.5 labels are retired.
 
@@ -14,6 +14,7 @@ Scope is cut into **phases**, solo-first (H15). The app becomes complete for one
 | S1 | Wave system | SVG primitives in `components/ui/waves/`: wave line (drop), bundle (timed, log-scaled line count at constant gap), planned at reduced opacity, multi-ring commit ripple, travelling motion for in-progress, `prefers-reduced-motion` fallbacks, fixture page at `/dev/waves` | Every ripple state in the seed renders correctly, static and animated, and looks right against `_docs/mockups/` | done |
 | S2 | Home Daily read | Ordered time axis (top = early), ripples placed by occurred_time, Daily Note area (several per day), date pager with author-tz boundaries, scroll anchors, duration chips, timeline exclusivity + inner ripples | Seed data renders as the mockup's Home Daily; anchors behave per SPEC 5 | done |
 | S3 | Input sheet | Half-sheet with chips, single note field, segmented time toggle, audience chip, Drop / Timer dual commit, progressive landing rail, three entry points, running-session stop, collision surfaced as UX | A chip-only zero-character drop lands; the rail shows the ghost when the time is touched; a deliberate overlap is caught and named | done |
+| S3.5 | Running record | Full-screen focus surface for a running timed (solid #0507C9, white travelling waves, elapsed at display size, stop behind a confirm, add-to-session entry); the now band on Home Daily replacing the plain running row | Starting a timer turns the row into the band; tapping it submerges into the focus screen; stop stills everything back into a finished bundle | done |
 | S4 | Ripple mini sheet | Half-sheet on tap: note, time, media, lock state, inner ripples with their own entry point. **No view count** — that is P2, because it needs an audience to count | Tapping a ripple opens it; an inner ripple can be filed into its parent from here |  |
 | S5 | Care | Hard delete including storage objects, photo attach + upload, final empty-state copy (empty day, empty Trail, empty Lanes) | Delete removes row and media; every empty state shows designed copy |  |
 | S6 | Recall | Lanes read-only matrix (my categories x days, locked included unmarked; tab appears now); Locker Trail (full personal scroll including locked ripples, date-sectioned, sinking sections per law 1) | A month of my own records is browsable by category and by day |  |
@@ -26,7 +27,7 @@ Daily personal use, small fixes, no new surfaces unless use demands them.
 - First candidate: Spotify now-playing suggestion — client-side fetch when the sheet opens, one-tap prefill, no background jobs, no stored tokens.
 - Quiet-day handling polish.
 
-**What this window can conclude (H15):** input cost and recall value only — whether a record is cheap enough to make, and whether the archive is worth returning to. **Solo usage decay is not evidence of product failure.** The witnessed hook is absent by design until P2, so its absence explains a decay that says nothing about the product with friends present.
+**What this window can conclude (H11):** input cost and recall value only — whether a record is cheap enough to make, and whether the archive is worth returning to. **Solo usage decay is not evidence of product failure.** The witnessed hook is absent by design until P2, so its absence explains a decay that says nothing about the product with friends present.
 
 ## P2: Link world
 

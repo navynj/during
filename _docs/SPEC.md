@@ -1,4 +1,4 @@
-# During: Product Spec (v0.13)
+# During: Product Spec (v0.14)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional (H11). v0.9 applies H12 (the ghost lands on a compressed axis inside the sheet). v0.10: inner ripples are created from the parent Ripple's detail sheet, not the input sheet. v0.11 applies H13 (the landing rail is progressive; time is a segmented toggle). v0.12 applies H14 (law 1's sinking is scoped to sections within a scroll; a paged day keeps its ground). v0.13 applies H15 (scope re-cut into solo-first phases; v1a/v1b/v1.5 retired).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional (H16). v0.9 applies H12 (the ghost lands on a compressed axis inside the sheet). v0.10: inner ripples are created from the parent Ripple's detail sheet, not the input sheet. v0.11 applies H13 (the landing rail is progressive; time is a segmented toggle). v0.12 applies H14 (law 1's sinking is scoped to sections within a scroll; a paged day keeps its ground). v0.13 applies H11 (scope re-cut into solo-first phases; v1a/v1b/v1.5 retired). v0.14 applies H15 (a running record gets a now band and a focus screen; solid #0507C9 means a live session; wave colour is contrast-determined).
 
 ---
 
@@ -78,7 +78,7 @@ Home / Lanes / Pools / Locker + FAB
   1. Friends strip (live = bold ring + elapsed; past-TTL members absent).
   2. Header: month + date pager (`< 15 SAT >`). **One pager governs the whole page**; it is the only date navigation.
   3. Daily Note area: records that belong to the date without a time. **Several per day allowed**, stacked; empty state shows the "Add a Daily Note" prompt. Weekly zoom shows the Weekly Note area.
-  4. Time axis: **top to bottom = early to late.** The axis is **ordered, not time-proportional**: vertical distance measures nothing. Time is carried by the order of records and by the start-time labels in the gutter; duration is carried by line density (log-scaled, capped) and the duration chip. A quiet stretch of the day costs no empty space, and a long session does not push the rest of the day off the screen. Rendering: timed = wave bundle, drop = single wave line, category badge at the bundle head, planned at reduced opacity. The gutter carries **start times only**, so the column reads as one ascending sequence. **Top-level Ripples never overlap** (H10); anything concurrent is an inner ripple and does not take a row of its own.
+  4. Time axis: **top to bottom = early to late.** The axis is **ordered, not time-proportional**: vertical distance measures nothing. Time is carried by the order of records and by the start-time labels in the gutter; duration is carried by line density (log-scaled, capped) and the duration chip. A quiet stretch of the day costs no empty space, and a long session does not push the rest of the day off the screen. Rendering: timed = wave bundle, drop = single wave line, category badge at the bundle head, planned at reduced opacity. The gutter carries **start times only**, so the column reads as one ascending sequence. **Top-level Ripples never overlap** (H10); anything concurrent is an inner ripple and does not take a row of its own. **A running timed takes the now band** (H15): a full-width solid #0507C9 band spanning the whole row including the friend rail, still, with white waves moving inside it and a `Stop · <elapsed>` chip. Tapping it opens the focus screen; tapping the chip stops the timer behind a confirm.
   5. **"Add ripple" ghost slot at the end of the flow**: the seat of the next record and an input entry point (time prefilled = now). New records append downward in time order.
   6. **Friend rail, far right:** a thin vertical line where friends' activity sits at its time-of-day position, sharing the main axis's time coordinates. Same-hour adjacency is the rail's information.
   7. Bottom resident area: active Splash bar (only when one exists) + Lanes preview strip.
@@ -120,7 +120,7 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 2. **Undulation = activity.** More waves = more happened. Impression-level (calm / some / lots), log-scaled, never a precise count or a participation gauge.
 3. **Only living things move.** An in-progress timed **travels**: its waveform is held rigid and slid through a clipped window, every line in the bundle in phase, so what moves is the water and not the drawing of it (H9). Finished water is still. New drop = a **ripple: three rings spreading outward, staggered**, their opacity front-loaded against their travel (H9c) — one event per commit, never a loop. reduced-motion fallback mandatory, and every design must read correctly static.
 4. **Dotted = not yet.** Lane ropes and the empty "your lane" slot. **Not planned Ripples** (H9b): at the wave's 1px amplitude a dashed stroke becomes a row of dots and stops reading as a wave, so planned renders at reduced opacity instead.
-5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. A solid #0507C9 **content** surface is reserved for live Swim/Splash cards, where the fill is what encodes liveness. Interactive **chrome** — the FAB, primary action buttons, the active nav item — may use solid #0507C9 as the action color: chrome styling is not encoding, so it does not compete for the channel (H8).
+5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. A solid #0507C9 **content** surface means **a live session**: Swim and Splash cards, the now band, and the running-record focus screen (H15). The fill is what encodes liveness. Interactive **chrome** — the FAB, primary action buttons, the active nav item — may use solid #0507C9 as the action color: chrome styling is not encoding, so it does not compete for the channel (H8).
 6. **Vocabulary may be taught; visual encodings may not.** If an encoding needs explanation, it is rejected.
 
 **Palette (the only custom tokens):**
@@ -130,6 +130,8 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 - **Text rule (H8):** #787BE2 is a **chip foreground and a wave tone, nothing else**. Its only text use is the foreground of category chips and other small tag-like chips; otherwise it appears solely as the "recent" tone inside the wave ramp. Text hierarchy: **#313338** default, **#0507C9** emphasis, **#6B79A3** muted or secondary. #D3D7F6 is never text. Enforced by `scripts/check-tokens.sh`, which fails the lint if main-400 is used outside the chip and wave components.
 - **No other colors, with one exception: category emojis keep their native colors** (the only off-palette element).
 - Dark mode: undefined for now. When designed it must be a night pool, never inverted colors.
+
+**Wave colour is contrast-determined (H15c):** #0507C9 on light surfaces, white on deep live surfaces. An inversion rule, not a second tone — one wave drawn in whatever reads against its ground, carried by `currentColor` so the surface decides and the component never takes a colour.
 
 **Ripple grammar:** timed = multi-line wave bundle (line count log-scaled on duration, capped at 10; **constant gap between lines, so only the count varies** — a bundle's height is a consequence of its density, not a measure of its span). drop = single wave line. Planned renders at reduced opacity, badge included. Category badge on the avatar corner (rows) or bundle head (timeline), so text is 100% note. Display format: `category · note`.
 
@@ -162,7 +164,7 @@ occurred vs created separated (backfill lands on the right day); occurred_on and
 
 ## 9. Scope
 
-Scope is cut into **phases**, not versions (H15). The build is solo-first: the app becomes complete for one person before anyone is invited, because the founding constraint is that a user is complete with zero pools and the archive is worth keeping with nobody watching.
+Scope is cut into **phases**, not versions (H11). The build is solo-first: the app becomes complete for one person before anyone is invited, because the founding constraint is that a user is complete with zero pools and the archive is worth keeping with nobody watching.
 
 *Mapping, stated once:* the old v1a splits across **P1** (everything except the social half) and **P2** (Link, rail, view count, presence). Old v1b's Lanes matrix moves into P1; its Spotify suggestion into P1.5; Home Weekly is deferred. Old v1.5 becomes **P3** unchanged. The v1a/v1b/v1.5 labels are retired.
 
@@ -172,7 +174,7 @@ Scope is cut into **phases**, not versions (H15). The build is solo-first: the a
 
 **P2 — Link world.** Link + invite link, friend rail, view-count UI (opening a Ripple records a view event; the count is visible to the author only), presence TTL surfacing (hardcoded 3d, computed at read). **The witnessing experiment runs here**: the section 1 hypotheses about being witnessed are not answerable before an audience exists.
 
-**What each phase can conclude (H15).** P1 and P1.5 validate **input cost and recall value only** — whether a record is cheap enough to make, and whether the archive is worth returning to. **Solo usage decay is not evidence of product failure**, because the witnessed hook is absent by design until P2.
+**What each phase can conclude (H11).** P1 and P1.5 validate **input cost and recall value only** — whether a record is cheap enough to make, and whether the archive is worth returning to. **Solo usage decay is not evidence of product failure**, because the witnessed hook is absent by design until P2.
 
 **P3 — Pool world.** Pool create/join + mapping contract screen, Swimmers (Daily score / Weekly matrix), pool Lanes, Splash tab (boards + joint filter), Swim (lane card, live card, FAB entry), suggestion row full version.
 
