@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/*
+ * SPEC 7: the three ramps are the ONLY custom tokens. Spacing, radius and type
+ * stay on the Tailwind default scale — nothing else belongs in this block.
+ * Dark mode is deliberately absent: SPEC 7 defers it to a designed night pool
+ * and forbids inversion, so the scaffold ships no `prefers-color-scheme` block.
+ */
+@theme {
+  /* Main ramp — content vitality */
+  --color-main-900: #0507c9; /* live / now */
+  --color-main-400: #787be2; /* recent; doubles as accent text at bold/large sizes */
+  --color-main-100: #d3d7f6; /* settled / past — never used for text */
+
+  /* Gray ramp — structure */
+  --color-pool-100: #f1f3f7; /* surfaces */
+  --color-pool-200: #d8dce8; /* deeper surfaces, dividers, lane ropes */
+  --color-pool-500: #6b79a3; /* muted and secondary text */
+
+  /* Ink — body text */
+  --color-ink: #313338;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
