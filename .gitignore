@@ -44,3 +44,6 @@ next-env.d.ts
 # supabase
 supabase/.branches
 supabase/.temp
+
+# Database dumps. Real records: never committed, never shared.
+backups/

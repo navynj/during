@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Poppins } from 'next/font/google';
 
 import { Providers } from '@/app/providers';
@@ -18,6 +18,27 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'During',
   description: 'A one-line diary that assembles itself.',
+  // Installed on a phone it is an app, so it gets an app's name and an
+  // app's status bar rather than a browser's.
+  appleWebApp: { capable: true, title: 'During', statusBarStyle: 'default' },
+  icons: { apple: '/apple-touch-icon.png' },
+};
+
+/**
+ * `viewportFit: 'cover'` is load-bearing, not polish: the tab bar, the bottom
+ * sheets and the Lanes strip all pad themselves with `env(safe-area-inset-*)`,
+ * and those resolve to 0 under the default viewport. Without this the bar sits
+ * under the home indicator on a notched phone and every sheet's last control
+ * is half unreachable.
+ *
+ * Zoom is left alone. Pinching out of a small time label is the kind of thing
+ * a diary has to allow.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0507c9',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

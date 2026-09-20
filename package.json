@@ -11,11 +11,16 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "db:start": "set -a; [ -f .env.local ] && . ./.env.local; set +a; supabase start",
-    "db:reset": "supabase db reset",
+    "db:reset": "./scripts/guard-destructive.sh \"db reset\" \"$@\" && supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
     "check:tokens": "./scripts/check-tokens.sh",
     "predev": "./scripts/check-stack.sh",
-    "seed:me": "./scripts/seed-me.sh"
+    "seed:me": "./scripts/assert-local.sh && ./scripts/seed-me.sh",
+    "test:ci": "vitest run --config vitest.ci.config.ts",
+    "verify": "pnpm lint && pnpm test:ci",
+    "backup": "./scripts/backup.sh",
+    "db:push": "./scripts/db-push.sh",
+    "verify:prod": "node scripts/verify-prod-rls.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

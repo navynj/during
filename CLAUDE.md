@@ -35,6 +35,15 @@ Explicitly NOT in P1 (do not scaffold, stub, or placeholder): Link and invites, 
 
 **P1.5** is a dogfood window: daily personal use and small fixes, first candidate the Spotify now-playing suggestion. **P2** adds the Link world and is where the witnessing experiment runs. **P1/P1.5 validate input cost and recall value only — solo usage decay is not evidence of product failure**, because the witnessed hook is absent by design until P2.
 
+## Data is real now
+
+The database holds records someone actually wrote. Everything below outranks convenience, including my own.
+
+1. **Never run `db reset`, or any destructive command, against the linked (production) project.** Not once, not to fix a migration, not because the alternative is slower. **The local database is protected too** — it currently holds real records, and it stays protected until Yoonji says in the session that it is disposable again. `pnpm db:reset` refuses unless `DURING_DB_DISPOSABLE=yes` is set for that one command, which is her declaration and never mine to make.
+2. **Migrations are forward-only.** A schema change is a new migration file, rehearsed against a local fixture database, applied to prod with `supabase db push` and nothing else. **Destructive DDL — `DROP`, narrowing a column type, removing an RLS policy — needs her explicit approval in the session, quoted in the commit message.** `pnpm db:push` scans the pending migrations and refuses when it finds any, unless that approval is passed through.
+3. **Backups are ours to make: the free tier has none.** `pnpm backup` writes a schema + data dump of the linked database to `backups/<timestamp>.sql` (gitignored) and a listing of storage objects beside it. **Running it is mandatory before every push to prod**, and `pnpm db:push` refuses without a dump from today. Object _bytes_ are not in that dump — Postgres does not hold them — so a bucket restore is manual. Remind her that weekly-ish dumps are hers to run.
+4. **Never decide data migration on her behalf.** Whether local records are carried into prod or prod starts empty is her call, asked once, in the session.
+
 ## Stack
 
 - Next.js (App Router) + TypeScript strict. Deployed on Vercel.
