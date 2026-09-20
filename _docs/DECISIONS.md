@@ -1,4 +1,4 @@
-# During: Decision Log (v0.12)
+# During: Decision Log (v0.13)
 
 Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chronological within each. Group H records spec-review amendments; where H supersedes an earlier entry, the earlier entry stays as history with a note.
 
@@ -283,3 +283,29 @@ So the time control gains an optional end. Commit stays **Drop** regardless of s
 Rejected: (a) a separate "log a past session" surface — a second editor, which H17 settled against; (b) a duration input beside the times — exclusion and containment both validate on times, so times are the unit of truth and a duration field would be a second way to say the same thing that has to be kept in agreement; (c) allowing a straddling span and quietly clamping the end to now — a silent rewrite of what the author typed.
 
 **Consequence for inner ripples:** "inner composition is Drop-only" loosens into **"inner mode has no Timer"**. A typed span is allowed inside a session, validated by containment. This costs nothing that H15a2 relied on: a break was made identifiable by its *span* rather than by a name or a flag precisely so that the identification would not depend on breaks being the only producer of one — and that choice now pays, because they no longer are.
+
+**H19. The Lanes matrix, the Locker Trail, and the empty-state voice.**
+
+**Cells count; they never sum time.** A Lanes cell is how many Ripples a category held that day, drawn as an impression (law 2, log-scaled, capped at five lines) and never as a number. **Inner ripples are counted**, which is the aggregation rule (H15a2) read from the other side: inner ripples contribute their count and their content, never their time. A break inside a session is one more thing that happened, not a subtraction from it. Planned Ripples are left out — a cell says what a day held, and an intention is not yet a record of one. Locked Ripples are counted, unmarked: this view is mine alone, and lock state belongs to the detail sheet.
+
+**Quiet stretches fold.** Three or more consecutive days with nothing recorded collapse into one low row, `Sep 2 to 6`. The threshold is a constant and deliberately tunable: two quiet days between records still read as part of the same week, while three drawn as three empty rows cost a screenful to say nothing. The fold is also what makes the matrix affordable to leave **unbounded** — it runs from today back to the first record, so the archive is complete rather than windowed at some arbitrary depth.
+
+**Interactions stay at two.** A cell opens that day on Home; a column header opens that lane's own sheet (name, icon, delete-while-empty). The header's other half, the mapping dashboard, needs pools to flow into and arrives with P2 — nothing is scaffolded for it. **Deleting a lane that holds records is refused, not resolved**: every answer to "what happens to them" is worse than the refusal, because deleting them loses records to a bookkeeping action and moving them rewrites what the author said happened. So the refusal names the count and stops.
+
+**Lane creation ships with the tab**, which the brief did not ask for and the Home strip had already promised ("New lanes arrive with the Lanes tab"). Shipping the tab without it would have left that copy lying on the screen. Same sheet, one branch.
+
+**The Trail is archive browsing, and that is not what the no-feed hypothesis is about.** A1/A2 concern *other people's content arriving unasked* — an endless column of records I did not write. My own archive, read backwards, is the opposite motion: nothing ever arrives at its top, and the only way through it is to go back. Stated where the scroll is implemented, so the distinction is not re-litigated by whoever reads that file next.
+
+**Law 1's sinking finally has somewhere to apply.** H14 scoped it to sections within a continuous scroll and exempted the paged Home Daily, which left the rule with no consumer. Lanes and the Trail are both such scrolls, and their sections are **months** — the unit the gutter already names. A row never picks its own depth: the section sets `--row-surface` and the row reads it back, so the same `RippleRow` renders white on Home and sunk in the Trail without knowing which it is in. *Conflict noted:* `_docs/mockups/Home - Lanes.png` keeps white at every depth; it predates law 1's scoping, so SPEC wins and the mockup's layout is kept.
+
+**The empty-state voice: invitation, never absence, never a nudge.** No exclamation marks, no counts of what is missing, no "yet" that implies a debt. Tense does the work — today is still open, a past day is finished, and only a future day is missing *plans* rather than records, because you cannot have failed to record a day that has not happened. The set, held in one module so it stays greppable:
+
+| Where | Copy |
+| --- | --- |
+| Home, today | A quiet day so far. |
+| Home, a past day | A quiet day. |
+| Home, a future day | Nothing planned yet. |
+| Lanes, nothing recorded at all | Waves gather here as you drop. |
+| Locker Trail, empty | Your trail starts with the first ripple. |
+
+The ghost slot stays beside the copy on every one of them: a quiet day is still a day you can record into, and removing the slot would turn a statement into a dead end.

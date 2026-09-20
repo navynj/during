@@ -7,6 +7,8 @@ export type { CommitRingProps } from './commit-ring';
 export {
   bundleLineCount,
   bundleHeight,
+  impressionLineCount,
+  MAX_IMPRESSION_LINES,
   stateOpacity,
   waveLinePath,
   MAX_BUNDLE_LINES,

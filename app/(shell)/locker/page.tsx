@@ -1,28 +1,57 @@
-export default function LockerPage() {
+import { redirect } from 'next/navigation';
+
+import { Trail } from '@/features/locker/trail';
+import { RippleSheetHost } from '@/features/ripple-sheet/sheet-host';
+import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
+import { getMyTrail, groupByDay } from '@/lib/queries/trail';
+import { createClient } from '@/lib/supabase/server';
+import { todayIn } from '@/lib/time';
+
+/**
+ * SPEC 5: the Locker is my private global archive and recall engine. The
+ * Trail is its scroll; aggregates and one-year-ago join it later, and D10
+ * keeps matrices out of here entirely — those are Lanes.
+ */
+export default async function LockerPage() {
+  const supabase = await createClient();
+  const profile = await getMyProfile(supabase);
+  if (!profile) redirect('/sign-in');
+
+  const [ripples, categories] = await Promise.all([
+    getMyTrail(supabase, profile.id),
+    getMyCategories(supabase),
+  ]);
+
+  // Read once for the whole scroll: RLS already limits these rows to their
+  // author, and the detail sheet needs the state the moment a row is tapped.
+  const { data: lockRows } = await supabase
+    .from('ripple_audience')
+    .select('ripple_id')
+    .eq('target_type', 'lock')
+    .in(
+      'ripple_id',
+      ripples.length ? ripples.map((r) => r.id) : ['00000000-0000-0000-0000-000000000000'],
+    );
+
+  const days = groupByDay(ripples);
+  const now = new Date();
+
   return (
-    <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
-      <header className="py-6">
-        <h1 className="text-ink text-2xl font-semibold">Locker</h1>
-      </header>
-
-      <section className="border-pool-200 flex flex-1 items-center justify-center border-t py-16">
-        {/* TODO(S6): the Trail — full personal scroll, locked Ripples included. */}
-        <p className="text-pool-500 text-center">Your Trail starts with your first ripple.</p>
-      </section>
-
-      {/*
-        The rule above the tab bar belongs to the page that needs one, not to
-        the bar: on Home the Lanes strip's own ground does the separating, and
-        a rule on the bar showed up there as a border under the strip.
-
-        Sticky at the bar's height so it holds the edge once the Trail is long
-        enough to scroll (S6).
-      */}
-      <div
-        aria-hidden
-        className="bg-pool-200 sticky -mx-6 mt-auto h-px"
-        style={{ bottom: 'calc(var(--tab-bar-h) + env(safe-area-inset-bottom, 0px))' }}
-      />
-    </main>
+    <RippleSheetHost
+      ripples={ripples}
+      inner={[]}
+      lockedIds={(lockRows ?? []).map((row) => row.ripple_id)}
+      sheetContext={{
+        categories,
+        ripples,
+        running: null,
+        timeZone: profile.timezone,
+        date: todayIn(profile.timezone),
+      }}
+    >
+      <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
+        <Trail days={days} timeZone={profile.timezone} now={now} />
+      </main>
+    </RippleSheetHost>
   );
 }

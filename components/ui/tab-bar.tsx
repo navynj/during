@@ -2,17 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus, ShelvingUnit, type LucideIcon } from 'lucide-react';
+import { Home, Plus, ShelvingUnit, Waves, type LucideIcon } from 'lucide-react';
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 
 /**
  * D3: tab slots are full by design and the bar grows only as screens ship.
- * Lanes and Pools are deliberately absent until v1b and v1.5 — a dead tab is
- * forbidden, so this list is the shipped surface, not a plan.
+ * Pools is deliberately absent until P3 — a dead tab is forbidden, so this
+ * list is the shipped surface, not a plan.
  */
 const TABS: ReadonlyArray<{ href: string; label: string; icon: LucideIcon }> = [
   { href: '/', label: 'Home', icon: Home },
+  // Lanes are divisions of the water, which is what the glyph draws. The
+  // mockup's icon is a lane-rope figure with no lucide equivalent.
+  { href: '/lanes', label: 'Lanes', icon: Waves },
   // lucide calls the shelves glyph ShelvingUnit.
   { href: '/locker', label: 'Locker', icon: ShelvingUnit },
 ];

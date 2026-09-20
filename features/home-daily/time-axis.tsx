@@ -22,12 +22,16 @@ export function TimeAxis({
   timeZone,
   now,
   openBreakByRipple,
+  quietCopy,
 }: {
   ripples: RippleWithCategory[];
   timeZone: string;
   now: Date;
   /** A break still running inside a session, per session. */
   openBreakByRipple?: Record<string, string>;
+  /** What an empty day says. The ghost slot stays either way: a quiet day is
+   *  still a day you can record into. */
+  quietCopy?: string;
 }) {
   return (
     // The rope is drawn per row, inside the wave cell, so it is centred by the
@@ -35,6 +39,11 @@ export function TimeAxis({
     <section>
       {/* Clear of the divider: the first record should not look welded to it. */}
       <ol className="flex flex-col pt-5">
+        {ripples.length === 0 && quietCopy ? (
+          <li data-quiet-day className="text-pool-500 pb-4 text-sm">
+            {quietCopy}
+          </li>
+        ) : null}
         {ripples.map((ripple) => {
           // A running record has its own face (H15b); everything else is a row.
           if (rippleState(ripple) === 'active') {

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 import { WaveLine } from '@/components/ui/waves';
@@ -80,23 +81,22 @@ export function LanesStrip({
 }
 
 /**
- * The seat of a category that does not exist yet, per the mockup. Inert: the
- * category editor lives in the Lanes tab, which is v1b — the slot is drawn so
- * the strip is whole, and says so rather than failing silently on a tap.
+ * The seat of a category that does not exist yet, per the mockup. It leads to
+ * the Lanes tab, where a lane is made and edited: the strip is a preview, and
+ * putting a second lane editor on it would be a second place that knows what
+ * a category is.
  */
 function NewLaneSlot() {
   return (
     <li className="flex w-[4.5rem] shrink-0 flex-col items-center gap-2">
       <span className="text-xs">&nbsp;</span>
-      <button
-        type="button"
-        disabled
-        title="New lanes arrive with the Lanes tab"
-        aria-label="New lane — not yet available"
+      <Link
+        href="/lanes"
+        aria-label="New lane"
         className="text-main-900 flex h-10 w-10 items-center justify-center rounded-full bg-white/60 opacity-30"
       >
         <Plus aria-hidden size={16} />
-      </button>
+      </Link>
     </li>
   );
 }

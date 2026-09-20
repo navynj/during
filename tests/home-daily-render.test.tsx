@@ -8,6 +8,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: () => {}, refresh: () => {} }),
 }));
 
+import { ROW_SURFACE } from '@/features/home-daily/depth';
 import { RippleRow } from '@/features/home-daily/ripple-row';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { TimeAxis, ADD_RIPPLE_SLOT_ID } from '@/features/home-daily/time-axis';
@@ -174,7 +175,9 @@ describe('the rope', () => {
   it('is masked by the wave stack rather than showing through it', () => {
     const { container } = render(<RippleRow ripple={ripple()} timeZone={TZ} now={NOW} />);
 
-    const stack = container.querySelector('.bg-white');
+    // Queried through the constant: the row takes its ground from the surface
+    // it sits on, so the class is a variable reference, not a literal.
+    const stack = container.querySelector(`.${CSS.escape(ROW_SURFACE)}`);
     expect(stack).not.toBeNull();
     expect(stack!.querySelector('[data-lines]')).not.toBeNull();
   });
@@ -226,16 +229,6 @@ describe('the duration tag', () => {
     const { container } = row({ occurred_time: '12:15:00', ended_at: at });
 
     expect(container.querySelector('.text-main-400')).toBeNull();
-  });
-});
-
-describe('the rope', () => {
-  it('is masked by the wave stack rather than showing through it', () => {
-    const { container } = render(<RippleRow ripple={ripple()} timeZone={TZ} now={NOW} />);
-
-    const stack = container.querySelector('.bg-white');
-    expect(stack).not.toBeNull();
-    expect(stack!.querySelector('[data-lines]')).not.toBeNull();
   });
 });
 

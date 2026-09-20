@@ -44,6 +44,22 @@ export function bundleLineCount(durationMinutes: number): number {
 }
 
 /**
+ * The same law applied to a count of records rather than to a duration
+ * (law 2): calm / some / lots, log-scaled, never a tally.
+ *
+ * Lanes cells are counts, so they cannot borrow `bundleLineCount` — four
+ * records and a four-minute session are not the same impression. Capped
+ * lower, too: a cell is a glance, and past four lines a matrix row starts to
+ * look like a chart.
+ */
+export const MAX_IMPRESSION_LINES = 5;
+
+export function impressionLineCount(count: number): number {
+  if (!Number.isFinite(count) || count <= 0) return 0;
+  return Math.min(MAX_IMPRESSION_LINES, Math.floor(Math.log2(count)) + 1);
+}
+
+/**
  * Future fades (law 1). Opacity alone, not a dash: a dashed stroke at this
  * amplitude turns the wave into a dotted line and loses the wave entirely.
  */

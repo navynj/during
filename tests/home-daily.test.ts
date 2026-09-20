@@ -140,6 +140,11 @@ describe('anchors', () => {
     // Law 1's sinking is about sections within one scroll. Home Daily pages a
     // day at a time, so there is nothing to sink: a tinted past page read as
     // disabled rather than deep, next to waves that stay full strength (H9a).
-    expect(ROW_SURFACE).toBe('bg-white');
+    //
+    // The row reads its ground from the surface it sits on, and nothing on
+    // Home sets that, so every date falls back to white. The Trail is the
+    // scroll that does set it.
+    expect(ROW_SURFACE).toContain('--row-surface');
+    expect(ROW_SURFACE).toContain('#ffffff');
   });
 });

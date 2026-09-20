@@ -12,6 +12,7 @@ import { getInnerRipples, getRunningSession, runningBreak } from '@/lib/queries/
 import { getRipplesForDate, splitByRegion } from '@/lib/queries/ripples';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
 import { createClient } from '@/lib/supabase/server';
+import { quietDayCopy } from '@/lib/empty-states';
 import { todayIn, type IsoDate } from '@/lib/time';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -90,6 +91,7 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
             timeZone={profile.timezone}
             now={now}
             openBreakByRipple={openBreakByRipple}
+            quietCopy={quietDayCopy(date, today)}
           />
         </div>
 
