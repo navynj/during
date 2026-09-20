@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# Puts the seed fixture on a real signed-in account, dated relative to that
+# Puts the demo fixture on a real signed-in account, dated relative to that
 # account's own today.
 #
 # supabase/seed.sql populates yoonji@during.today, but you sign in as yourself
-# through Google, so your Home is empty and there is nothing to judge a design
-# against. Idempotent: row ids are derived from your user id, so re-running
-# refreshes the times instead of piling up duplicates.
+# through Google, so your Home starts empty and there is nothing to judge a
+# design against.
+#
+# Safe to run on an account you are actually using. Row ids derive from your
+# user id, so re-running refreshes the fixture rather than duplicating it, and
+# a fixture row whose time is already occupied by one of your own records is
+# SKIPPED rather than forced — H10 makes the timeline exclusive, and your real
+# day outranks the demo.
 #
 #   pnpm seed:me you@example.com
 set -euo pipefail
@@ -32,6 +37,10 @@ declare
   today date;
   yesterday date;
   focus uuid; place uuid; listening uuid; day uuid;
+  row_spec record;
+  parent_id uuid;
+  seeded int := 0;
+  skipped int := 0;
 begin
   select p.id, p.timezone into me, tz
     from public.profiles p
@@ -55,70 +64,111 @@ begin
   today := local_now::date;
   yesterday := today - 1;
 
-  -- Deterministic ids: same slug, same row, so this is a refresh not a pile-up.
+  -- Today is anchored to the clock rather than written as fixed hours, so the
+  -- live record is both the most recent thing on the axis and long enough to
+  -- have a bundle worth watching, at whatever hour this is run.
   --
-  -- Today is anchored to the clock rather than written as fixed hours. A live
-  -- record has to be both the most recent thing on the axis and long enough to
-  -- have a bundle worth watching, and fixed hours can only satisfy one of
-  -- those: 18:00 is last but has not started, 07:00 has run a while but sits
-  -- at the top. Offsets from now satisfy both, at any hour the script is run.
-  insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)
-  select md5(me::text || ':' || v.slug)::uuid, me, v.category, v.note,
-         (local_now + v.starts)::date,
-         (local_now + v.starts)::time,
-         case when v.ends is null then null else (local_now + v.ends) at time zone tz end,
-         v.planned
-    from (values
-      -- Minutes throughout: in Postgres `interval '-2 hours 30 minutes'` is
-      -- -1h30, because the sign binds only to the first field. That silently
-      -- turned a 90-minute record into a 150-minute one here.
-      ('focus-am',   focus,     'spec rewrite',                           interval '-240 minutes', interval '-150 minutes', false),
-      ('place-noon', place,     'kitsilano beach',                        interval '-120 minutes', interval '-120 minutes', false),
-      ('locked',     day,       'the thing I am not saying out loud yet', interval '-75 minutes',  interval '-75 minutes',  false),
-      -- In progress: no end, and started long enough ago to carry five lines.
-      ('live',       focus,     'session 2',                              interval '-50 minutes',  null,                    false),
-      ('planned',    place,     'dinner later',                           interval '300 minutes',  interval '300 minutes',  true)
-    ) as v(slug, category, note, starts, ends, planned)
-  on conflict (id) do update
-     set occurred_on   = excluded.occurred_on,
-         occurred_time = excluded.occurred_time,
-         ended_at      = excluded.ended_at,
-         planned       = excluded.planned;
+  -- Minutes throughout: in Postgres `interval '-2 hours 30 minutes'` is -1h30,
+  -- because the sign binds only to the first field.
+  for row_spec in
+    select *
+      from (values
+        ('focus-am',   focus,     'spec rewrite',                           interval '-240 minutes', interval '-150 minutes', false),
+        ('place-noon', place,     'kitsilano beach',                        interval '-120 minutes', interval '-120 minutes', false),
+        ('locked',     day,       'the thing I am not saying out loud yet', interval '-75 minutes',  interval '-75 minutes',  false),
+        ('live',       focus,     'session 2',                              interval '-50 minutes',  null,                    false),
+        ('planned',    place,     'dinner later',                           interval '300 minutes',  interval '300 minutes',  true)
+      ) as v(slug, category, note, starts, ends, planned)
+  loop
+    begin
+      insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)
+      values (
+        md5(me::text || ':' || row_spec.slug)::uuid, me, row_spec.category, row_spec.note,
+        (local_now + row_spec.starts)::date,
+        (local_now + row_spec.starts)::time,
+        case when row_spec.ends is null then null else (local_now + row_spec.ends) at time zone tz end,
+        row_spec.planned
+      )
+      on conflict (id) do update
+         set occurred_on   = excluded.occurred_on,
+             occurred_time = excluded.occurred_time,
+             ended_at      = excluded.ended_at,
+             planned       = excluded.planned;
+      seeded := seeded + 1;
+    exception
+      -- Your own day owns that stretch. The fixture yields; it is a demo.
+      when exclusion_violation then
+        skipped := skipped + 1;
+    end;
+  end loop;
 
   -- An inner ripple (H10): a drop that happened *during* the focus session.
-  -- Top-level Ripples cannot overlap, so a record inside a span is carried by
-  -- its parent rather than taking a row of its own.
-  insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
-  select md5(me::text || ':inner')::uuid, me, listening, 'something instrumental, to keep going',
-         (local_now - interval '200 minutes')::date,
-         (local_now - interval '200 minutes')::time,
-         (local_now - interval '200 minutes') at time zone tz,
-         md5(me::text || ':focus-am')::uuid
-  on conflict (id) do update
-     set occurred_on   = excluded.occurred_on,
-         occurred_time = excluded.occurred_time,
-         ended_at      = excluded.ended_at;
+  -- Only if that session is actually there — it may have been skipped.
+  select id into parent_id from public.ripples
+   where id = md5(me::text || ':focus-am')::uuid;
+
+  if parent_id is not null then
+    begin
+      insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
+      select md5(me::text || ':inner')::uuid, me, listening, 'something instrumental, to keep going',
+             (local_now - interval '200 minutes')::date,
+             (local_now - interval '200 minutes')::time,
+             (local_now - interval '200 minutes') at time zone tz,
+             parent_id
+      on conflict (id) do update
+         set occurred_on   = excluded.occurred_on,
+             occurred_time = excluded.occurred_time,
+             ended_at      = excluded.ended_at;
+      seeded := seeded + 1;
+    exception
+      when others then
+        skipped := skipped + 1;
+    end;
+  end if;
 
   -- Fixed-hour rows: a date-only note, yesterday, and one far enough back to
-  -- show the surface at its deepest step.
-  insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)
-  values
-    (md5(me::text || ':note')::uuid,    me, day,       'slept badly, worked anyway', today,     null,    null, false),
-    (md5(me::text || ':y-focus')::uuid, me, focus,     'schema, first pass',         yesterday, '13:00', (yesterday + time '15:00') at time zone tz, false),
-    (md5(me::text || ':y-song')::uuid,  me, listening, 'that one song again',        yesterday, '20:10', (yesterday + time '20:10') at time zone tz, false),
-    (md5(me::text || ':y-note')::uuid,  me, day,       'quiet one',                  yesterday, null,    null, false),
-    (md5(me::text || ':old')::uuid,     me, day,       'further back, deeper water', today - 9, '18:00', (today - 9 + time '18:00') at time zone tz, false)
-  on conflict (id) do update
-     set occurred_on   = excluded.occurred_on,
-         occurred_time = excluded.occurred_time,
-         ended_at      = excluded.ended_at,
-         planned       = excluded.planned;
+  -- show a quiet day.
+  for row_spec in
+    select *
+      from (values
+        ('note',    day,       'slept badly, worked anyway', today,     null::time,      null::time),
+        -- Yesterday's session is a span, not a point: ends two hours later.
+        ('y-focus', focus,     'schema, first pass',         yesterday, '13:00'::time,   '15:00'::time),
+        ('y-song',  listening, 'that one song again',        yesterday, '20:10'::time,   '20:10'::time),
+        ('y-note',  day,       'quiet one',                  yesterday, null::time,      null::time),
+        ('old',     day,       'further back, deeper water', today - 9, '18:00'::time,   '18:00'::time)
+      ) as v(slug, category, note, on_day, at_time, end_time)
+  loop
+    begin
+      insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at)
+      values (
+        md5(me::text || ':' || row_spec.slug)::uuid, me, row_spec.category, row_spec.note,
+        row_spec.on_day, row_spec.at_time,
+        case when row_spec.end_time is null then null
+             else (row_spec.on_day + row_spec.end_time) at time zone tz end
+      )
+      on conflict (id) do update
+         set occurred_on   = excluded.occurred_on,
+             occurred_time = excluded.occurred_time,
+             ended_at      = excluded.ended_at;
+      seeded := seeded + 1;
+    exception
+      when exclusion_violation then
+        skipped := skipped + 1;
+    end;
+  end loop;
 
-  -- One locked Ripple, so the timeline shows it unmarked (SPEC: my own view).
+  -- One locked Ripple, if its row made it in.
   insert into public.ripple_audience (ripple_id, target_type)
-  values (md5(me::text || ':locked')::uuid, 'lock')
+  select md5(me::text || ':locked')::uuid, 'lock'
+   where exists (select 1 from public.ripples where id = md5(me::text || ':locked')::uuid)
   on conflict do nothing;
 
-  raise notice 'Seeded 11 ripples (one of them inner) for % (timezone %, today %).', target_email, tz, today;
+  if skipped > 0 then
+    raise notice 'Seeded % fixture ripples for % (timezone %). Skipped %: your own records already own those times, and the timeline is exclusive (H10).',
+      seeded, target_email, tz, skipped;
+  else
+    raise notice 'Seeded % fixture ripples for % (timezone %, today %).', seeded, target_email, tz, today;
+  end if;
 end $$;
 SQL

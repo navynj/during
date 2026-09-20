@@ -52,17 +52,17 @@ covers this.
 
 ## Everyday commands
 
-| Command                | What it does                                               |
-| ---------------------- | ---------------------------------------------------------- |
-| `pnpm dev`             | Next.js dev server; warns first if Supabase is unreachable |
-| `pnpm build`           | Production build; must pass with zero type errors          |
-| `pnpm lint`            | ESLint, plus the design-token guard                        |
-| `pnpm format`          | Prettier write                                             |
-| `pnpm test`            | Vitest; the RLS suite needs a running local stack          |
-| `pnpm db:start`        | Boots the local stack with `.env.local` exported           |
-| `pnpm seed:me <email>` | Puts the seed fixture on your own signed-in account        |
-| `pnpm db:reset`        | Re-runs every migration, then `supabase/seed.sql`          |
-| `pnpm db:types`        | Regenerates `lib/database.types.ts` from the local schema  |
+| Command                | What it does                                                        |
+| ---------------------- | ------------------------------------------------------------------- |
+| `pnpm dev`             | Next.js dev server; warns first if Supabase is unreachable          |
+| `pnpm build`           | Production build; must pass with zero type errors                   |
+| `pnpm lint`            | ESLint, plus the design-token guard                                 |
+| `pnpm format`          | Prettier write                                                      |
+| `pnpm test`            | Vitest; the RLS suite needs a running local stack                   |
+| `pnpm db:start`        | Boots the local stack with `.env.local` exported                    |
+| `pnpm seed:me <email>` | Demo fixture on your own account; skips times your real records own |
+| `pnpm db:reset`        | Re-runs every migration, then `supabase/seed.sql`                   |
+| `pnpm db:types`        | Regenerates `lib/database.types.ts` from the local schema           |
 
 ## Layout
 
