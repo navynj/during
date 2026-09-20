@@ -58,7 +58,7 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
   - Emphasis / accent text: `#0507C9` (`main-900`).
   - Muted or secondary text, only where the hierarchy needs it: `#6B79A3` (`pool-500`).
   - `#D3D7F6` is never text.
-  - Active or selected states in chrome (tab bar, pagers) are carried by ink and weight, not by a ramp color.
+  - Active or selected states in chrome (tab bar, pagers) use `#0507C9` (`main-900`) with weight; inactive stays `#6B79A3`.
 - `pnpm lint` fails on `main-400` or `#787BE2` used outside `components/ui/chips/` and `components/ui/waves/` (see `scripts/check-tokens.sh`). If a new directory legitimately renders chips or waves, add it to that allowlist rather than working around the check.
 - Category emojis keep their native colors: the single allowed off-palette element.
 - **Motion: only living things move.** An in-progress timed grows its last wave line; a new drop plays one expanding ring that settles to a single ring. Nothing else animates. `prefers-reduced-motion` fallback is mandatory, and every design must read correctly when static.
