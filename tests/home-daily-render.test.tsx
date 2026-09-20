@@ -177,3 +177,23 @@ describe('the rope', () => {
     expect(stack!.querySelector('[data-lines]')).not.toBeNull();
   });
 });
+
+describe('the time gutter', () => {
+  it('shows both ends of a timed record', () => {
+    const { getByText } = row();
+    expect(getByText('09:00')).toBeTruthy();
+    expect(getByText('10:30')).toBeTruthy();
+  });
+
+  it('shows one time for a drop', () => {
+    const at = wallClockToInstant('2026-09-19', '12:15', TZ).toISOString();
+    const { container } = row({ occurred_time: '12:15:00', ended_at: at });
+
+    expect(container.querySelectorAll('time')).toHaveLength(1);
+  });
+
+  it('shows one time while a timer runs', () => {
+    const { container } = row({ ended_at: null });
+    expect(container.querySelectorAll('time')).toHaveLength(1);
+  });
+});

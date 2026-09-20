@@ -5,6 +5,7 @@ import { motionFromSearchParams } from '@/features/home-daily/motion-override';
 import { splitByRegion, type RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
+  endWallClock,
   minutesIntoDay,
   rippleDurationMinutes,
   rippleKind,
@@ -164,5 +165,25 @@ describe('the motion override', () => {
     vi.stubEnv('NODE_ENV', 'production');
     expect(motionFromSearchParams('travel')).toBe('grow');
     vi.unstubAllEnvs();
+  });
+});
+
+describe('the end of a timed record', () => {
+  it('reads back in the author zone, not the server zone', () => {
+    const end = wallClockToInstant('2026-09-19', '10:30', VANCOUVER).toISOString();
+    expect(endWallClock(ripple({ ended_at: end }), VANCOUVER)).toBe('10:30');
+  });
+
+  it('is nothing for a drop, whose end equals its start', () => {
+    const at = wallClockToInstant('2026-09-19', '12:15', VANCOUVER).toISOString();
+    expect(endWallClock(ripple({ occurred_time: '12:15:00', ended_at: at }), VANCOUVER)).toBeNull();
+  });
+
+  it('is nothing while the timer is still running', () => {
+    expect(endWallClock(ripple({ ended_at: null }), VANCOUVER)).toBeNull();
+  });
+
+  it('is nothing for a date-only record', () => {
+    expect(endWallClock(ripple({ occurred_time: null, ended_at: null }), VANCOUVER)).toBeNull();
   });
 });

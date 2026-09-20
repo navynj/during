@@ -45,7 +45,7 @@ export function TimeAxis({
             surface={surface}
           />
         ))}
-        <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} />
+        <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} surface={surface} />
       </ol>
     </section>
   );

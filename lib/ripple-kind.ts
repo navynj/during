@@ -92,6 +92,28 @@ export function elapsedMinutes(ripple: Ripple, timeZone: string, now: Date): num
 }
 
 /**
+ * A finished timed's end, as the author's own wall clock.
+ *
+ * `ended_at` is an instant, so it has to be read back in the author's zone or
+ * a record made in Seoul would report a Vancouver hour. Null for a drop, whose
+ * end equals its start, and for a timer still running.
+ */
+export function endWallClock(ripple: Ripple, timeZone: string): string | null {
+  if (!ripple.occurred_time || !ripple.ended_at) return null;
+
+  const start = wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
+  const end = new Date(ripple.ended_at);
+  if (end.getTime() <= start.getTime()) return null;
+
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(end);
+}
+
+/**
  * Vitality, which after H9 is the only channel a wave has. `planned` is the
  * column, not an inference from the clock: a record is a plan because it was
  * committed as one (SPEC 6), and a plan whose hour has passed stays a plan

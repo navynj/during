@@ -1,6 +1,12 @@
 import { WaveBundle, WaveLine, type WaveMotion } from '@/components/ui/waves';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
-import { elapsedMinutes, rippleDurationMinutes, rippleKind, rippleState } from '@/lib/ripple-kind';
+import {
+  elapsedMinutes,
+  endWallClock,
+  rippleDurationMinutes,
+  rippleKind,
+  rippleState,
+} from '@/lib/ripple-kind';
 
 import { ROPE, ROW_GRID } from './row-grid';
 
@@ -53,14 +59,20 @@ export function RippleRow({
       ? elapsedMinutes(ripple, timeZone, now)
       : rippleDurationMinutes(ripple, timeZone);
 
+  // A timed record spans two hours of the day, so the gutter carries both: the
+  // start beside its badge, the end beside its last wave line. A drop has one
+  // moment and a running timer has no end yet, so both show a single label.
+  const endsAt = endWallClock(ripple, timeZone);
+
   return (
     <li className={ROW_GRID}>
-      <time
-        className="text-main-900 pt-2 text-xs font-medium tabular-nums"
+      <div
+        className="text-main-900 flex flex-col justify-between pt-2 pb-4 text-xs font-medium tabular-nums"
         style={{ opacity: fade }}
       >
-        {clock(ripple.occurred_time!)}
-      </time>
+        <time>{clock(ripple.occurred_time!)}</time>
+        {endsAt ? <time>{endsAt}</time> : null}
+      </div>
 
       {/* The rope runs the full height of this cell, so consecutive rows join
           into one continuous line without anyone computing an offset. */}
