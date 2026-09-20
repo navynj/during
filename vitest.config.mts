@@ -7,7 +7,7 @@ export default defineConfig({
   },
   test: {
     // The suites talk to the local stack; keep them serial and patient.
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.{ts,tsx}'],
     setupFiles: ['tests/setup.ts'],
     fileParallelism: false,
   },

@@ -7,8 +7,11 @@ import { fetchWithDeadline, isUnreachable, withDeadline } from '@/lib/supabase/f
 /** How long a page may wait on the auth server before giving up on it. */
 const AUTH_DEADLINE_MS = 3_000;
 
-/** Routes reachable without a session. Everything else redirects to sign-in. */
-const PUBLIC_PATHS = ['/sign-in', '/auth/callback', '/auth/sign-out'];
+/**
+ * Routes reachable without a session. Everything else redirects to sign-in.
+ * `/dev` holds render fixtures that touch no data and 404 in production.
+ */
+const PUBLIC_PATHS = ['/sign-in', '/auth/callback', '/auth/sign-out', '/dev'];
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
