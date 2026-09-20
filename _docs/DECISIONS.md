@@ -168,3 +168,15 @@ Why a constraint and not a convention. The axis has one row per moment; two reco
 **Vocabulary.** A child is an **inner ripple** — lowercase modifier, the same register as drop and timed. Top-level Ripples stay unmarked: they are just Ripples, and "top-level" is a technical contrast term for constraint language only. There is no "outer ripple". No UI noun ships in v1a; the sheet's entry point is verb-phrased ("Add to this session"). **"Thread" remains banned** as a UI noun — it collides with the no-chat hypothesis (A2, H1).
 
 `started_at` is stored rather than derived: `occurred_on` + `occurred_time` are an author-local wall clock and the zone lives on the profile, so the instant cannot be computed inside a constraint. Resolving it once at write time also means a later timezone change does not move records that already happened.
+
+**H11. The axis is ordered, not time-proportional.** Vertical distance on Home Daily measures nothing. Time is carried by the order of records and by the start-time labels in the gutter; duration is carried by line density (log-scaled, capped) and the duration chip. F3's "bundle span = duration span" stopped being true when H9 fixed the gap between lines — height follows line count now — and SPEC 5.4 was still asserting it.
+
+Why keep it ordered rather than restore proportion: a proportional axis spends its vertical budget on the parts of the day where nothing happened, and a single long session pushes the rest of the day off the screen. It also says duration twice, in the span and in the density, and the two disagree. Rejected: a proportional axis with collapsed empty stretches — that is a scale with holes in it, which is worse than no scale, because the holes are not labelled.
+
+**H12. The ghost lands in the sheet, on a compressed axis in its left rail.** Replaces SPEC 6's "the sheet must not cover the landing spot".
+
+Why the old constraint had to go: the landing spot *moves* with the chosen time. A record placed at 07:00 and one placed at 23:00 sit at opposite ends of the day, so no fixed sheet height can keep both uncovered, and on a phone the constraint is simply unenforceable. It was a rule written for the common case that fails exactly when the time control is used, which is the moment it was meant to protect.
+
+What survives is the intent: direct manipulation, the record visibly taking its place rather than being submitted to a form. The sheet carries a compressed today-axis in its left rail, always visible, and the ghost slides along it as the time or category changes. **Preview in the rail, arrival on the page:** on commit the sheet closes and the multi-ring ripple plays at the real row on the real timeline, scrolled into view if needed.
+
+Constraint on the implementation, so this does not become two timelines: the rail is **not a second rendering**. Same wave components, same query for today's Ripples, a compressed density preset on the library. No duplicated state to keep in sync — the rail and the page read the same data, and the ghost is draft state that exists in one place.
