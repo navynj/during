@@ -28,7 +28,7 @@ export function CategoryChip({
       // chip the size of a button showed three of them before scrolling.
       className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
         selected
-          ? 'border-ink bg-ink text-white'
+          ? 'border-main-900 bg-main-900 text-white'
           : 'border-pool-200 text-main-400 hover:bg-pool-100 bg-white'
       }`}
     >

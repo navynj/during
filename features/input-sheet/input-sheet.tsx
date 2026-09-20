@@ -43,11 +43,16 @@ export function InputSheet({
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(categories, timeZone, prefill));
   const [result, setResult] = useState<CommitResult | null>(null);
   const [askingToSwap, setAskingToSwap] = useState(false);
+  // H13: the rail is instrumentation for a time that is not now. In the
+  // default state the sheet is chips, note, toggle and commit — nothing else.
+  const [openedAt] = useState(() => draft.time);
+  const [pickingTime, setPickingTime] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const planned = isPlanned(draft, timeZone);
   const timerAvailable = canRunTimer(draft, timeZone);
   const selected = categories.find((c) => c.id === draft.categoryId) ?? null;
+  const railOpen = draft.time !== null && (pickingTime || draft.time !== openedAt);
 
   function commit(mode: 'drop' | 'timer', parentRippleId: string | null = null) {
     if (!draft.categoryId) return;
@@ -91,15 +96,23 @@ export function InputSheet({
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="flex min-h-0 gap-4">
-          {/* H12: the landing surface. Always visible, whatever the time. */}
-          <div className="w-[4.5rem] shrink-0 overflow-y-auto">
-            <MiniAxis
-              ripples={ripples}
-              draft={draft}
-              emoji={selected?.icon ?? null}
-              timeZone={timeZone}
-              now={new Date()}
-            />
+          {/* H12's landing surface, H13's progressive disclosure: it slides in
+              when the time is touched and retracts when it returns to now. */}
+          <div
+            aria-hidden={!railOpen}
+            className={`shrink-0 overflow-hidden transition-all duration-200 motion-reduce:transition-none ${
+              railOpen ? 'w-[4.5rem] opacity-100' : 'w-0 opacity-0'
+            }`}
+          >
+            <div className="w-[4.5rem] overflow-y-auto">
+              <MiniAxis
+                ripples={ripples}
+                draft={draft}
+                emoji={selected?.icon ?? null}
+                timeZone={timeZone}
+                date={date}
+              />
+            </div>
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -132,6 +145,7 @@ export function InputSheet({
               planned={planned}
               timeZone={timeZone}
               onChange={(time) => setDraft((d) => ({ ...d, time }))}
+              onEditingChange={setPickingTime}
             />
 
             {askingToSwap && running ? (

@@ -2,7 +2,12 @@
 
 import { WaveBundle, WaveLine } from '@/components/ui/waves';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
-import { rippleDurationMinutes, rippleKind, rippleState } from '@/lib/ripple-kind';
+import {
+  rippleDurationMinutes,
+  rippleKind,
+  rippleState,
+  wallClockToInstant,
+} from '@/lib/ripple-kind';
 
 import type { Draft } from './draft';
 
@@ -19,15 +24,18 @@ export function MiniAxis({
   draft,
   emoji,
   timeZone,
-  now,
+  date,
 }: {
   ripples: RippleWithCategory[];
   draft: Draft;
   emoji: string | null;
   timeZone: string;
-  now: Date;
+  date: string;
 }) {
   const withGhost = placeGhost(ripples, draft.time);
+  // The rail is now the collision-anticipation surface, so it says which
+  // record is in the way before the constraint refuses the write.
+  const colliding = findColliding(ripples, draft.time, timeZone, date);
 
   return (
     <ol className="flex flex-col gap-1 pr-1" aria-label="Today, with your draft in place">
@@ -35,7 +43,13 @@ export function MiniAxis({
         entry === 'ghost' ? (
           <Ghost key="ghost" time={draft.time} emoji={emoji} />
         ) : (
-          <li key={entry.id} className="grid grid-cols-[2.25rem_1.75rem] items-start gap-x-1">
+          <li
+            key={entry.id}
+            data-colliding={entry.id === colliding ? '' : undefined}
+            className={`grid grid-cols-[2.25rem_1.75rem] items-start gap-x-1 rounded ${
+              entry.id === colliding ? 'bg-pool-100 ring-main-900/30 ring-1' : ''
+            }`}
+          >
             <time className="text-main-900 pt-1 text-[10px] font-light tabular-nums opacity-60">
               {entry.occurred_time!.slice(0, 5)}
             </time>
@@ -100,4 +114,28 @@ function placeGhost(
   const before = timed.filter((r) => r.occurred_time!.slice(0, 5) <= time);
   const after = timed.filter((r) => r.occurred_time!.slice(0, 5) > time);
   return [...before, 'ghost', ...after];
+}
+
+/**
+ * Which existing span the chosen time falls inside, if any. Computed here
+ * rather than asked of the server: the answer changes with every tick of the
+ * time picker, and a round trip per tick would lag behind the thumb.
+ */
+function findColliding(
+  ripples: RippleWithCategory[],
+  time: string | null,
+  timeZone: string,
+  date: string,
+): string | null {
+  if (time === null) return null;
+  const at = wallClockToInstant(date, time, timeZone).getTime();
+
+  for (const ripple of ripples) {
+    if (!ripple.started_at || ripple.planned) continue;
+    const start = Date.parse(ripple.started_at);
+    const end = ripple.ended_at === null ? Number.POSITIVE_INFINITY : Date.parse(ripple.ended_at);
+    // Half-open, matching the constraint: touching an endpoint is adjacency.
+    if (end > start && at >= start && at < end) return ripple.id;
+  }
+  return null;
 }

@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Globe } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 import type { Audience, Draft } from './draft';
 
 /**
- * UI language is English everywhere (SPEC preamble). The author's timezone
- * governs the value; the format is pinned, because a native time input renders
- * in the *browser's* locale however the value was computed — which is how
- * "오전 09:19" reached an English screen.
+ * UI language is English everywhere. The author's timezone governs the value;
+ * the format is pinned, because a native time input renders in the *browser's*
+ * locale however the value was computed — which is how "오전 09:19" reached an
+ * English screen.
  */
 export function formatClock(time: string): string {
   // `time` is already the author's wall clock, so this formats rather than
@@ -26,57 +26,65 @@ export function formatClock(time: string): string {
 }
 
 /**
- * Time is edge UI (SPEC 6): visible, one tap to change, never the thing the
- * eye lands on first. "For the whole day" removes it, which moves the record
- * off the axis into the Daily Note area.
+ * Two mutually exclusive segments, one control: a time, or the whole day.
+ *
+ * A segmented toggle rather than prose links, because the two are states of
+ * one thing and the old copy made them read as two separate commands. Selected
+ * uses the same grammar as a category chip — solid action colour, white text —
+ * so "chosen" looks the same everywhere in the sheet.
  */
 export function TimeControl({
   draft,
   planned,
   timeZone,
   onChange,
+  onEditingChange,
 }: {
   draft: Draft;
   planned: boolean;
   timeZone: string;
   onChange: (time: string | null) => void;
+  onEditingChange?: (editing: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const allDay = draft.time === null;
+
+  function setEditingState(next: boolean): void {
+    setEditing(next);
+    onEditingChange?.(next);
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      {draft.time === null ? (
-        <span className="text-pool-500">For the whole day</span>
-      ) : editing ? (
-        <input
-          type="time"
-          lang="en"
-          autoFocus
-          value={draft.time}
-          onChange={(event) => onChange(event.target.value || null)}
-          onBlur={() => setEditing(false)}
-          aria-label="Time"
-          className="text-main-900 border-pool-200 rounded border px-2 py-1 text-sm tabular-nums"
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          aria-label="Change the time"
-          data-time-label
-          className="text-main-900 border-pool-200 rounded border px-2 py-1 text-sm tabular-nums"
-        >
-          {formatClock(draft.time)}
-        </button>
-      )}
+      <div className="border-pool-200 inline-flex items-center rounded-full border p-0.5">
+        {editing && !allDay ? (
+          <input
+            type="time"
+            lang="en"
+            autoFocus
+            value={draft.time!}
+            onChange={(event) => onChange(event.target.value || null)}
+            onBlur={() => setEditingState(false)}
+            aria-label="Time"
+            className="bg-main-900 rounded-full px-2 py-1 text-xs text-white tabular-nums"
+          />
+        ) : (
+          <Segment
+            selected={!allDay}
+            onClick={() => {
+              if (allDay) onChange(nowIn(timeZone));
+              else setEditingState(true);
+            }}
+          >
+            <Clock aria-hidden size={13} />
+            <span data-time-label>{allDay ? nowIn(timeZone) : formatClock(draft.time!)}</span>
+          </Segment>
+        )}
 
-      <button
-        type="button"
-        onClick={() => onChange(draft.time === null ? nowIn(timeZone) : null)}
-        className="text-pool-500 underline-offset-2 hover:underline"
-      >
-        {draft.time === null ? 'Give it a time' : 'For the whole day'}
-      </button>
+        <Segment selected={allDay} onClick={() => onChange(null)}>
+          All day
+        </Segment>
+      </div>
 
       {/* The microcopy SPEC 6 asks for, shown only when it is true. */}
       {planned ? <span className="text-pool-500">Later today — this saves as a plan.</span> : null}
@@ -84,8 +92,31 @@ export function TimeControl({
   );
 }
 
+function Segment({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium tabular-nums transition-colors ${
+        selected ? 'bg-main-900 text-white' : 'text-pool-500'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 /** The author's zone, not the server's — day boundaries are theirs. */
-function nowIn(timeZone: string): string {
+export function nowIn(timeZone: string): string {
   return new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hour: '2-digit',
@@ -96,7 +127,8 @@ function nowIn(timeZone: string): string {
 
 /**
  * One chip cycling the spectrum, not a separate lock toggle: lock is one end
- * of the audience range, not a feature of its own (C8). v1a has two stops.
+ * of the audience range, not a feature of its own (C8). v1a has two stops, and
+ * no avatar — the audience is a state of this record, not a picture of who.
  */
 export function AudienceChip({
   audience,
@@ -106,15 +138,14 @@ export function AudienceChip({
   onChange: (next: Audience) => void;
 }) {
   const locked = audience === 'only-me';
-  const Icon = locked ? Lock : Globe;
 
   return (
     <button
       type="button"
       onClick={() => onChange(locked ? 'everyone' : 'only-me')}
-      className="text-pool-500 hover:bg-pool-100 flex items-center gap-1.5 rounded-full px-2 py-1 text-xs"
+      aria-pressed={locked}
+      className="border-pool-200 text-pool-500 hover:bg-pool-100 shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium"
     >
-      <Icon aria-hidden size={14} />
       {locked ? 'Only me' : 'Everyone'}
     </button>
   );
