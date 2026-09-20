@@ -13,7 +13,8 @@
     "db:start": "set -a; [ -f .env.local ] && . ./.env.local; set +a; supabase start",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
-    "check:tokens": "./scripts/check-tokens.sh"
+    "check:tokens": "./scripts/check-tokens.sh",
+    "predev": "./scripts/check-stack.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

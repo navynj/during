@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 import type { Database } from '@/lib/database.types';
+import { fetchWithDeadline, isUnreachable, withDeadline } from '@/lib/supabase/fetch';
+
+/** How long a page may wait on the auth server before giving up on it. */
+const AUTH_DEADLINE_MS = 3_000;
 
 /** Routes reachable without a session. Everything else redirects to sign-in. */
 const PUBLIC_PATHS = ['/sign-in', '/auth/callback', '/auth/sign-out'];
@@ -13,6 +17,9 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // This call is in front of every request, so it gets a deadline and no
+      // retries: a stack that is down should cost one timeout, not four.
+      global: { fetch: fetchWithDeadline(3_000) },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -30,13 +37,29 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     },
   );
 
+  const { pathname, searchParams } = request.nextUrl;
+
+  // The callback has no session to read yet and does its own exchange, so the
+  // round trip here would be pure latency on the hottest path in sign-in.
+  if (pathname === '/auth/callback') return response;
+
   // Refreshes the session cookie. Must stay directly after createServerClient:
   // anything between the two can cause hard-to-debug random sign-outs.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const result = await withDeadline(supabase.auth.getUser(), AUTH_DEADLINE_MS);
 
-  const { pathname, searchParams } = request.nextUrl;
+  if (result === 'deadline-exceeded') {
+    return unreachable(request, response, pathname);
+  }
+
+  const { data, error } = result;
+  const user = data.user;
+
+  // "Cannot reach Supabase" is not "not signed in". Saying so costs nothing
+  // and saves the next person from reading a redirect to sign-in as a bug in
+  // their own code.
+  if (error && isUnreachable(error)) {
+    return unreachable(request, response, pathname);
+  }
 
   // An OAuth code anywhere but the callback means Supabase did not accept the
   // redirect_to we sent and fell back to site_url. That failure is otherwise
@@ -66,6 +89,13 @@ function cleanUrl(request: NextRequest, pathname: string): URL {
   url.pathname = pathname;
   url.search = '';
   return url;
+}
+
+function unreachable(request: NextRequest, response: NextResponse, pathname: string): NextResponse {
+  console.error('[during] auth server unreachable — is the stack running? (pnpm db:start)');
+
+  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) return response;
+  return NextResponse.redirect(errorUrl(request, 'auth_unreachable'));
 }
 
 function errorUrl(request: NextRequest, reason: string): URL {

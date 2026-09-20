@@ -5,6 +5,8 @@ const ERRORS: Record<string, string> = {
   redirect_not_allowlisted: `Sign-in came back to the wrong address. Supabase did not accept ${authCallbackUrl()} as a return URL, so it fell back to site_url. Add that exact URL to additional_redirect_urls in supabase/config.toml and restart with pnpm db:start.`,
   exchange_failed: 'Google signed you in, but the session exchange failed. Try again.',
   missing_code: 'Sign-in returned without an authorization code. Try again.',
+  auth_unreachable:
+    'Cannot reach Supabase. The local stack is probably not running — start it with pnpm db:start (and make sure OrbStack or Docker is up).',
 };
 
 export default async function SignInPage({ searchParams }: PageProps<'/sign-in'>) {
