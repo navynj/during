@@ -2,7 +2,6 @@ import {
   stateOpacity,
   travellingWaveWidth,
   waveLinePath,
-  WAVE_COLOR_CLASS,
   WAVE_HEIGHT,
   WAVE_STROKE,
   WAVE_WAVELENGTH,
@@ -40,7 +39,7 @@ export function WaveLine({
   const path = (
     <path
       d={waveLinePath(pathWidth)}
-      stroke="currentColor"
+      stroke="var(--wave-ink)"
       strokeWidth={WAVE_STROKE}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -56,7 +55,7 @@ export function WaveLine({
       viewBox={`0 0 ${width} ${WAVE_HEIGHT}`}
       fill="none"
       aria-hidden
-      className={`${WAVE_COLOR_CLASS} ${className}`}
+      className={className}
       style={{ opacity: stateOpacity(state) }}
     >
       {travelling ? (

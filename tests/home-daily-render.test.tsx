@@ -235,11 +235,10 @@ describe('the rope', () => {
   });
 });
 
-describe('one tone (H9a)', () => {
-  it('draws every wave in #0507C9, whatever the record', () => {
+describe('one tone, inverted by surface (H9a, H15c)', () => {
+  it('never draws a wave in a second tone, whatever the record', () => {
     const cases: Partial<RippleWithCategory>[] = [
       {},
-      { ended_at: null },
       { planned: true, ended_at: null },
       {
         occurred_time: '12:15:00',
@@ -249,18 +248,20 @@ describe('one tone (H9a)', () => {
 
     for (const over of cases) {
       const { container } = row(over);
+      for (const path of container.querySelectorAll('path')) {
+        // The ink is the surface's, so no record can carry a colour of its own.
+        expect(path.getAttribute('stroke')).toBe('var(--wave-ink)');
+      }
       for (const svg of container.querySelectorAll('svg')) {
-        const cls = svg.getAttribute('class') ?? '';
-        expect(cls).toContain('text-main-900');
-        expect(cls).not.toMatch(/text-main-(400|100)/);
+        expect(svg.getAttribute('class') ?? '').not.toMatch(/text-main/);
       }
       cleanup();
     }
   });
 
   it('varies only by opacity, and only where a state calls for it', () => {
-    // Lighter waves exist, but they are #0507C9 faded by state — planned, and
-    // the live trail — never a second tone (ruling 2 / H9a).
+    // Lighter waves exist, but they are the ground's ink faded by state —
+    // planned, and the live trail — never a second tone (H9a).
     const done = row();
     for (const svg of done.container.querySelectorAll('svg')) {
       expect((svg as SVGElement).style.opacity).toBe('');

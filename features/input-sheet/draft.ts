@@ -12,7 +12,16 @@ export type Draft = {
   audience: Audience;
 };
 
-export type Prefill = { categoryId?: string; time?: string };
+export type Prefill = {
+  categoryId?: string;
+  time?: string;
+  /**
+   * Set only when the sheet is opened from a running session's focus screen.
+   * Inner ripples are composed where their parent is in view (H10), so this
+   * arrives as prefill and is never a control inside the sheet.
+   */
+  parentRippleId?: string;
+};
 
 export function emptyDraft(categories: MyCategory[], timeZone: string, prefill: Prefill): Draft {
   return {

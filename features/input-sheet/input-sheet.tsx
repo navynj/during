@@ -9,7 +9,7 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
 import { commitRipple, stopSession, type CommitResult } from './commit';
-import { canRunTimer, emptyDraft, isPlanned, type Draft } from './draft';
+import { canRunTimer, emptyDraft, isPlanned, type Draft, type Prefill } from './draft';
 import { MiniAxis } from './mini-axis';
 import { AudienceChip, TimeControl } from './sheet-controls';
 import { CollisionNotice } from './collision-notice';
@@ -35,7 +35,7 @@ export function InputSheet({
   onCommitted,
 }: {
   context: SheetContext;
-  prefill: { categoryId?: string; time?: string };
+  prefill: Prefill;
   onClose: () => void;
   onCommitted: (rippleId: string) => void;
 }) {
@@ -46,15 +46,16 @@ export function InputSheet({
   // H13: the rail is instrumentation for a time that is not now. In the
   // default state the sheet is chips, note, toggle and commit — nothing else.
   const [openedAt] = useState(() => draft.time);
+  const parentRippleId = prefill.parentRippleId ?? null;
   const [pickingTime, setPickingTime] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const planned = isPlanned(draft, timeZone);
-  const timerAvailable = canRunTimer(draft, timeZone);
+  const timerAvailable = canRunTimer(draft, timeZone) && parentRippleId === null;
   const selected = categories.find((c) => c.id === draft.categoryId) ?? null;
   const railOpen = draft.time !== null && (pickingTime || draft.time !== openedAt);
 
-  function commit(mode: 'drop' | 'timer', parentRippleId: string | null = null) {
+  function commit(mode: 'drop' | 'timer', parent: string | null = parentRippleId) {
     if (!draft.categoryId) return;
     setResult(null);
 
@@ -67,7 +68,7 @@ export function InputSheet({
         mode,
         planned,
         locked: draft.audience === 'only-me',
-        parentRippleId,
+        parentRippleId: parent,
         startInstant:
           draft.time === null ? null : wallClockToInstant(date, draft.time, timeZone).toISOString(),
       });
@@ -147,6 +148,12 @@ export function InputSheet({
               onChange={(time) => setDraft((d) => ({ ...d, time }))}
               onEditingChange={setPickingTime}
             />
+
+            {parentRippleId && running ? (
+              <p className="bg-pool-100 text-pool-500 rounded-lg px-3 py-2 text-sm">
+                Going into {running.note ?? 'this session'}.
+              </p>
+            ) : null}
 
             {askingToSwap && running ? (
               <RunningTimerNotice

@@ -34,13 +34,17 @@ describe('WaveLine', () => {
     const path = container.querySelector('path')!;
 
     expect(container.querySelector('svg')?.getAttribute('fill')).toBe('none');
-    expect(path.getAttribute('stroke')).toBe('currentColor');
     expect(path.getAttribute('fill')).toBeNull();
   });
 
-  it('carries its color as a text class, so currentColor resolves', () => {
+  it('takes its ink from the surface, not from a colour of its own (H15c)', () => {
     const { container } = render(<WaveLine />);
-    expect(container.querySelector('svg')?.getAttribute('class')).toContain('text-main-900');
+    const path = container.querySelector('path')!;
+
+    // One wave, drawn in whatever reads against its ground: blue on light,
+    // white on a live surface. A colour class here would pin it to one.
+    expect(path.getAttribute('stroke')).toBe('var(--wave-ink)');
+    expect(container.querySelector('svg')?.getAttribute('class') ?? '').not.toMatch(/text-main/);
   });
 
   it('fades planned rather than dashing it', () => {

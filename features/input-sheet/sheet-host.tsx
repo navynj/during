@@ -12,20 +12,39 @@ import { useInputSheet } from './sheet-provider';
  * Mounts the sheet where the day's data is. Committing closes it and plays the
  * ripple on the real timeline — preview in the rail, arrival on the page (H12).
  */
-export function SheetHost({ context }: { context: SheetContext }) {
+export function SheetHost({
+  context,
+  openWithParent,
+}: {
+  context: SheetContext;
+  /** A session id from `?session=`, handed over by the focus screen. */
+  openWithParent?: string;
+}) {
   const { open, prefill, closeSheet } = useInputSheet();
+  const [dismissedHandoff, setDismissedHandoff] = useState(false);
   const [landed, setLanded] = useState<string | null>(null);
   const router = useRouter();
 
-  if (!open) return <LandingRipple rippleId={landed} onDone={() => setLanded(null)} />;
+  // The hand-off opens the sheet by rendering it, not by writing state from an
+  // effect: the URL already says the sheet should be open, so asking React to
+  // discover that after paint would only add a frame and a cascading render.
+  const handingOff = Boolean(openWithParent) && !dismissedHandoff;
+  if (!open && !handingOff)
+    return <LandingRipple rippleId={landed} onDone={() => setLanded(null)} />;
+
+  function dismiss(): void {
+    setDismissedHandoff(true);
+    closeSheet();
+    if (openWithParent) router.replace('/');
+  }
 
   return (
     <InputSheet
       context={context}
-      prefill={prefill}
-      onClose={closeSheet}
+      prefill={open ? prefill : { parentRippleId: openWithParent }}
+      onClose={dismiss}
       onCommitted={(rippleId) => {
-        closeSheet();
+        dismiss();
         setLanded(rippleId);
         // The row is new, so the page has to re-read before it can be scrolled to.
         router.refresh();

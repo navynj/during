@@ -60,6 +60,11 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
 
       <SheetHost
         context={{ categories, ripples: timeline, running, timeZone: profile.timezone, date }}
+        openWithParent={
+          typeof params.session === 'string' && running?.id === params.session
+            ? params.session
+            : undefined
+        }
       />
     </main>
   );

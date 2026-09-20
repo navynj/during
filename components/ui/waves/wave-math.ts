@@ -6,10 +6,14 @@
  */
 
 /**
- * Waves are always #0507C9. Vitality is carried by state, not by tone: past
- * is expressed by the section background sinking (law 1), not by draining the
- * color out of the wave itself.
+ * One tone (H9a): vitality is carried by state, not by colour. What varies is
+ * *contrast*, not tone — a wave is drawn in whatever reads against its ground,
+ * #0507C9 on light surfaces and white on a live one (H15c). The surface sets
+ * `--wave-ink`; no wave component takes a colour.
  */
+export const WAVE_INK = 'var(--wave-ink)';
+
+/** Still the ramp's own value, for anything that has to name it directly. */
 export const WAVE_COLOR_CLASS = 'text-main-900';
 
 /** Where the record sits in time. */

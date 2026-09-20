@@ -1,6 +1,8 @@
 import type { RippleWithCategory } from '@/lib/queries/ripples';
+import { elapsedMinutes, rippleState, startInstant } from '@/lib/ripple-kind';
 
 import { AddRippleSlot } from './add-ripple-slot';
+import { NowBand } from './now-band';
 import { RippleRow } from './ripple-row';
 
 export const ADD_RIPPLE_SLOT_ID = 'add-ripple-slot';
@@ -30,9 +32,21 @@ export function TimeAxis({
     <section>
       {/* Clear of the divider: the first record should not look welded to it. */}
       <ol className="flex flex-col pt-5">
-        {ripples.map((ripple) => (
-          <RippleRow key={ripple.id} ripple={ripple} timeZone={timeZone} now={now} />
-        ))}
+        {ripples.map((ripple) => {
+          // A running record has its own face (H15b); everything else is a row.
+          if (rippleState(ripple) === 'active') {
+            return (
+              <NowBand
+                key={ripple.id}
+                ripple={ripple}
+                clock={ripple.occurred_time!.slice(0, 5)}
+                elapsedMinutes={elapsedMinutes(ripple, timeZone, now)}
+                startedAt={startInstant(ripple, timeZone)!.toISOString()}
+              />
+            );
+          }
+          return <RippleRow key={ripple.id} ripple={ripple} timeZone={timeZone} now={now} />;
+        })}
         <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} />
       </ol>
     </section>
