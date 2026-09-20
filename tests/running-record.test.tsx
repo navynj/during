@@ -279,8 +279,9 @@ describe('a break, on the surfaces (H15a2)', () => {
     );
     expect(paused.getByLabelText('Resume').textContent).toBe('Resume');
     expect(paused.container.querySelector('.lucide-pause')).toBeNull();
-    // Same glyph either way: it is the break control in both states.
-    expect(paused.getByLabelText('Resume').querySelector('.lucide-bubbles')).not.toBeNull();
+    // Resume turns back from the break rather than repeating its glyph.
+    expect(paused.getByLabelText('Resume').querySelector('.lucide-undo-2')).not.toBeNull();
+    expect(paused.getByLabelText('Resume').querySelector('.lucide-bubbles')).toBeNull();
   });
 
   it('still shows the session clock, unpaused, during a break', () => {

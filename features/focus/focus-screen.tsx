@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { Bubbles, ChevronDown, Plus } from 'lucide-react';
+import { Bubbles, ChevronDown, Plus, Undo2 } from 'lucide-react';
 
 import { DEEP_SCALE, WaveLine } from '@/components/ui/waves';
 import { StopControl } from '@/features/home-daily/stop-control';
@@ -96,12 +96,12 @@ export function FocusScreen({
 
       <div className="flex items-center justify-center gap-8 pb-4">
         {/* Bubbles: exhaled air underwater — resting while submerged, which is
-            the surface's own metaphor and the Submerge vocabulary. Never a
-            pause glyph, which would promise the clock stops, and never a
-            droplet, which is already a drop. */}
+            the surface's own metaphor and the Submerge vocabulary. Resume
+            turns back from it. Never a pause glyph, which would promise the
+            clock stops, and never a droplet, which is already a drop. */}
         <SideAction
           label={onBreak ? 'Resume' : 'Break'}
-          icon={<Bubbles aria-hidden size={18} />}
+          icon={onBreak ? <Undo2 aria-hidden size={18} /> : <Bubbles aria-hidden size={18} />}
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
