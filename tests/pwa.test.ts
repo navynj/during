@@ -53,3 +53,18 @@ describe('the installed app is an app', () => {
     expect((manifest().icons ?? []).some((icon) => icon.purpose === 'maskable')).toBe(true);
   });
 });
+
+describe('the status bar belongs to the page, not to a session', () => {
+  it('is not the live-surface colour', () => {
+    // SPEC 7 law 5: a solid #0507C9 surface means a live session. The status
+    // bar is present whenever the app is, so tinting it with that colour
+    // would make the claim permanently — and spend the one channel the
+    // running record depends on.
+    expect(manifest().theme_color?.toLowerCase()).not.toBe('#0507c9');
+  });
+
+  it('matches the ground the app actually renders on', () => {
+    expect(manifest().theme_color?.toLowerCase()).toBe('#ffffff');
+    expect(manifest().background_color?.toLowerCase()).toBe('#ffffff');
+  });
+});

@@ -57,7 +57,7 @@ The database holds records someone actually wrote. Everything below outranks con
 - **Timezone:** `occurred_on` and `occurred_time` are author-local. Day boundaries are computed in the author's timezone (store the author's tz on the profile). This app will be used across Vancouver and Korea from week one.
 - **Submerge is never stored.** Presence expiry is computed at read time from the last activity timestamp.
 - **Deletes are hard deletes** (privacy over recovery), including storage objects.
-- **The deployment's origin is configuration, never source.** It reaches the app through `NEXT_PUBLIC_SITE_URL` and nothing else (`lib/site.ts` is the only reader), so one build serves a preview, a local run and production. A domain written into a file is a second source of truth that only disagrees once, and an origin mismatch fails *silently* — S0's lesson. `pnpm lint` fails on it.
+- **The deployment's origin is configuration, never source.** It reaches the app through `NEXT_PUBLIC_SITE_URL` and nothing else (`lib/site.ts` is the only reader), so one build serves a preview, a local run and production. A domain written into a file is a second source of truth that only disagrees once, and an origin mismatch fails _silently_ — S0's lesson. `pnpm lint` fails on it.
 - One vocabulary, one table: every remaining record is a row in `ripples`.
 
 ## Design tokens and visual rules

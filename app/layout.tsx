@@ -37,12 +37,18 @@ export const metadata: Metadata = {
  *
  * Zoom is left alone. Pinching out of a small time label is the kind of thing
  * a diary has to allow.
+ *
+ * The status bar is white, not #0507C9. Law 5 gives a solid #0507C9 *content*
+ * surface one meaning — a live session — and the status bar is always there,
+ * so tinting it would claim the app is running something whenever it is open.
+ * It is also the app's own ground, which is what makes the bar disappear into
+ * the page instead of sitting on top of it as a band.
  */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0507c9',
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

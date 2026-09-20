@@ -18,9 +18,10 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
-    // The live surface, so the splash and the status bar are the app's own
-    // colour rather than a browser default.
-    theme_color: '#0507c9',
+    // The page's own ground, not the live surface. Law 5 reserves a solid
+    // #0507C9 surface for a live session; a status bar carrying it would make
+    // that claim for as long as the app is open.
+    theme_color: '#ffffff',
     orientation: 'portrait',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
