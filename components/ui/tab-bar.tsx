@@ -30,11 +30,9 @@ export function TabBar() {
               href={tab.href}
               aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center gap-1 ${
-                active ? 'text-main-900 font-semibold' : 'text-main-900/20 font-medium'
+                active ? 'text-main-900 font-semibold' : 'text-main-900 font-medium opacity-20'
               }`}
             >
-              {/* Alpha on the text color rather than `opacity`, so the glyph
-                  fades with the label: lucide strokes in currentColor. */}
               {/* The label carries the meaning; the glyph is decoration. */}
               <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 2} />
               <span className="text-xs/none">{tab.label}</span>
