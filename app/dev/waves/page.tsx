@@ -1,6 +1,12 @@
 import { notFound } from 'next/navigation';
 
-import { bundleLineCount, CommitRing, WaveBundle, WaveLine } from '@/components/ui/waves';
+import {
+  bundleLineCount,
+  CommitRing,
+  stateOpacity,
+  WaveBundle,
+  WaveLine,
+} from '@/components/ui/waves';
 import { DURATIONS, SEED_ROWS, STATES } from './fixtures';
 
 export const metadata = { title: 'Waves · fixture' };
@@ -76,10 +82,15 @@ export default function WavesFixturePage() {
                     emoji={row.emoji}
                   />
                 ) : (
-                  <>
+                  // A drop fades as one piece too: badge and line share the
+                  // wrapper's opacity rather than each applying their own.
+                  <span
+                    className="flex flex-col items-center"
+                    style={{ opacity: stateOpacity(row.state) }}
+                  >
                     <Badge emoji={row.emoji} />
-                    <WaveLine state={row.state} />
-                  </>
+                    <WaveLine />
+                  </span>
                 )}
               </div>
               <div className="min-w-0">

@@ -107,3 +107,23 @@ describe('reduced motion (law 3)', () => {
     expect(container.querySelectorAll('svg')).toHaveLength(7);
   });
 });
+
+describe('planned fades as one piece', () => {
+  it('puts the opacity on the wrapper so the category badge fades too', () => {
+    const { container, getByText } = render(
+      <WaveBundle durationMinutes={60} state="planned" emoji="🔍" />,
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(Number(wrapper.style.opacity)).toBeLessThan(1);
+    expect(wrapper.contains(getByText('🔍'))).toBe(true);
+  });
+
+  it('does not fade the lines a second time', () => {
+    const { container } = render(<WaveBundle durationMinutes={60} state="planned" />);
+
+    for (const svg of container.querySelectorAll('svg')) {
+      expect((svg as SVGElement).style.opacity).toBe('');
+    }
+  });
+});

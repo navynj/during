@@ -1,6 +1,6 @@
 'use client';
 
-import { bundleLineCount, WAVE_GAP } from './wave-math';
+import { bundleLineCount, stateOpacity, WAVE_GAP } from './wave-math';
 import type { WaveState } from './wave-math';
 import { usePrefersReducedMotion } from './use-reduced-motion';
 import { WaveLine, WAVE_WIDTH } from './wave-line';
@@ -41,16 +41,17 @@ export function WaveBundle({
   const isLiving = state === 'active' && !prefersReducedMotion;
 
   return (
-    <div className={`flex flex-col items-center ${className}`}>
+    // The fade sits on the wrapper, so the category badge goes with the waves:
+    // a planned record is one faint thing, not faint waves under a solid icon.
+    // Lines are therefore rendered without state, or they would fade twice.
+    <div
+      className={`flex flex-col items-center ${className}`}
+      style={{ opacity: stateOpacity(state) }}
+    >
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine
-            key={index}
-            state={state}
-            width={width}
-            growing={isLiving && index === lines - 1}
-          />
+          <WaveLine key={index} width={width} growing={isLiving && index === lines - 1} />
         ))}
       </div>
     </div>
