@@ -259,9 +259,12 @@ describe('a break, on the surfaces (H15a2)', () => {
     const idle = render(
       <FocusScreen ripple={running} startedAt={running.started_at!} initialSeconds={60} />,
     );
-    // A pause icon would promise the clock stops, and ours does not (H15a2).
+    // A pause icon would promise the clock stops, and ours does not (H15a2);
+    // a droplet would collide with drop. Bubbles is rest while submerged.
     expect(idle.getByLabelText('Break').textContent).toBe('Break');
     expect(idle.container.querySelector('.lucide-pause')).toBeNull();
+    expect(idle.container.querySelector('.lucide-droplet')).toBeNull();
+    expect(idle.getByLabelText('Break').querySelector('.lucide-bubbles')).not.toBeNull();
     cleanup();
 
     const paused = render(
@@ -276,6 +279,8 @@ describe('a break, on the surfaces (H15a2)', () => {
     );
     expect(paused.getByLabelText('Resume').textContent).toBe('Resume');
     expect(paused.container.querySelector('.lucide-pause')).toBeNull();
+    // Same glyph either way: it is the break control in both states.
+    expect(paused.getByLabelText('Resume').querySelector('.lucide-bubbles')).not.toBeNull();
   });
 
   it('still shows the session clock, unpaused, during a break', () => {
