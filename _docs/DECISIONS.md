@@ -258,7 +258,13 @@ Why keep it ordered rather than restore proportion: a proportional axis spends i
 
 **What is editable:** note, category, audience, media, and when the record *happened* — `occurred_on` / `occurred_time`, freely for a drop, and for a session subject to the same exclusion constraint and containment check any write faces (H10). A moved record surfaces the same calm collision message the input sheet shows.
 
-**What is not:** `ended_at`, because stop is its only writer — a session's length should stay something that happened rather than something typed — and `created_at`, because **the occurred/created separation exists so that a correction edits when it happened while the diary still remembers when you wrote it.** A backfill lands on the right day without pretending you were there; an edit fixes a typo without pretending you never made it.
+**`ended_at`, refined.** Stop is the only **initial** writer of an end: a running session's end is written by the act of stopping, and an edit cannot invent one — `/now` and the now band are untouched by this. **Once a record has finished, its end is a past fact, and past facts are correctable**, which is the same reasoning that lets `occurred` be edited. So a finished timed Ripple shows start *and* end fields, with the duration derived beside them and never typed into: exclusion and containment both validate on times, so times are the unit of truth and a duration input would be a second way to say the same thing.
+
+An edited end revalidates everything a new write faces — end after start, the top-level exclusion constraint, and containment of every inner ripple. That last one needed a new trigger: 0002 checks containment when a *child* moves, which cannot catch a *parent* shrinking away from under its children. Editing an end made that reachable from the UI, so the invariant moved to where it can be held.
+
+When an inner ripple is the blocker, the message names it — "that span leaves the break at 09:20 outside this session" — because "that does not fit" leaves the author hunting, and naming the thing in the way is the difference between a refusal and an answer.
+
+**What is not editable:** `created_at`, because **the occurred/created separation exists so that a correction edits when it happened while the diary still remembers when you wrote it.** A backfill lands on the right day without pretending you were there; an edit fixes a typo without pretending you never made it. Drops are unchanged: a drop makes no duration claim (E2), so it has no end to correct.
 
 **One editor.** Edit opens the input sheet prefilled, with the commit reading *Update*. A second editor would be a second place that knows how to describe a Ripple, and the two would drift — the first thing to drift being which fields exist.
 

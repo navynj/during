@@ -9,11 +9,20 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
 import { commitRipple, stopSession, type CommitResult } from './commit';
-import { canRunTimer, draftFrom, emptyDraft, isPlanned, type Draft, type Prefill } from './draft';
+import {
+  canRunTimer,
+  draftFrom,
+  emptyDraft,
+  endInstantFor,
+  isFinishedSpan,
+  isPlanned,
+  type Draft,
+  type Prefill,
+} from './draft';
 import { MediaField } from './media-field';
 import { updateRipple } from '@/features/ripple-sheet/actions';
 import { MiniAxis } from './mini-axis';
-import { AudienceChip, TimeControl } from './sheet-controls';
+import { AudienceChip, EndTimeControl, TimeControl } from './sheet-controls';
 import { CollisionNotice } from './collision-notice';
 import { RunningTimerNotice } from './running-timer-notice';
 
@@ -46,7 +55,9 @@ export function InputSheet({
 }) {
   const { categories, ripples, running, timeZone, date } = context;
   const [draft, setDraft] = useState<Draft>(() =>
-    editing ? draftFrom(editing.ripple, editing.locked) : emptyDraft(categories, timeZone, prefill),
+    editing
+      ? draftFrom(editing.ripple, editing.locked, timeZone)
+      : emptyDraft(categories, timeZone, prefill),
   );
   const [result, setResult] = useState<CommitResult | null>(null);
   const [askingToSwap, setAskingToSwap] = useState(false);
@@ -54,6 +65,10 @@ export function InputSheet({
   // default state the sheet is chips, note, toggle and commit — nothing else.
   const [openedAt] = useState(() => draft.time);
   const isEdit = Boolean(editing);
+  // Only a record that has already finished has an end to correct (H17).
+  const editableEnd = Boolean(
+    editing && isFinishedSpan(editing.ripple) && draft.time && draft.endTime,
+  );
   const [nestInto, setNestInto] = useState<string | null>(prefill.parentRippleId ?? null);
   const parentRippleId = nestInto;
   const inner = parentRippleId !== null;
@@ -77,6 +92,10 @@ export function InputSheet({
       startTransition(async () => {
         const outcome = await updateRipple({
           id: editing.ripple.id,
+          endInstant:
+            editableEnd && draft.endTime
+              ? endInstantFor(editing.ripple.ended_at!, draft.endTime, timeZone)
+              : null,
           categoryId: draft.categoryId!,
           note: draft.note,
           occurredOn: editing.ripple.occurred_on,
@@ -197,6 +216,14 @@ export function InputSheet({
                 onEditingChange={setPickingTime}
                 allowAllDay={!inner}
               />
+
+              {editableEnd && draft.time && draft.endTime ? (
+                <EndTimeControl
+                  startTime={draft.time}
+                  endTime={draft.endTime}
+                  onChange={(endTime) => setDraft((d) => ({ ...d, endTime }))}
+                />
+              ) : null}
 
               {askingToSwap && running ? (
                 <RunningTimerNotice

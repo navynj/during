@@ -129,7 +129,7 @@ describe('the day around it', () => {
   });
 
   it('stacks several Daily Notes rather than collapsing them', () => {
-    const { getByText } = render(
+    const { getByText } = renderAxis(
       <DailyNoteArea
         notes={[
           ripple({ id: 'n1', note: 'slept badly', occurred_time: null }),
@@ -142,9 +142,13 @@ describe('the day around it', () => {
     expect(getByText('quiet one')).toBeTruthy();
   });
 
-  it('prompts when the day has no note', () => {
-    const { getByText } = render(<DailyNoteArea notes={[]} />);
-    expect(getByText('Add a Daily Note')).toBeTruthy();
+  it('prompts when the day has no note, and the prompt opens the sheet', () => {
+    const { getByText } = renderAxis(<DailyNoteArea notes={[]} />);
+    const prompt = getByText('Add a Daily Note');
+
+    // A Daily Note has no time, so the prompt is the one entrance that starts
+    // without one rather than defaulting to now.
+    expect(prompt.tagName).toBe('BUTTON');
   });
 });
 

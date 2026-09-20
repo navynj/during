@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Clock } from 'lucide-react';
 
+import { formatDuration } from '@/components/ui/chips/duration-chip';
+
 import type { Audience, Draft } from './draft';
 
 /**
@@ -157,4 +159,46 @@ export function AudienceChip({
       {locked ? 'Only me' : 'Everyone'}
     </button>
   );
+}
+
+/**
+ * The end of a finished record, with its duration shown beside it.
+ *
+ * Duration is not an input. Exclusion and containment both validate on times,
+ * so times are the unit of truth; a duration field would be a second way to
+ * say the same thing, and the two would disagree the moment one was rounded.
+ */
+export function EndTimeControl({
+  startTime,
+  endTime,
+  onChange,
+}: {
+  startTime: string;
+  endTime: string;
+  onChange: (time: string) => void;
+}) {
+  const minutes = minutesBetween(startTime, endTime);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-pool-500 text-xs">Ends</span>
+      <input
+        type="time"
+        lang="en"
+        value={endTime}
+        onChange={(event) => event.target.value && onChange(event.target.value)}
+        aria-label="End time"
+        className="text-main-900 border-pool-200 rounded border px-2 py-1 text-xs tabular-nums"
+      />
+      <span data-derived-duration className="text-pool-500 text-xs tabular-nums">
+        {minutes > 0 ? formatDuration(minutes) : 'ends before it starts'}
+      </span>
+    </div>
+  );
+}
+
+function minutesBetween(from: string, to: string): number {
+  const [fh, fm] = from.split(':').map(Number);
+  const [th, tm] = to.split(':').map(Number);
+  return th * 60 + tm - (fh * 60 + fm);
 }

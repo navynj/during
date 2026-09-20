@@ -1,5 +1,6 @@
 'use client';
 
+import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 
@@ -10,14 +11,20 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
  */
 export function DailyNoteArea({ notes }: { notes: RippleWithCategory[] }) {
   const { openRipple } = useRippleSheet();
+  const { openSheet } = useInputSheet();
   if (notes.length === 0) {
     return (
-      // TODO(S5): final empty-state copy. The prompt is an invitation, never a
-      // reproach — SPEC 1's no-guilt hypothesis. Ghosted the same way as the
-      // Add ripple slot: #0507C9 faded, not a paler token.
-      <p className="text-main-900 pb-3 text-sm" style={{ opacity: 0.35 }}>
+      // An invitation, never a reproach — SPEC 1's no-guilt hypothesis.
+      // Ghosted like the Add ripple slot: #0507C9 faded, not a paler token.
+      // It opens the sheet with no time, which is what a Daily Note is.
+      <button
+        type="button"
+        onClick={() => openSheet({ allDay: true })}
+        className="text-main-900 pb-3 text-left text-sm"
+        style={{ opacity: 0.35 }}
+      >
         Add a Daily Note
-      </p>
+      </button>
     );
   }
 

@@ -237,3 +237,60 @@ describe('media belongs to its owner', () => {
     await asAdmin().storage.from(BUCKET).remove([objectPath]);
   });
 });
+
+describe('correcting a finished end (H17)', () => {
+  it('refuses a shrink that would strand a record inside it', async () => {
+    const session = await insert({ time: '09:00', endedAt: utc('11:00') });
+    await insert({ time: '10:00', endedAt: utc('10:20'), parent: session.data![0].id });
+
+    // The child trigger cannot see this: the parent is what moved.
+    const { error } = await asAdmin()
+      .from('ripples')
+      .update({ ended_at: utc('09:30') })
+      .eq('id', session.data![0].id);
+
+    expect(error?.message).toMatch(/falls outside the session span/i);
+  });
+
+  it('refuses an extension onto the next record', async () => {
+    const session = await insert({ time: '09:00', endedAt: utc('10:00') });
+    await insert({ time: '10:30', endedAt: utc('10:30') });
+
+    const { error } = await asAdmin()
+      .from('ripples')
+      .update({ ended_at: utc('11:00') })
+      .eq('id', session.data![0].id);
+
+    expect(error?.code).toBe('23P01');
+  });
+
+  it('allows a shrink that still contains everything inside it', async () => {
+    const session = await insert({ time: '09:00', endedAt: utc('11:00') });
+    await insert({ time: '09:10', endedAt: utc('09:20'), parent: session.data![0].id });
+
+    const { error } = await asAdmin()
+      .from('ripples')
+      .update({ ended_at: utc('09:40') })
+      .eq('id', session.data![0].id);
+
+    expect(error).toBeNull();
+  });
+
+  it('allows an extension into free time', async () => {
+    const session = await insert({ time: '09:00', endedAt: utc('10:00') });
+
+    const { error } = await asAdmin()
+      .from('ripples')
+      .update({ ended_at: utc('12:00') })
+      .eq('id', session.data![0].id);
+
+    expect(error).toBeNull();
+
+    const { data } = await asAdmin()
+      .from('ripples')
+      .select('ended_at')
+      .eq('id', session.data![0].id)
+      .single();
+    expect(Date.parse(data!.ended_at!)).toBe(Date.parse(utc('12:00')));
+  });
+});

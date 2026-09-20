@@ -7,6 +7,7 @@ import { removeRippleMedia } from '@/lib/media';
 import { EXCLUSION_VIOLATION, findCollision } from '@/lib/queries/compose';
 import { createClient } from '@/lib/supabase/server';
 import type { CommitResult } from '@/features/input-sheet/commit';
+import { resolveEnd, strayMessage } from './end-rules';
 
 const Edit = z.object({
   id: z.uuid(),
@@ -21,6 +22,12 @@ const Edit = z.object({
   media: z.array(z.string()).max(8),
   /** The instant the chosen wall clock refers to, resolved in the browser. */
   startInstant: z.string().datetime().nullable(),
+  /**
+   * Only for a record that has already finished. Stop remains the sole
+   * *initial* writer of an end (H17); once written, the end is a past fact
+   * and past facts are correctable.
+   */
+  endInstant: z.string().datetime().nullable().optional(),
 });
 
 export type Edit = z.infer<typeof Edit>;
@@ -28,10 +35,11 @@ export type Edit = z.infer<typeof Edit>;
 /**
  * Corrects a Ripple in place.
  *
- * `ended_at` is not editable: stop is its only writer, so a session's length
- * stays something that happened rather than something typed. `created_at` is
- * not editable either — the occurred/created separation exists so a correction
- * edits when it *happened* while the diary still remembers when you wrote it.
+ * `ended_at` is editable once the record has finished, and never before: a
+ * running session's end is written by the act of stopping, so an edit cannot
+ * invent one. `created_at` is not editable at all — the occurred/created
+ * separation exists so a correction edits when it *happened* while the diary
+ * still remembers when you wrote it.
  *
  * Moving a Ripple in time re-runs the exclusion constraint and, for a session,
  * the containment check on its children. Both are surfaced as sentences.
@@ -54,10 +62,11 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
     .single();
   if (!before) return { ok: false, reason: 'error', message: 'That record is gone.' };
 
-  // A drop's end follows its start; a session's end is left alone.
-  const wasPoint = before.ended_at !== null && before.ended_at === before.started_at;
-  const endedAt =
-    edit.occurredTime === null ? null : wasPoint ? edit.startInstant : before.ended_at;
+  const endedAt = resolveEnd(before, edit);
+
+  if (endedAt && edit.startInstant && Date.parse(endedAt) <= Date.parse(edit.startInstant)) {
+    return { ok: false, reason: 'error', message: 'That end is before the start.' };
+  }
 
   const { error } = await supabase
     .from('ripples')
@@ -90,6 +99,11 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
         reason: 'error',
         message: 'That time falls outside the session this record sits in.',
       };
+    }
+    // The blocker is a record inside this session, so say which one.
+    const strayId = error.message.match(/inner ripple ([0-9a-f-]{36})/i)?.[1];
+    if (strayId) {
+      return { ok: false, reason: 'error', message: await describeStray(supabase, strayId) };
     }
     return { ok: false, reason: 'error', message: error.message };
   }
@@ -143,4 +157,25 @@ export async function deleteRipple(rippleId: string): Promise<CommitResult> {
   revalidatePath('/');
   revalidatePath('/now');
   return { ok: true, rippleId };
+}
+
+/**
+ * Names the inner ripple an edit would have stranded.
+ *
+ * "That does not fit" leaves the author hunting; naming the thing in the way
+ * is the difference between a refusal and an answer. A break carries no note
+ * of its own (H15a2), so it is named by what it is.
+ */
+async function describeStray(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  strayId: string,
+): Promise<string> {
+  const { data } = await supabase
+    .from('ripples')
+    .select('note, started_at, ended_at, occurred_time')
+    .eq('id', strayId)
+    .maybeSingle();
+
+  if (!data) return 'That span leaves a record inside this session outside it.';
+  return strayMessage(data);
 }

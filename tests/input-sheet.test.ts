@@ -73,3 +73,18 @@ describe('for the whole day', () => {
     expect(canRunTimer(d, TZ)).toBe(false);
   });
 });
+
+describe('the Daily Note entrance', () => {
+  it('opens with no time at all, which is what a Daily Note is', () => {
+    const draft = emptyDraft([category()], TZ, { allDay: true });
+
+    expect(draft.time).toBeNull();
+    // Nothing without a time can run a timer: there is no moment to run from.
+    expect(canRunTimer(draft, TZ)).toBe(false);
+  });
+
+  it('still defaults to now from every other entrance', () => {
+    expect(emptyDraft([category()], TZ, {}).time).toMatch(/^\d{2}:\d{2}$/);
+    expect(emptyDraft([category()], TZ, { time: '21:30' }).time).toBe('21:30');
+  });
+});
