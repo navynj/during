@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  bundleHeight,
   bundleLineCount,
   MAX_BUNDLE_LINES,
   stateOpacity,
-  strokeDasharray,
-  toneClass,
+  WAVE_COLOR_CLASS,
+  WAVE_GAP,
+  WAVE_HEIGHT,
   waveLinePath,
 } from '@/components/ui/waves';
 
@@ -69,20 +71,32 @@ describe('wave geometry', () => {
   });
 });
 
-describe('tone and state', () => {
-  it('maps tone to the main ramp', () => {
-    expect(toneClass('live')).toBe('text-main-900');
-    expect(toneClass('recent')).toBe('text-main-400');
-    expect(toneClass('settled')).toBe('text-main-100');
+describe('state', () => {
+  it('is the only vitality channel — every wave is one color', () => {
+    expect(WAVE_COLOR_CLASS).toBe('text-main-900');
   });
 
-  it('renders planned dotted and faded, and nothing else', () => {
-    expect(strokeDasharray('planned')).toBe('2 2');
+  it('fades planned by opacity, never by a dash', () => {
+    // A dash at 1px amplitude turns the wave into a dotted line and the wave
+    // stops reading as a wave at all.
     expect(stateOpacity('planned')).toBeLessThan(1);
+    expect(stateOpacity('planned')).toBeGreaterThan(0);
+  });
 
-    for (const state of ['active', 'done'] as const) {
-      expect(strokeDasharray(state)).toBeUndefined();
-      expect(stateOpacity(state)).toBeUndefined();
-    }
+  it('leaves active and done at full strength', () => {
+    expect(stateOpacity('active')).toBeUndefined();
+    expect(stateOpacity('done')).toBeUndefined();
+  });
+});
+
+describe('bundle height', () => {
+  it('grows by a constant pitch, so only the count varies', () => {
+    const one = bundleHeight(1);
+    const two = bundleHeight(2);
+    const three = bundleHeight(3);
+
+    expect(one).toBe(WAVE_HEIGHT);
+    expect(two - one).toBe(WAVE_HEIGHT + WAVE_GAP);
+    expect(three - two).toBe(two - one);
   });
 });

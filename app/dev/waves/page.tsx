@@ -1,9 +1,16 @@
 import { notFound } from 'next/navigation';
 
 import { bundleLineCount, CommitRing, WaveBundle, WaveLine } from '@/components/ui/waves';
-import { DURATIONS, SEED_ROWS, STATES, TONES } from './fixtures';
+import { DURATIONS, SEED_ROWS, STATES } from './fixtures';
 
 export const metadata = { title: 'Waves · fixture' };
+
+const STATE_HINT: Record<string, string> = {
+  planned: 'not yet — reduced opacity',
+  active:
+    'in progress — the bundle grows its last line. A drop has no duration, so a lone line never animates.',
+  done: 'finished — still, full strength',
+};
 
 /**
  * Every wave state on one page, for eyeballing against _docs/mockups/.
@@ -21,51 +28,33 @@ export default function WavesFixturePage() {
         <code>Home - Lanes.png</code>. Nothing here touches the database.
       </p>
 
-      <Section title="Tone × state" hint="Rows are tone (live / recent / settled), columns state.">
-        <table className="border-pool-200 w-full border-collapse border-t text-sm">
-          <thead>
-            <tr className="text-pool-500 text-left">
-              <th className="w-24 py-2 font-medium">tone</th>
-              {STATES.map((state) => (
-                <th key={state} className="py-2 font-medium">
-                  {state}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {TONES.map((tone) => (
-              <tr key={tone} className="border-pool-200 border-t">
-                <td className="text-ink py-4 font-medium">{tone}</td>
-                {STATES.map((state) => (
-                  <td key={state} className="py-4">
-                    <div className="flex items-center gap-6">
-                      <WaveLine tone={tone} state={state} />
-                      <WaveBundle
-                        durationMinutes={90}
-                        height={44}
-                        tone={tone}
-                        state={state}
-                        emoji="🔍"
-                      />
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <Section
+        title="State"
+        hint="One tone for every wave. Vitality is state, not color: past sinks through the section background, never by draining the wave."
+      >
+        <div className="border-pool-200 flex flex-wrap gap-12 border-t pt-6">
+          {STATES.map((state) => (
+            <figure key={state} className="flex w-40 flex-col items-center gap-4">
+              <WaveLine state={state} />
+              <WaveBundle durationMinutes={120} state={state} emoji="🔍" />
+              <figcaption className="text-center">
+                <span className="text-ink text-sm font-medium">{state}</span>
+                <span className="text-pool-500 block text-xs">{STATE_HINT[state]}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
       </Section>
 
       <Section
         title="Line count by duration"
-        hint="Log-scaled, capped at 10. The cap lands at 8h, so a long day reads simply as 'lots'."
+        hint="Constant gap, only the count varies. Log-scaled and capped at 10, so 8h and 24h read alike."
       >
-        <div className="flex flex-wrap items-end gap-8">
+        <div className="border-pool-200 flex flex-wrap items-start gap-10 border-t pt-6">
           {DURATIONS.map((minutes) => (
-            <figure key={minutes} className="flex flex-col items-center gap-2">
-              <WaveBundle durationMinutes={minutes} height={minutes >= 240 ? 96 : 56} tone="live" />
-              <figcaption className="text-pool-500 text-xs">
+            <figure key={minutes} className="flex w-20 flex-col items-center gap-3">
+              <WaveBundle durationMinutes={minutes} />
+              <figcaption className="text-pool-500 text-center text-xs">
                 {formatDuration(minutes)} · {bundleLineCount(minutes)}
               </figcaption>
             </figure>
@@ -74,43 +63,51 @@ export default function WavesFixturePage() {
       </Section>
 
       <Section title="Seed rows" hint="The fixtures every later session renders against.">
-        <ul className="divide-pool-200 divide-y">
+        <ul className="divide-pool-200 border-pool-200 divide-y border-t">
           {SEED_ROWS.map((row) => (
             <li key={row.label} className="flex items-start gap-6 py-5">
-              <div className="w-24 shrink-0">
+              {/* Every row centres its wave in the same column, so drops and
+                  bundles line up on one axis rather than drifting apart. */}
+              <div className="flex w-24 shrink-0 flex-col items-center">
                 {row.durationMinutes ? (
                   <WaveBundle
                     durationMinutes={row.durationMinutes}
-                    height={Math.max(32, row.durationMinutes / 2)}
-                    tone={row.tone}
                     state={row.state}
                     emoji={row.emoji}
                   />
                 ) : (
-                  <div className="flex flex-col items-center">
-                    <span
-                      aria-hidden
-                      className="bg-pool-100 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-sm"
-                    >
-                      {row.emoji}
-                    </span>
-                    <WaveLine tone={row.tone} state={row.state} />
-                  </div>
+                  <>
+                    <Badge emoji={row.emoji} />
+                    <WaveLine state={row.state} />
+                  </>
                 )}
               </div>
               <div className="min-w-0">
                 <p className="text-pool-500 text-xs">{row.label}</p>
                 <p className="text-ink">{row.note}</p>
-                {row.locked ? <Tag>locked · author only</Tag> : null}
-                {row.dateOnly ? <Tag>date-only · Daily Note area</Tag> : null}
+                {row.tag ? <Tag>{row.tag}</Tag> : null}
               </div>
             </li>
           ))}
         </ul>
       </Section>
 
-      <Section title="Commit ring" hint="Plays once on mount, settles to a single ring.">
-        <CommitRing />
+      <Section
+        title="Ripple"
+        hint="Concentric rings spreading from a commit, staggered so they read as one disturbance travelling outward."
+      >
+        <div className="border-pool-200 flex flex-wrap items-center gap-16 border-t pt-8">
+          <CommitRing>
+            <span className="bg-pool-100 flex h-12 w-12 items-center justify-center rounded-full text-xl">
+              +
+            </span>
+          </CommitRing>
+          <CommitRing rings={4} size={120}>
+            <span className="bg-pool-100 text-pool-500 flex h-14 w-14 items-center justify-center rounded-full text-sm">
+              YL
+            </span>
+          </CommitRing>
+        </div>
       </Section>
     </main>
   );
@@ -131,6 +128,17 @@ function Section({
       <p className="text-pool-500 mb-4 text-sm">{hint}</p>
       {children}
     </section>
+  );
+}
+
+function Badge({ emoji }: { emoji: string }) {
+  return (
+    <span
+      aria-hidden
+      className="bg-pool-100 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-sm"
+    >
+      {emoji}
+    </span>
   );
 }
 

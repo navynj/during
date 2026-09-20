@@ -5,22 +5,15 @@
  * to be read back as a quantity.
  */
 
-/** Content vitality (SPEC 7). Callers decide the mapping; S2 owns that. */
-export type WaveTone = 'live' | 'recent' | 'settled';
+/**
+ * Waves are always #0507C9. Vitality is carried by state, not by tone: past
+ * is expressed by the section background sinking (law 1), not by draining the
+ * color out of the wave itself.
+ */
+export const WAVE_COLOR_CLASS = 'text-main-900';
 
-/** Where the record sits in time. `planned` is law 4's "dotted = not yet". */
+/** Where the record sits in time. */
 export type WaveState = 'planned' | 'active' | 'done';
-
-const TONE_CLASS: Record<WaveTone, string> = {
-  live: 'text-main-900',
-  recent: 'text-main-400',
-  settled: 'text-main-100',
-};
-
-/** Waves stroke in `currentColor`, so tone is just a text color. */
-export function toneClass(tone: WaveTone): string {
-  return TONE_CLASS[tone];
-}
 
 /** SPEC 7: cap 8 to 10 lines. Ten, so 8h is distinguishable from 4h. */
 export const MAX_BUNDLE_LINES = 10;
@@ -47,14 +40,12 @@ export function bundleLineCount(durationMinutes: number): number {
   return Math.min(MAX_BUNDLE_LINES, Math.max(MIN_BUNDLE_LINES, lines));
 }
 
-/** Dotted = not yet (law 4). Returned as a dasharray, not a border style. */
-export function strokeDasharray(state: WaveState): string | undefined {
-  return state === 'planned' ? '2 2' : undefined;
-}
-
-/** Future fades; past sinks by tone, never by opacity (law 1). */
+/**
+ * Future fades (law 1). Opacity alone, not a dash: a dashed stroke at this
+ * amplitude turns the wave into a dotted line and loses the wave entirely.
+ */
 export function stateOpacity(state: WaveState): number | undefined {
-  return state === 'planned' ? 0.45 : undefined;
+  return state === 'planned' ? 0.35 : undefined;
 }
 
 /**
@@ -70,6 +61,8 @@ export function stateOpacity(state: WaveState): number | undefined {
  */
 export const WAVE_HEIGHT = 4;
 export const WAVE_STROKE = 2;
+/** Constant pitch between lines: only the count varies with duration. */
+export const WAVE_GAP = 2;
 const MIDLINE = WAVE_HEIGHT / 2;
 const CONTROL_OFFSET = 4 / 3;
 const SEGMENT = 5;
@@ -96,4 +89,9 @@ export function waveLinePath(width: number): string {
       ` ${round(start + segment)} ${round(MIDLINE)}`;
   }
   return path;
+}
+
+/** A bundle's rendered height, given constant pitch. */
+export function bundleHeight(lines: number, gap: number = WAVE_GAP): number {
+  return lines * WAVE_HEIGHT + Math.max(0, lines - 1) * gap;
 }

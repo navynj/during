@@ -1,4 +1,4 @@
-import type { WaveState, WaveTone } from '@/components/ui/waves';
+import type { WaveState } from '@/components/ui/waves';
 
 /**
  * Mirrors supabase/seed.sql by hand rather than querying it: the wave library
@@ -9,12 +9,10 @@ export type WaveFixture = {
   label: string;
   note: string;
   emoji: string;
-  tone: WaveTone;
   state: WaveState;
   /** null = a drop or a date-only record: no duration to span. */
   durationMinutes: number | null;
-  locked?: boolean;
-  dateOnly?: boolean;
+  tag?: string;
 };
 
 export const SEED_ROWS: WaveFixture[] = [
@@ -22,7 +20,6 @@ export const SEED_ROWS: WaveFixture[] = [
     label: '09:00–10:30 · timed, finished',
     note: 'spec rewrite',
     emoji: '🔍',
-    tone: 'recent',
     state: 'done',
     durationMinutes: 90,
   },
@@ -30,7 +27,6 @@ export const SEED_ROWS: WaveFixture[] = [
     label: '12:15 · drop',
     note: 'kitsilano beach',
     emoji: '📍',
-    tone: 'recent',
     state: 'done',
     durationMinutes: null,
   },
@@ -38,7 +34,6 @@ export const SEED_ROWS: WaveFixture[] = [
     label: '20:00– · timed, in progress',
     note: 'session 0',
     emoji: '🔍',
-    tone: 'live',
     state: 'active',
     durationMinutes: 75,
   },
@@ -46,7 +41,6 @@ export const SEED_ROWS: WaveFixture[] = [
     label: '21:30 · planned',
     note: 'dinner with mina',
     emoji: '📍',
-    tone: 'recent',
     state: 'planned',
     durationMinutes: null,
   },
@@ -54,31 +48,28 @@ export const SEED_ROWS: WaveFixture[] = [
     label: '16:00 · drop, locked',
     note: 'the thing I am not saying out loud yet',
     emoji: '🖋',
-    tone: 'recent',
     state: 'done',
     durationMinutes: null,
-    locked: true,
+    tag: 'locked · author only',
   },
   {
     label: 'no time · date-only',
     note: 'slept badly, worked anyway',
     emoji: '🖋',
-    tone: 'recent',
     state: 'done',
     durationMinutes: null,
-    dateOnly: true,
+    tag: 'date-only · Daily Note area',
   },
   {
-    label: "5 days ago · Jae's ripple, settled",
+    label: "5 days ago · Jae's ripple",
     note: 'see you when I see you',
     emoji: '🖋',
-    tone: 'settled',
     state: 'done',
     durationMinutes: null,
+    tag: 'past — the section background sinks, the wave does not',
   },
 ];
 
-export const TONES: WaveTone[] = ['live', 'recent', 'settled'];
 export const STATES: WaveState[] = ['planned', 'active', 'done'];
 
 /** The points the log curve is pinned at (see bundleLineCount). */

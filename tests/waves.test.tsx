@@ -38,33 +38,47 @@ describe('WaveLine', () => {
     expect(path.getAttribute('fill')).toBeNull();
   });
 
-  it('carries its tone as a text color, so currentColor resolves', () => {
-    const { container } = render(<WaveLine tone="settled" />);
-    expect(container.querySelector('svg')?.getAttribute('class')).toContain('text-main-100');
+  it('carries its color as a text class, so currentColor resolves', () => {
+    const { container } = render(<WaveLine />);
+    expect(container.querySelector('svg')?.getAttribute('class')).toContain('text-main-900');
   });
 
-  it('renders planned dotted', () => {
+  it('fades planned rather than dashing it', () => {
     const { container } = render(<WaveLine state="planned" />);
-    expect(container.querySelector('path')?.getAttribute('stroke-dasharray')).toBe('2 2');
+    const svg = container.querySelector('svg') as SVGElement;
+
+    expect(Number(svg.style.opacity)).toBeLessThan(1);
+    expect(container.querySelector('path')?.getAttribute('stroke-dasharray')).toBeNull();
   });
 });
 
 describe('WaveBundle', () => {
-  it('draws one line per log step, filling the span it is given', () => {
-    const { container } = render(<WaveBundle durationMinutes={120} height={80} />);
-
+  it('draws one line per log step', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} />);
     expect(container.querySelectorAll('svg')).toHaveLength(7);
-    const span = container.querySelector('[data-lines]') as HTMLElement;
-    expect(span.style.height).toBe('80px');
+  });
+
+  it('keeps the same gap whatever the duration', () => {
+    const short = render(<WaveBundle durationMinutes={25} />);
+    const long = render(<WaveBundle durationMinutes={480} />);
+
+    const gapOf = (c: HTMLElement): string =>
+      (c.querySelector('[data-lines]') as HTMLElement).style.gap;
+
+    expect(gapOf(short.container)).toBe(gapOf(long.container));
+    // Only the count moves.
+    expect(short.container.querySelectorAll('svg').length).toBeLessThan(
+      long.container.querySelectorAll('svg').length,
+    );
   });
 
   it('puts the category emoji at the bundle head', () => {
-    const { getByText } = render(<WaveBundle durationMinutes={60} height={40} emoji="🔍" />);
+    const { getByText } = render(<WaveBundle durationMinutes={60} emoji="🔍" />);
     expect(getByText('🔍')).toBeTruthy();
   });
 
   it('grows only the last line, and only while in progress', () => {
-    const { container } = render(<WaveBundle durationMinutes={60} height={40} state="active" />);
+    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
     const growing = container.querySelectorAll('path.wave-grow');
 
     expect(growing).toHaveLength(1);
@@ -73,7 +87,7 @@ describe('WaveBundle', () => {
   });
 
   it('holds still when the record is finished', () => {
-    const { container } = render(<WaveBundle durationMinutes={60} height={40} state="done" />);
+    const { container } = render(<WaveBundle durationMinutes={60} state="done" />);
     expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
   });
 });
@@ -81,14 +95,14 @@ describe('WaveBundle', () => {
 describe('reduced motion (law 3)', () => {
   it('emits no animation class at all', () => {
     setReducedMotion(true);
-    const { container } = render(<WaveBundle durationMinutes={60} height={40} state="active" />);
+    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
 
     expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
   });
 
   it('still renders every wave, so the design reads correctly static', () => {
     setReducedMotion(true);
-    const { container } = render(<WaveBundle durationMinutes={120} height={80} state="active" />);
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
 
     expect(container.querySelectorAll('svg')).toHaveLength(7);
   });

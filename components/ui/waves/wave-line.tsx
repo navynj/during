@@ -1,18 +1,16 @@
 import {
   stateOpacity,
-  strokeDasharray,
-  toneClass,
   waveLinePath,
+  WAVE_COLOR_CLASS,
   WAVE_HEIGHT,
   WAVE_STROKE,
 } from './wave-math';
-import type { WaveState, WaveTone } from './wave-math';
+import type { WaveState } from './wave-math';
 
 /** The export's width. Lanes cells and the timeline both use it. */
 export const WAVE_WIDTH = 22;
 
 export type WaveLineProps = {
-  tone?: WaveTone;
   state?: WaveState;
   width?: number;
   className?: string;
@@ -27,7 +25,6 @@ export type WaveLineProps = {
  * shape reads as a block, which F3 rejected.
  */
 export function WaveLine({
-  tone = 'live',
   state = 'done',
   width = WAVE_WIDTH,
   className = '',
@@ -40,7 +37,8 @@ export function WaveLine({
       viewBox={`0 0 ${width} ${WAVE_HEIGHT}`}
       fill="none"
       aria-hidden
-      className={`${toneClass(tone)} ${className}`}
+      className={`${WAVE_COLOR_CLASS} ${className}`}
+      style={{ opacity: stateOpacity(state) }}
     >
       <path
         d={waveLinePath(width)}
@@ -48,8 +46,6 @@ export function WaveLine({
         strokeWidth={WAVE_STROKE}
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray={strokeDasharray(state)}
-        opacity={stateOpacity(state)}
         // Law 3: only living things move. Scales along x from the left edge,
         // so the animation touches transform only and never reflows the bundle.
         className={growing ? 'wave-grow' : undefined}
