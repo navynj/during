@@ -161,7 +161,9 @@ Why a constraint and not a convention. The axis has one row per moment; two reco
 
 **Planned Ripples are exempt.** Intentions are allowed to collide — two plans for 19:00 is a normal way to think — and the clash is resolved when one is checked, not when it is written. Forcing plans to be exclusive would turn the morning's planning into a scheduling puzzle, which A8 explicitly did not want.
 
-**Corollary, free from the same rule: at most one in-progress timer per user.** A running timer's span runs to infinity, so nothing top-level can follow it until it stops. S3's sheet offers "add to this session" as the inner-ripple entry point; that UI is not built yet.
+**Corollary, free from the same rule: at most one in-progress timer per user.** A running timer's span runs to infinity, so nothing top-level can follow it until it stops. The input sheet resolves a second Timer in one tap — stop the running one and start this one — rather than reporting the constraint's refusal.
+
+**Where an inner ripple is created (S3 revision).** Not from the input sheet. The sheet briefly offered "add to this session" as a proactive toggle; it was removed because it made every record a question about the session, and because an inner ripple belongs to a parent that the author should be looking at when they file into it. The entry point is the **parent Ripple's detail sheet** (S5). The input sheet keeps one path to a parent — the repair offered when a write is refused for colliding with a session — which is a fix for a rejected record, not a way of composing one.
 
 **Inner ripples inherit the parent's audience in v1a**, enforced in `ripple_is_locked`, which now walks to the parent — without that, a friend would see the contents of a locked session. They must lie within the parent's span, they are one level deep, and they do not appear on the top-level axis; their display arrives with the mini sheet in S5.
 

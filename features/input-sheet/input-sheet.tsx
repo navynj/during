@@ -8,12 +8,12 @@ import type { MyCategory } from '@/lib/queries/profile';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
-import { commitRipple, type CommitResult } from './commit';
+import { commitRipple, stopSession, type CommitResult } from './commit';
 import { canRunTimer, emptyDraft, isPlanned, type Draft } from './draft';
 import { MiniAxis } from './mini-axis';
 import { AudienceChip, TimeControl } from './sheet-controls';
 import { CollisionNotice } from './collision-notice';
-import { SessionOffer } from './session-offer';
+import { RunningTimerNotice } from './running-timer-notice';
 
 export type SheetContext = {
   categories: MyCategory[];
@@ -42,13 +42,14 @@ export function InputSheet({
   const { categories, ripples, running, timeZone, date } = context;
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(categories, timeZone, prefill));
   const [result, setResult] = useState<CommitResult | null>(null);
+  const [askingToSwap, setAskingToSwap] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const planned = isPlanned(draft, timeZone);
-  const timerAvailable = canRunTimer(draft, timeZone) && draft.parentRippleId === null;
+  const timerAvailable = canRunTimer(draft, timeZone);
   const selected = categories.find((c) => c.id === draft.categoryId) ?? null;
 
-  function commit(mode: 'drop' | 'timer', parentRippleId: string | null = draft.parentRippleId) {
+  function commit(mode: 'drop' | 'timer', parentRippleId: string | null = null) {
     if (!draft.categoryId) return;
     setResult(null);
 
@@ -133,12 +134,17 @@ export function InputSheet({
               onChange={(time) => setDraft((d) => ({ ...d, time }))}
             />
 
-            {running ? (
-              <SessionOffer
+            {askingToSwap && running ? (
+              <RunningTimerNotice
                 running={running}
-                filing={draft.parentRippleId !== null}
-                onToggle={(on) =>
-                  setDraft((d) => ({ ...d, parentRippleId: on ? running.id : null }))
+                pending={pending}
+                onCancel={() => setAskingToSwap(false)}
+                onSwap={() =>
+                  startTransition(async () => {
+                    await stopSession(running.id);
+                    setAskingToSwap(false);
+                    commit('timer');
+                  })
                 }
               />
             ) : null}
@@ -174,7 +180,9 @@ export function InputSheet({
           <button
             type="button"
             disabled={pending || !timerAvailable}
-            onClick={() => commit('timer')}
+            // One running timer at a time (H10). A second is a choice to
+            // offer, not an error to report after the fact.
+            onClick={() => (running ? setAskingToSwap(true) : commit('timer'))}
             aria-label="Start a timer"
             title={timerAvailable ? 'Start a timer' : 'A plan has not started yet'}
             // Outlined, not filled: Drop is the primary action, and two solid

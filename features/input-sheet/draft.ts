@@ -10,8 +10,6 @@ export type Draft = {
   /** `null` = "for the whole day": the record leaves the axis (SPEC 6). */
   time: string | null;
   audience: Audience;
-  /** Set when filing into a running session — an inner ripple (H10). */
-  parentRippleId: string | null;
 };
 
 export type Prefill = { categoryId?: string; time?: string };
@@ -23,7 +21,6 @@ export function emptyDraft(categories: MyCategory[], timeZone: string, prefill: 
     // Time defaults to now; changing it is edge UI (SPEC 6).
     time: prefill.time ?? nowTime(timeZone),
     audience: 'everyone',
-    parentRippleId: null,
   };
 }
 

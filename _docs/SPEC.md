@@ -1,4 +1,4 @@
-# During: Product Spec (v0.9)
+# During: Product Spec (v0.10)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional (H11). v0.9 applies H12 (the ghost lands on a compressed axis inside the sheet).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional (H11). v0.9 applies H12 (the ghost lands on a compressed axis inside the sheet). v0.10: inner ripples are created from the parent Ripple's detail sheet, not the input sheet.
 
 ---
 
@@ -106,7 +106,8 @@ Swimmers / Lanes / Splash
 - A chip tap alone is a valid entry: the zero-character diary.
 - Time defaults to now. Changing it is edge UI. Future time = planned Ripple (dotted ghost at reduced opacity; check converts it). Removing time = date-only record ("for the whole day"). Microcopy: "change the time and it becomes a plan."
 - **Ghost landing (H12):** the sheet carries a **compressed today-axis in its left rail**, and the ghost sits live on it at the chosen time and category, sliding as either changes. The rail is the landing surface because the landing spot moves with the chosen time, so no sheet height can keep it uncovered. It is not a second timeline: same wave components, same query, a compressed density preset. **Preview in the rail, arrival on the page** — committing closes the sheet and plays the multi-ring ripple at the real row, scrolled into view if needed.
-- **Dual commit: Drop / Timer.** No mode state, no long-press dependency. Future time disables the timer button (or converts it to "save as plan").
+- **Dual commit: Drop / Timer.** No mode state, no long-press dependency. Future time disables the timer button (or converts it to "save as plan"). Starting a Timer while one runs offers, in one tap, to stop the running one and start this — the single-timer rule is H10's exclusion constraint, so the sheet resolves it rather than reporting it.
+- **Inner ripples are not composed here.** They are created from the parent Ripple's detail sheet, where the parent is in view. The sheet's only path to a parent is the repair it offers when a write is refused for colliding with a session.
 - Audience chip: small, visible, one tap to override this drop only. Repeat/recurrence engine: rejected for v1 (suggestion-row re-drop covers habits).
 - After commit: sheet closes, one expanding ring on the timeline, nothing else. No praise, no share prompts.
 
