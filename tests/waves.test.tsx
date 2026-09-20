@@ -79,7 +79,7 @@ describe('WaveBundle', () => {
 
   it('grows only the last line, and only while in progress', () => {
     const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
-    const growing = container.querySelectorAll('path.wave-grow');
+    const growing = container.querySelectorAll('path.wave-travel');
 
     expect(growing).toHaveLength(1);
     const paths = [...container.querySelectorAll('path')];
@@ -88,7 +88,7 @@ describe('WaveBundle', () => {
 
   it('holds still when the record is finished', () => {
     const { container } = render(<WaveBundle durationMinutes={60} state="done" />);
-    expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
+    expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
   });
 });
 
@@ -97,7 +97,7 @@ describe('reduced motion (law 3)', () => {
     setReducedMotion(true);
     const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
 
-    expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
+    expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
   });
 
   it('still renders every wave, so the design reads correctly static', () => {
@@ -125,5 +125,17 @@ describe('planned fades as one piece', () => {
     for (const svg of container.querySelectorAll('svg')) {
       expect((svg as SVGElement).style.opacity).toBe('');
     }
+  });
+});
+
+describe('the active line travels rather than stretches', () => {
+  it('draws a longer path and clips it, instead of scaling', () => {
+    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
+    const moving = container.querySelector('path.wave-travel') as SVGPathElement;
+    const still = container.querySelector('path:not(.wave-travel)') as SVGPathElement;
+
+    // The moving line's path is wider than the box it is drawn into.
+    expect(moving.getAttribute('d')!.length).toBeGreaterThan(still.getAttribute('d')!.length);
+    expect(moving.closest('g')?.getAttribute('transform')).toBe('translate(-10 0)');
   });
 });

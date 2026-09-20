@@ -1,9 +1,11 @@
 import {
   stateOpacity,
+  travellingWaveWidth,
   waveLinePath,
   WAVE_COLOR_CLASS,
   WAVE_HEIGHT,
   WAVE_STROKE,
+  WAVE_WAVELENGTH,
 } from './wave-math';
 import type { WaveState } from './wave-math';
 
@@ -15,7 +17,7 @@ export type WaveLineProps = {
   width?: number;
   className?: string;
   /** Set by WaveBundle on its last line so only that one moves. */
-  growing?: boolean;
+  travelling?: boolean;
 };
 
 /**
@@ -28,8 +30,24 @@ export function WaveLine({
   state = 'done',
   width = WAVE_WIDTH,
   className = '',
-  growing = false,
+  travelling = false,
 }: WaveLineProps) {
+  // A travelling line is drawn long and clipped by the viewBox, so the water
+  // moves through a fixed window instead of the waveform being distorted.
+  const pathWidth = travelling ? travellingWaveWidth(width) : width;
+
+  const path = (
+    <path
+      d={waveLinePath(pathWidth)}
+      stroke="currentColor"
+      strokeWidth={WAVE_STROKE}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      // Law 3: only living things move. Transform only — never layout.
+      className={travelling ? 'wave-travel' : undefined}
+    />
+  );
+
   return (
     <svg
       width={width}
@@ -40,16 +58,13 @@ export function WaveLine({
       className={`${WAVE_COLOR_CLASS} ${className}`}
       style={{ opacity: stateOpacity(state) }}
     >
-      <path
-        d={waveLinePath(width)}
-        stroke="currentColor"
-        strokeWidth={WAVE_STROKE}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        // Law 3: only living things move. Scales along x from the left edge,
-        // so the animation touches transform only and never reflows the bundle.
-        className={growing ? 'wave-grow' : undefined}
-      />
+      {travelling ? (
+        // Parked one wavelength left so the path overhangs both edges for the
+        // whole loop; the animation then shifts it one more wavelength.
+        <g transform={`translate(${-WAVE_WAVELENGTH} 0)`}>{path}</g>
+      ) : (
+        path
+      )}
     </svg>
   );
 }

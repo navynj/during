@@ -91,6 +91,25 @@ export function waveLinePath(width: number): string {
   return path;
 }
 
+/** One full period: down then up. The travel loop shifts by exactly this. */
+export const WAVE_WAVELENGTH = SEGMENT * 2;
+
+/**
+ * Path width for a line that travels horizontally inside its box.
+ *
+ * Wide enough to overflow a whole wavelength on the left and two on the
+ * right, so neither round end cap can drift into view during the loop, and
+ * snapped to an even number of segments so the path is exactly periodic —
+ * without that, shifting by one wavelength would not land on an identical
+ * shape and the loop would visibly jump.
+ */
+export function travellingWaveWidth(visibleWidth: number): number {
+  const needed = visibleWidth + WAVE_WAVELENGTH * 3;
+  const segments = Math.ceil((needed - INSET * 2) / SEGMENT);
+  const evenSegments = segments % 2 === 0 ? segments : segments + 1;
+  return evenSegments * SEGMENT + INSET * 2;
+}
+
 /** A bundle's rendered height, given constant pitch. */
 export function bundleHeight(lines: number, gap: number = WAVE_GAP): number {
   return lines * WAVE_HEIGHT + Math.max(0, lines - 1) * gap;

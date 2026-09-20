@@ -57,19 +57,20 @@ body {
  * class is emitted at all; this block is the belt to that braces, covering a
  * viewer who changes the setting after paint.
  */
-@keyframes wave-grow {
-  0%,
-  100% {
-    transform: scaleX(0.45);
+@keyframes wave-travel {
+  from {
+    transform: translateX(0);
   }
-  50% {
-    transform: scaleX(1);
+  to {
+    /* Exactly one wavelength: the path is periodic, so the last frame is
+       pixel-identical to the first and the loop has no seam. Linear, because
+       any easing would read as the water hesitating. */
+    transform: translateX(-10px);
   }
 }
 
-.wave-grow {
-  transform-origin: left center;
-  animation: wave-grow 2.6s ease-in-out infinite;
+.wave-travel {
+  animation: wave-travel 1.9s linear infinite;
 }
 
 @keyframes commit-ring {
@@ -101,7 +102,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave-grow,
+  .wave-travel,
   .commit-ring {
     animation: none;
   }

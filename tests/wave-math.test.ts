@@ -6,8 +6,10 @@ import {
   MAX_BUNDLE_LINES,
   stateOpacity,
   WAVE_COLOR_CLASS,
+  travellingWaveWidth,
   WAVE_GAP,
   WAVE_HEIGHT,
+  WAVE_WAVELENGTH,
   waveLinePath,
 } from '@/components/ui/waves';
 
@@ -98,5 +100,33 @@ describe('bundle height', () => {
     expect(one).toBe(WAVE_HEIGHT);
     expect(two - one).toBe(WAVE_HEIGHT + WAVE_GAP);
     expect(three - two).toBe(two - one);
+  });
+});
+
+describe('travelling line geometry', () => {
+  it('is exactly periodic, so the loop has no seam', () => {
+    // An even segment count means shifting by one wavelength lands on an
+    // identical shape; an odd one would jump every cycle.
+    const width = travellingWaveWidth(22);
+    const segments = (waveLinePath(width).match(/C/g) ?? []).length;
+
+    expect(segments % 2).toBe(0);
+  });
+
+  it('overhangs both edges for the whole shift', () => {
+    const visible = 22;
+    const width = travellingWaveWidth(visible);
+
+    // Parked one wavelength left, then shifted one more: the path must still
+    // cover the window at the end of the loop, or a round cap drifts in.
+    expect(width).toBeGreaterThanOrEqual(visible + WAVE_WAVELENGTH * 3);
+  });
+
+  it('keeps 5px segments at the widened size', () => {
+    const path = waveLinePath(travellingWaveWidth(22));
+    const xs = (path.match(/C[\d.]+ /g) ?? []).map((m) => Number(m.slice(1)));
+
+    // First control point sits a third into the first 5px segment.
+    expect(xs[0]).toBeCloseTo(1 + 5 / 3, 4);
   });
 });

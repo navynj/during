@@ -51,7 +51,7 @@ export function WaveBundle({
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine key={index} width={width} growing={isLiving && index === lines - 1} />
+          <WaveLine key={index} width={width} travelling={isLiving && index === lines - 1} />
         ))}
       </div>
     </div>
