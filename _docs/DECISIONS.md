@@ -1,4 +1,4 @@
-# During: Decision Log (v0.5)
+# During: Decision Log (v0.6)
 
 Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chronological within each. Group H records spec-review amendments; where H supersedes an earlier entry, the earlier entry stays as history with a note.
 
@@ -153,3 +153,11 @@ Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chr
 (c) **The commit feedback is a multi-ring ripple — three rings, staggered — replacing "one expanding ring that settles to a single ring".** One ring read as a pulse emitted by the control; several reading outward read as water displaced by something that landed. The rings' opacity is front-loaded against their travel so the figure spends quickly rather than being traced to the edge. Law 3 is unaffected: still one event per commit, no loop, reduced-motion fallback mandatory.
 
 **Open, deliberately: how an in-progress timed shows it is alive.** Two modes are implemented and both ship until the call is made. `grow` scales the most recent line along x, with settled water above it — the original law 3 wording. `travel` holds the waveform rigid and slides it through a clipped window, moving the whole bundle in phase. `grow` is the default. The objection to `grow` is that it stretches the waveform, which is what `travel` exists to avoid; the objection to `travel` is that it may read as ambient decoration rather than as this record being alive. **Deferred to an in-context decision on Home Daily**, because the mode has to be judged on a real timeline among still records, not on a fixture page. Neither mode is deleted until then; law 3's "grows its last wave line" is provisional wording pending it.
+
+**H10. An in-progress timed travels; `grow` is deleted.** H9 left the two modes open and shipped both, to be judged on a real timeline rather than a fixture page. Judged there, `travel` wins and `grow` is removed rather than kept as an option.
+
+Why. `grow` scaled the most recent line along x, which stretches the waveform — the exported geometry is what makes a wave read as a wave, and compressing it to 45% and back turns the shape into the thing that is moving. `travel` holds the waveform rigid and slides it through a clipped window, so what moves is the water, not the drawing of it. On the axis, among still records, the whole bundle moving in phase also reads as *this record is still running*, where one line moving inside a settled stack read as that line being broken.
+
+`grow` is deleted with the call, along with the `motion` prop and the `?motion=` dev override that existed to make it. Keeping the losing mode "in case" is how an unused encoding survives long enough to be reintroduced by accident — the same reasoning that retired the wave tone ramp in H9a. Law 3's provisional wording ("grows its last wave line") is now settled: an in-progress timed travels, and every line in the bundle travels together.
+
+Rejected: keeping both behind a setting. Motion is a visual encoding, and SPEC 7 law 6 says encodings may not be taught — two of them for one state is worse than either.

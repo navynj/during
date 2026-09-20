@@ -1,4 +1,4 @@
-# During: Product Spec (v0.5)
+# During: Product Spec (v0.6)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). The motion of an in-progress timed is open, pending an in-context call on Home Daily.
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 applies H10 (an in-progress timed travels; the grow mode is deleted).
 
 ---
 
@@ -117,7 +117,7 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 **Laws:**
 1. **Time owns the tone and opacity channels.** Past: backgrounds sink stepwise (white, then #F1F3F7, then #D8DCE8); scrolling into older sections = going deeper. Future: the item itself renders at reduced opacity, dotted. Tone and opacity never encode ownership (mine vs others).
 2. **Undulation = activity.** More waves = more happened. Impression-level (calm / some / lots), log-scaled, never a precise count or a participation gauge.
-3. **Only living things move.** An in-progress timed animates; finished water is still. New drop = a **ripple: three rings spreading outward, staggered**, their opacity front-loaded against their travel (H9c) — one event per commit, never a loop. reduced-motion fallback mandatory, and every design must read correctly static. *Open (H9):* whether an in-progress timed `grow`s its most recent line or `travel`s the whole bundle through a clipped window. Both are implemented; `grow` is the default until the call is made on Home Daily.
+3. **Only living things move.** An in-progress timed **travels**: its waveform is held rigid and slid through a clipped window, every line in the bundle in phase, so what moves is the water and not the drawing of it (H10). Finished water is still. New drop = a **ripple: three rings spreading outward, staggered**, their opacity front-loaded against their travel (H9c) — one event per commit, never a loop. reduced-motion fallback mandatory, and every design must read correctly static.
 4. **Dotted = not yet.** Lane ropes and the empty "your lane" slot. **Not planned Ripples** (H9b): at the wave's 1px amplitude a dashed stroke becomes a row of dots and stops reading as a wave, so planned renders at reduced opacity instead.
 5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. A solid #0507C9 **content** surface is reserved for live Swim/Splash cards, where the fill is what encodes liveness. Interactive **chrome** — the FAB, primary action buttons, the active nav item — may use solid #0507C9 as the action color: chrome styling is not encoding, so it does not compete for the channel (H8).
 6. **Vocabulary may be taught; visual encodings may not.** If an encoding needs explanation, it is rejected.
