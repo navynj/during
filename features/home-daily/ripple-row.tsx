@@ -59,7 +59,7 @@ export function RippleRow({
   return (
     <li className={ROW_GRID}>
       <div
-        className="text-main-900 flex flex-col justify-between pt-2 pb-4 text-xs font-medium tabular-nums"
+        className="text-main-900 flex flex-col justify-between pt-2 pb-4 text-xs font-light tabular-nums"
         style={{ opacity: fade }}
       >
         <time>{clock(ripple.occurred_time!)}</time>

@@ -10,7 +10,7 @@ import './globals.css';
 // is never downloaded, so keeping it available costs nothing.
 const poppins = Poppins({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-poppins',
   display: 'swap',
 });
