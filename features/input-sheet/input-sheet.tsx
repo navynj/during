@@ -177,7 +177,9 @@ export function InputSheet({
             onClick={() => commit('timer')}
             aria-label="Start a timer"
             title={timerAvailable ? 'Start a timer' : 'A plan has not started yet'}
-            className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white disabled:opacity-40"
+            // Outlined, not filled: Drop is the primary action, and two solid
+            // action-coloured buttons side by side name two primaries.
+            className="border-main-900 text-main-900 flex h-12 w-12 items-center justify-center rounded-full border disabled:opacity-40"
           >
             <Timer aria-hidden size={20} />
           </button>
