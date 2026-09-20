@@ -6,20 +6,34 @@ import { formatPagerDate, shiftDate, type IsoDate } from '@/lib/time';
  * SPEC 5: one pager governs the whole page, and it is the only date
  * navigation on it. The date lives in the URL so a day is linkable and the
  * server can resolve it against the author's timezone before rendering.
+ *
+ * Shape follows _docs/mockups/Home - Daily.png: the period on the left, the
+ * day itself on the right with its weekday stacked under it.
  */
 export function DatePager({ date }: { date: IsoDate }) {
-  const { day, weekday, month } = formatPagerDate(date);
+  const { year, month, day, weekday, full } = formatPagerDate(date);
 
   return (
-    <header className="flex flex-col gap-2 py-6">
-      <p className="text-main-900 text-sm font-semibold tracking-wide">{month}</p>
-      <div className="flex items-center gap-4">
+    <header className="flex items-center justify-between gap-4 py-6">
+      <p className="text-main-900 text-lg font-bold tracking-wide">
+        {year} {month}
+      </p>
+
+      <div className="flex items-center gap-3">
         <PagerLink date={shiftDate(date, -1)} label="Previous day">
           ‹
         </PagerLink>
-        <h1 className="text-ink text-2xl font-bold">
-          {day} <span className="text-ink">{weekday}</span>
+
+        <h1 className="text-main-900 flex flex-col items-center leading-none">
+          <span className="sr-only">{full}</span>
+          <span aria-hidden className="text-2xl font-bold">
+            {day}
+          </span>
+          <span aria-hidden className="text-xs font-bold tracking-wide">
+            {weekday}
+          </span>
         </h1>
+
         <PagerLink date={shiftDate(date, 1)} label="Next day">
           ›
         </PagerLink>
@@ -41,7 +55,7 @@ function PagerLink({
     <Link
       href={`/?d=${date}`}
       aria-label={label}
-      className="text-pool-500 hover:bg-pool-100 flex h-8 w-8 items-center justify-center rounded-full text-lg"
+      className="text-main-900 hover:bg-pool-100 flex h-8 w-8 items-center justify-center rounded-full text-lg"
     >
       {children}
     </Link>

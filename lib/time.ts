@@ -24,13 +24,29 @@ export function shiftDate(date: IsoDate, days: number): IsoDate {
   return shifted.toISOString().slice(0, 10);
 }
 
-/** The pager's label: `15 SAT`. Month is rendered separately (SPEC 5). */
-export function formatPagerDate(date: IsoDate): { day: string; weekday: string; month: string } {
+/**
+ * The header's two halves: `2026 AUG` on the left, `15` over `SAT` on the
+ * right. Formatted in UTC because these are calendar dates, not instants —
+ * the author's zone has already been applied to pick which date this is.
+ */
+export function formatPagerDate(date: IsoDate): {
+  year: string;
+  month: string;
+  day: string;
+  weekday: string;
+  full: string;
+} {
   const at = new Date(`${date}T00:00:00Z`);
+  const label = (options: Intl.DateTimeFormatOptions): string =>
+    at.toLocaleDateString('en-US', { ...options, timeZone: 'UTC' });
+
   return {
+    year: String(at.getUTCFullYear()),
+    month: label({ month: 'short' }).toUpperCase(),
     day: String(at.getUTCDate()),
-    weekday: at.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }).toUpperCase(),
-    month: at.toLocaleDateString('en-US', { month: 'long', timeZone: 'UTC' }),
+    weekday: label({ weekday: 'short' }).toUpperCase(),
+    // For assistive tech, which should hear a date rather than two fragments.
+    full: label({ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
   };
 }
 
