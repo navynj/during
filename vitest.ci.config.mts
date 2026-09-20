@@ -10,6 +10,21 @@ import { defaultExclude, defineConfig } from 'vitest/config';
  * they have to keep running locally before every push. A build machine has no
  * stack to point them at, so it runs the rest rather than pretending.
  */
+/**
+ * React ships two builds, and `act` exists only in the development one. A
+ * deploy sets NODE_ENV=production for the whole build, vitest respects an
+ * NODE_ENV that is already set, and the suite then resolves
+ * `react-dom-test-utils.production.js` — where every render fails with
+ * "React.act is not a function".
+ *
+ * Set here rather than in the script so no way of invoking the suite can miss
+ * it. Tests are a development-time activity whatever the surrounding build is
+ * doing; a suite run against production React is testing a different program.
+ */
+// Assigned through Object.assign because Next types NODE_ENV as read-only,
+// and these configs are inside the project's type check.
+Object.assign(process.env, { NODE_ENV: 'test' });
+
 const NEEDS_LOCAL_STACK = [
   'tests/rls.test.ts',
   'tests/edit-delete.test.ts',
