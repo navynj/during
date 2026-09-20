@@ -1,4 +1,4 @@
-# During: Decision Log (v0.6)
+# During: Decision Log (v0.11)
 
 Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chronological within each. Group H records spec-review amendments; where H supersedes an earlier entry, the earlier entry stays as history with a note.
 
@@ -182,3 +182,17 @@ Why the old constraint had to go: the landing spot *moves* with the chosen time.
 What survives is the intent: direct manipulation, the record visibly taking its place rather than being submitted to a form. The sheet carries a compressed today-axis in its left rail, always visible, and the ghost slides along it as the time or category changes. **Preview in the rail, arrival on the page:** on commit the sheet closes and the multi-ring ripple plays at the real row on the real timeline, scrolled into view if needed.
 
 Constraint on the implementation, so this does not become two timelines: the rail is **not a second rendering**. Same wave components, same query for today's Ripples, a compressed density preset on the library. No duplicated state to keep in sync — the rail and the page read the same data, and the ghost is draft state that exists in one place.
+
+**H13. The default-state sheet is chips, note, time toggle, commit. The landing rail is instrumentation.** Amends H12.
+
+H12 made the rail always visible, and first use showed the cost: a narrow axis occupying a fifth of the sheet on every single record, most of which are dropped at the current minute and never touch the time at all. The rail answers a question the default case does not ask.
+
+So it is **progressive**: hidden while the time is the one the sheet opened with, sliding in when the time control is engaged — the picker open, or a time set that is not that one — and retracting when the time returns to it. All-day shows no rail, because a record with no time has no position to preview.
+
+This follows the same rule as the time control itself: **defaults work, edges are touched.** The common record is a chip and a commit; everything else is reached for. H12's direct-manipulation intent is unharmed — the ghost still lands on a real axis, at exactly the moment the author is choosing where it lands.
+
+**The rail also becomes the collision-anticipation surface.** A chosen time inside an existing span highlights that bundle in the rail, so the exclusion constraint (H10) is visible before it refuses rather than only after. Computed client-side: the answer changes with every tick of the picker, and a round trip per tick would lag the thumb.
+
+**Time is one control with two exclusive segments** — a time, or All day — using the selection grammar the category chips use (solid #0507C9, white text), so "chosen" looks the same everywhere in the sheet. Replaces the prose links "For the whole day" / "Give it a time", which read as two separate commands rather than two states of one thing.
+
+**The audience chip carries no avatar in v1a.** Two text states, Everyone and Only me. The avatar was off-palette and collided with the label, and it answered "who" when the chip's job is "how far" — the audience is a property of the record, not a picture of its readers.
