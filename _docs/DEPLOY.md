@@ -57,6 +57,17 @@ rows. The local suite proves the policies; this proves they shipped.
 to a remote project at all. `pnpm db:reset` refuses outright (see CLAUDE.md
 § "Data is real now"). Neither is a matter of remembering.
 
+### Prod starts empty — her call, made in the deploy session
+
+No data migration. Local records stay local and keep being dumped; production
+begins with nothing and fills up from the phone. This doubles as the one eye
+check the empty states have never had: the first sign-in shows a zero-record
+Home, an empty Lanes and an empty Trail for real rather than in a test.
+
+Carrying the archive over stays possible later — it needs an author_id remap
+(local and prod auth are different stacks, so every uuid differs) and a manual
+re-upload of media objects. Nothing here forecloses it.
+
 ## 2. Auth, in the Supabase dashboard
 
 Authentication → URL Configuration:
