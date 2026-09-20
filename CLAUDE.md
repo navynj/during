@@ -64,7 +64,7 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
 - `pnpm lint` fails on `main-400` or `#787BE2` used outside `components/ui/chips/` and `components/ui/waves/` (see `scripts/check-tokens.sh`). If a new directory legitimately renders chips or waves, add it to that allowlist rather than working around the check.
 - Category emojis keep their native colors: the single allowed off-palette element.
 - **Motion: only living things move.** An in-progress timed grows its last wave line; a new drop plays one expanding ring that settles to a single ring. Nothing else animates. `prefers-reduced-motion` fallback is mandatory, and every design must read correctly when static.
-- Wave grammar: timed = multi-line bundle whose vertical span equals its duration (cap 8 to 10 lines, log-scaled impression); drop = single wave line. Wave counts are impressions (calm / some / lots), never precise gauges.
+- Wave grammar: timed = multi-line bundle whose line count is log-scaled on duration (cap 10) at a constant gap, so height is a consequence of density, not a measure of span; drop = single wave line. Wave counts are impressions (calm / some / lots), never precise gauges. The axis is ordered, not time-proportional: vertical distance measures nothing.
 - Past sinks (backgrounds step white, then `#F1F3F7`, then `#D8DCE8`); future fades (reduced opacity + dotted). Tone and opacity never encode ownership.
 
 ## Code conventions

@@ -1,4 +1,4 @@
-# During: Product Spec (v0.7)
+# During: Product Spec (v0.8)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional.
 
 ---
 
@@ -78,7 +78,7 @@ Home / Lanes / Pools / Locker + FAB
   1. Friends strip (live = bold ring + elapsed; past-TTL members absent).
   2. Header: month + date pager (`< 15 SAT >`). **One pager governs the whole page**; it is the only date navigation.
   3. Daily Note area: records that belong to the date without a time. **Several per day allowed**, stacked; empty state shows the "Add a Daily Note" prompt. Weekly zoom shows the Weekly Note area.
-  4. Time axis: **top to bottom = early to late.** My Ripples sit at their time position (timed = wave bundle whose line count is log-scaled on duration; drop = single wave line; category badge at the bundle head; planned/future items render at reduced opacity). The gutter carries **start times only**, so the column reads as one ascending sequence; a timed Ripple's length is told by its bundle and a small duration tag, never by a second number in the gutter. **Top-level Ripples never overlap** (H10); anything concurrent is an inner ripple and does not take a row of its own.
+  4. Time axis: **top to bottom = early to late.** The axis is **ordered, not time-proportional**: vertical distance measures nothing. Time is carried by the order of records and by the start-time labels in the gutter; duration is carried by line density (log-scaled, capped) and the duration chip. A quiet stretch of the day costs no empty space, and a long session does not push the rest of the day off the screen. Rendering: timed = wave bundle, drop = single wave line, category badge at the bundle head, planned at reduced opacity. The gutter carries **start times only**, so the column reads as one ascending sequence. **Top-level Ripples never overlap** (H10); anything concurrent is an inner ripple and does not take a row of its own.
   5. **"Add ripple" ghost slot at the end of the flow**: the seat of the next record and an input entry point (time prefilled = now). New records append downward in time order.
   6. **Friend rail, far right:** a thin vertical line where friends' activity sits at its time-of-day position, sharing the main axis's time coordinates. Same-hour adjacency is the rail's information.
   7. Bottom resident area: active Splash bar (only when one exists) + Lanes preview strip.
@@ -130,7 +130,7 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 - **No other colors, with one exception: category emojis keep their native colors** (the only off-palette element).
 - Dark mode: undefined for now. When designed it must be a night pool, never inverted colors.
 
-**Ripple grammar:** timed = multi-line wave bundle (line count log-scaled on duration, capped at 10; constant gap between lines, so only the count varies), drop = single wave line. Planned renders at reduced opacity, badge included. Category badge on the avatar corner (rows) or bundle head (timeline), so text is 100% note. Display format: `category · note`.
+**Ripple grammar:** timed = multi-line wave bundle (line count log-scaled on duration, capped at 10; **constant gap between lines, so only the count varies** — a bundle's height is a consequence of its density, not a measure of its span). drop = single wave line. Planned renders at reduced opacity, badge included. Category badge on the avatar corner (rows) or bundle head (timeline), so text is 100% note. Display format: `category · note`.
 
 **Design system follows Tailwind conventions:** spacing, radius, and type use the default scale; the three ramps above are the only custom tokens.
 

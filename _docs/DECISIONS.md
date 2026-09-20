@@ -106,7 +106,7 @@ Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chr
 
 **F2. Undulation = activity, generalized to "only living things move".** Wave counts are impressions (calm/some/lots, log-scaled, cap), never gauges (blue progress bars rejected as participation-tracking backdoor).
 
-**F3. Timed = wave bundle, drop = single wave line.** Capsule blocks rejected (Structured's signature + calendar-partition metaphor vs water physics); line-thickness "water column" superseded by the user's wave-bundle sketch (one shape, quantity difference; board and timeline finally share one language). Bundle span = duration span.
+**F3. Timed = wave bundle, drop = single wave line.** Capsule blocks rejected (Structured's signature + calendar-partition metaphor vs water physics); line-thickness "water column" superseded by the user's wave-bundle sketch (one shape, quantity difference; board and timeline finally share one language). Bundle span = duration span. (Superseded by H9/H10 practice and SPEC v0.8: the gap between lines is constant, so a bundle's height follows its line count. Duration is read from density and the duration chip, and the axis is ordered rather than time-proportional.)
 
 **F4. One channel, one meaning.** Depth/opacity = time (never mine/others), position = me (first row/column), dotted = not-yet (ropes, plans, empty lane), ring weight + live accent = live, solid deep surface = Swim/Splash cards only. Avatar corner badge / bundle head carries category so text is pure note. Mine/others by opacity rejected ("nobody would understand" = the rejection criterion, promoted to principle). (Color values superseded by H3.)
 
