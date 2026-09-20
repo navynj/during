@@ -45,7 +45,8 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
 
 ## Design tokens and visual rules
 
-- The ONLY custom design tokens are three color ramps. Everything else (spacing, radius, type) uses the Tailwind default scale.
+- The ONLY custom design tokens are three color ramps plus the typeface. Everything else (spacing, radius, type scale) uses the Tailwind default scale.
+- Typeface: **Poppins** (weights 400/500/600/700), self-hosted via `next/font/google` and exposed as Tailwind's `--font-sans`, so `font-sans` and `body` cannot drift apart. The type _scale_ is untouched.
   - Main ramp (content vitality): `#0507C9` live/now, `#787BE2` recent, `#D3D7F6` settled/past
   - Gray ramp (structure): `#F1F3F7` surfaces, `#D8DCE8` deeper surfaces / dividers / lane ropes, `#6B79A3` muted text
   - Ink: `#313338` body text

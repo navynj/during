@@ -23,15 +23,14 @@
 
   /* Ink — body text */
   --color-ink: #313338;
+
+  /* Typeface. The type SCALE stays Tailwind's default; only the family is
+   * ours, so `font-sans` and body agree instead of drifting apart. */
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background: #ffffff;
   color: var(--color-ink);
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
+  font-family: var(--font-sans);
 }
