@@ -37,7 +37,9 @@ export function WaveBundle({
   const lines = bundleLineCount(durationMinutes);
 
   // An in-progress timed is the only thing here that is still happening, so
-  // it is the only thing allowed to move (law 3).
+  // it is the only thing allowed to move (law 3). The whole bundle travels,
+  // in phase: it is one body of water, and moving a single line inside a
+  // still stack reads as that line being broken rather than the record living.
   const isLiving = state === 'active' && !prefersReducedMotion;
 
   return (
@@ -51,7 +53,7 @@ export function WaveBundle({
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine key={index} width={width} travelling={isLiving && index === lines - 1} />
+          <WaveLine key={index} width={width} travelling={isLiving} />
         ))}
       </div>
     </div>

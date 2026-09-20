@@ -77,13 +77,21 @@ describe('WaveBundle', () => {
     expect(getByText('🔍')).toBeTruthy();
   });
 
-  it('grows only the last line, and only while in progress', () => {
-    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
-    const growing = container.querySelectorAll('path.wave-travel');
+  it('moves every line together while in progress', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+    const paths = container.querySelectorAll('path');
+    const moving = container.querySelectorAll('path.wave-travel');
 
-    expect(growing).toHaveLength(1);
-    const paths = [...container.querySelectorAll('path')];
-    expect(paths[paths.length - 1]).toBe(growing[0]);
+    expect(paths).toHaveLength(7);
+    expect(moving).toHaveLength(paths.length);
+  });
+
+  it('gives no line a delay, so the bundle stays in phase', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+
+    for (const path of container.querySelectorAll('path.wave-travel')) {
+      expect((path as SVGElement).style.animationDelay).toBe('');
+    }
   });
 
   it('holds still when the record is finished', () => {
@@ -130,9 +138,11 @@ describe('planned fades as one piece', () => {
 
 describe('the active line travels rather than stretches', () => {
   it('draws a longer path and clips it, instead of scaling', () => {
-    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
-    const moving = container.querySelector('path.wave-travel') as SVGPathElement;
-    const still = container.querySelector('path:not(.wave-travel)') as SVGPathElement;
+    const active = render(<WaveBundle durationMinutes={60} state="active" />);
+    const done = render(<WaveBundle durationMinutes={60} state="done" />);
+
+    const moving = active.container.querySelector('path.wave-travel') as SVGPathElement;
+    const still = done.container.querySelector('path') as SVGPathElement;
 
     // The moving line's path is wider than the box it is drawn into.
     expect(moving.getAttribute('d')!.length).toBeGreaterThan(still.getAttribute('d')!.length);
