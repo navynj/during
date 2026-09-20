@@ -195,7 +195,7 @@ This follows the same rule as the time control itself: **defaults work, edges ar
 
 **Time is one control with two exclusive segments** — a time, or All day — using the selection grammar the category chips use (solid #0507C9, white text), so "chosen" looks the same everywhere in the sheet. Replaces the prose links "For the whole day" / "Give it a time", which read as two separate commands rather than two states of one thing.
 
-**The audience chip carries no avatar in v1a.** Two text states, Everyone and Only me. The avatar was off-palette and collided with the label, and it answered "who" when the chip's job is "how far" — the audience is a property of the record, not a picture of its readers.
+**The audience chip carries no avatar in v1a.** Two text states, Everyone and Only me. The avatar was off-palette and collided with the label, and it answered "who" when the chip's job is "how far" — the audience is a property of the record, not a picture of its readers. **Text-only, including the lock glyph**: a lone icon on one of two states is a second visual language inside one control. Revisit at the post-v1a checkpoint (SPEC section 9), when real use says whether a locked record needs to be identifiable at a glance — the cost of getting lock wrong is a misfire, and a misfire is only expensive once there is something to leak to.
 
 **H14. Law 1's sinking applies to sections within a scroll, not to a paged day.** Home Daily keeps a white ground at every date.
 

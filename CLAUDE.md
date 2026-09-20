@@ -12,6 +12,10 @@ During (during.today): a one-line diary that assembles itself. While you write i
 
 **If the mockup contains a drawn shape, ask for the Figma-exported SVG before generating one.** Guessing at drawn geometry is the most expensive mistake so far: a generated wave was rebuilt from the export, and the exported numbers turned out to be load-bearing (control offsets that make the amplitude land exactly inside the stroke box). Reading a shape off a PNG gets the impression right and the construction wrong.
 
+**Text replacements in code or docs must assert. A patch that matches nothing is a failure, not a no-op.** A replacement whose target string has drifted — reformatted by Prettier, edited earlier in the session — changes no file, breaks no type, and returns success. Run edits so a failed assertion aborts the task (`set -e`, or chain with `&&`); never let one script's failure leave the next one running.
+
+**After any doc-sync task, grep the file for the new content before claiming it.** A passing build is not evidence that a doc edit landed — documents are not compiled. `scripts/verify-doc.sh FILE "needle" ...` exits non-zero when a string is absent; run it before committing, and let a doc-sync commit message claim only what it printed.
+
 When the spec is silent, choose the smallest implementation consistent with DECISIONS and say so in the commit message. If it smells like a product decision, ask instead of deciding.
 
 ## Current scope: v1a only
