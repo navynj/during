@@ -1,12 +1,17 @@
 import { redirect } from 'next/navigation';
 
 import { FocusScreen } from '@/features/focus/focus-screen';
-import { getRunningSession } from '@/lib/queries/compose';
+import { getInnerRipples, getRunningSession, runningBreak } from '@/lib/queries/compose';
 import { getMyProfile } from '@/lib/queries/profile';
 import { startInstant } from '@/lib/ripple-kind';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata = { title: 'During · now' };
+
+/** Whole seconds since an instant, resolved once per request. */
+function secondsSince(instant: Date): number {
+  return Math.max(0, Math.floor((Date.now() - instant.getTime()) / 1000));
+}
 
 /**
  * The running record's own screen. Outside the shell group on purpose: it is
@@ -24,12 +29,18 @@ export default async function NowPage() {
   if (!running) redirect('/');
 
   const startedAt = startInstant(running, profile.timezone)!;
+  const inner = await getInnerRipples(supabase, [running.id]);
+  const onBreak = runningBreak(inner);
+  const breakStartedAt = onBreak ? startInstant(onBreak, profile.timezone) : null;
 
   return (
     <FocusScreen
       ripple={running}
       startedAt={startedAt.toISOString()}
-      initialSeconds={Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000))}
+      initialSeconds={secondsSince(startedAt)}
+      openBreak={onBreak?.id ?? null}
+      breakStartedAt={breakStartedAt?.toISOString() ?? null}
+      breakInitialSeconds={breakStartedAt ? secondsSince(breakStartedAt) : 0}
     />
   );
 }

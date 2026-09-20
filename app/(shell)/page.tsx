@@ -7,7 +7,7 @@ import { ScrollAnchor } from '@/features/home-daily/scroll-anchor';
 import { ADD_RIPPLE_SLOT_ID, TimeAxis } from '@/features/home-daily/time-axis';
 import { LanesStrip } from '@/features/home-daily/lanes-strip';
 import { SheetHost } from '@/features/input-sheet/sheet-host';
-import { getRunningSession } from '@/lib/queries/compose';
+import { calmSpans, getInnerRipples, getRunningSession, runningBreak } from '@/lib/queries/compose';
 import { getRipplesForDate, splitByRegion } from '@/lib/queries/ripples';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
 import { createClient } from '@/lib/supabase/server';
@@ -35,6 +35,24 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
   ]);
   const { notes, timeline } = splitByRegion(ripples);
 
+  // Inner ripples never take a row, but their spans are what draw calm water
+  // in the parent's bundle (H15a2).
+  const now = new Date();
+  const sessions = timeline.filter((r) => r.started_at !== null);
+  const inner = await getInnerRipples(
+    supabase,
+    sessions.map((r) => r.id),
+  );
+  const calmByRipple: Record<string, { from: number; to: number }[]> = {};
+  const openBreakByRipple: Record<string, string> = {};
+  for (const session of sessions) {
+    const children = inner.filter((child) => child.parent_ripple_id === session.id);
+    if (children.length === 0) continue;
+    calmByRipple[session.id] = calmSpans(session.started_at!, session.ended_at, now, children);
+    const open = runningBreak(children);
+    if (open) openBreakByRipple[session.id] = open.id;
+  }
+
   const countsByCategory = ripples.reduce<Record<string, number>>((counts, ripple) => {
     counts[ripple.category_id] = (counts[ripple.category_id] ?? 0) + 1;
     return counts;
@@ -50,7 +68,13 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
         <DatePager date={date} />
         <DailyNoteArea notes={notes} />
         <div className="bg-main-900 h-px" />
-        <TimeAxis ripples={timeline} timeZone={profile.timezone} now={new Date()} />
+        <TimeAxis
+          ripples={timeline}
+          timeZone={profile.timezone}
+          now={now}
+          calmByRipple={calmByRipple}
+          openBreakByRipple={openBreakByRipple}
+        />
       </div>
 
       <LanesStrip categories={categories} countsByCategory={countsByCategory} />

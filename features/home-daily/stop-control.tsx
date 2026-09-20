@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 
 import { formatDuration } from '@/components/ui/chips/duration-chip';
-import { stopSession } from '@/features/input-sheet/commit';
+import { stopSessionWithBreak } from '@/features/focus/break';
 
 import { useElapsed } from './use-elapsed';
 
@@ -19,12 +19,19 @@ export function StopControl({
   since,
   initialMinutes,
   tone,
+  openBreakId = null,
   onStopped,
 }: {
   rippleId: string;
   since: string;
   initialMinutes: number;
   tone: 'on-live' | 'on-light';
+  /**
+   * A break still running inside this session. Closed first, because a
+   * parent's span shrinks to its end and a child still running would be left
+   * outside it (H15a2).
+   */
+  openBreakId?: string | null;
   onStopped?: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -44,7 +51,7 @@ export function StopControl({
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
-              await stopSession(rippleId);
+              await stopSessionWithBreak(rippleId, openBreakId);
               onStopped?.();
             })
           }

@@ -25,11 +25,16 @@ export function NowBand({
   clock,
   elapsedMinutes,
   startedAt,
+  calm,
+  openBreakId,
 }: {
   ripple: RippleWithCategory;
   clock: string;
   elapsedMinutes: number;
   startedAt: string;
+  /** Stretches spent on something else; drawn as calm water (H15a2). */
+  calm?: { from: number; to: number }[];
+  openBreakId?: string | null;
 }) {
   return (
     <li className="live-surface -mx-6 px-6 py-3">
@@ -47,10 +52,13 @@ export function NowBand({
             {ripple.category?.icon}
           </span>
           {/* Same bundle as any timed record; only the ink inverts (H15c). */}
-          <WaveBundle durationMinutes={elapsedMinutes} state="active" />
+          <WaveBundle durationMinutes={elapsedMinutes} state="active" calm={calm} />
         </span>
 
-        <p className="text-sm text-white">{ripple.note}</p>
+        <p className="text-sm text-white">
+          {ripple.note}
+          {openBreakId ? <span className="block text-xs text-white/70">On a break</span> : null}
+        </p>
       </Link>
 
       <div className="grid grid-cols-[2.25rem_2.75rem_1fr] gap-x-2 pt-2">
@@ -62,6 +70,7 @@ export function NowBand({
             since={startedAt}
             initialMinutes={elapsedMinutes}
             tone="on-live"
+            openBreakId={openBreakId ?? null}
           />
         </span>
       </div>

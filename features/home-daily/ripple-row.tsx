@@ -26,10 +26,13 @@ export function RippleRow({
   ripple,
   timeZone,
   now,
+  calm,
 }: {
   ripple: RippleWithCategory;
   timeZone: string;
   now: Date;
+  /** Stretches of this session spent on something else (H15a2). */
+  calm?: { from: number; to: number }[];
 }) {
   const kind = rippleKind(ripple, timeZone);
   const state = rippleState(ripple);
@@ -67,7 +70,7 @@ export function RippleRow({
           {kind === 'timed' ? (
             // The bundle fades itself, badge included, so the fade is not
             // applied here as well — twice would land it at 0.12.
-            <WaveBundle durationMinutes={duration} state={state} emoji={emoji} />
+            <WaveBundle durationMinutes={duration} state={state} calm={calm} emoji={emoji} />
           ) : (
             <span className="flex flex-col items-center" style={{ opacity: fade }}>
               {emoji ? <Badge emoji={emoji} /> : null}

@@ -21,10 +21,16 @@ export function TimeAxis({
   ripples,
   timeZone,
   now,
+  calmByRipple,
+  openBreakByRipple,
 }: {
   ripples: RippleWithCategory[];
   timeZone: string;
   now: Date;
+  /** Stretches spent on something else, per session (H15a2). */
+  calmByRipple?: Record<string, { from: number; to: number }[]>;
+  /** A break still running inside a session, per session. */
+  openBreakByRipple?: Record<string, string>;
 }) {
   return (
     // The rope is drawn per row, inside the wave cell, so it is centred by the
@@ -42,10 +48,20 @@ export function TimeAxis({
                 clock={ripple.occurred_time!.slice(0, 5)}
                 elapsedMinutes={elapsedMinutes(ripple, timeZone, now)}
                 startedAt={startInstant(ripple, timeZone)!.toISOString()}
+                calm={calmByRipple?.[ripple.id]}
+                openBreakId={openBreakByRipple?.[ripple.id] ?? null}
               />
             );
           }
-          return <RippleRow key={ripple.id} ripple={ripple} timeZone={timeZone} now={now} />;
+          return (
+            <RippleRow
+              key={ripple.id}
+              ripple={ripple}
+              timeZone={timeZone}
+              now={now}
+              calm={calmByRipple?.[ripple.id]}
+            />
+          );
         })}
         <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} />
       </ol>

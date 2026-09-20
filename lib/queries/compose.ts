@@ -73,3 +73,63 @@ export type ComposeContext = {
   running: RippleWithCategory | null;
   date: IsoDate;
 };
+
+/**
+ * A running session's inner ripples. Their spans are what draw calm water in
+ * the parent's bundle, so the timeline needs them even though they never take
+ * a row of their own (H10).
+ */
+export async function getInnerRipples(
+  supabase: DuringClient,
+  parentIds: string[],
+): Promise<RippleWithCategory[]> {
+  if (parentIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('ripples')
+    .select('*, category:my_categories(name, icon)')
+    .in('parent_ripple_id', parentIds)
+    .order('started_at', { ascending: true })
+    .returns<RippleWithCategory[]>();
+
+  if (error) throw error;
+  return data;
+}
+
+/** The break currently running inside a session, if any. */
+export function runningBreak(inner: RippleWithCategory[]): RippleWithCategory | null {
+  return inner.find((child) => child.ended_at === null && child.occurred_time !== null) ?? null;
+}
+
+/**
+ * The stretches of a session that were spent on something else, as fractions
+ * of its span — what the bundle draws as calm water (H15a2).
+ *
+ * Any inner ripple with a span counts, not only the Break category: a stretch
+ * you spent on something else is a stretch this session was not undulating,
+ * and reading the category name would break the moment it is renamed.
+ */
+export function calmSpans(
+  sessionStart: string,
+  sessionEnd: string | null,
+  now: Date,
+  inner: RippleWithCategory[],
+): { from: number; to: number }[] {
+  const start = Date.parse(sessionStart);
+  const end = sessionEnd ? Date.parse(sessionEnd) : now.getTime();
+  const total = end - start;
+  if (total <= 0) return [];
+
+  const spans: { from: number; to: number }[] = [];
+  for (const child of inner) {
+    if (!child.started_at) continue;
+    const childStart = Date.parse(child.started_at);
+    const childEnd = child.ended_at === null ? end : Date.parse(child.ended_at);
+    if (childEnd <= childStart) continue; // a drop is a point, not a stretch
+
+    const from = Math.max(0, (childStart - start) / total);
+    const to = Math.min(1, (childEnd - start) / total);
+    if (to > from) spans.push({ from, to });
+  }
+  return spans;
+}
