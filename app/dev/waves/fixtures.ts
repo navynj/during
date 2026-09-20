@@ -74,3 +74,28 @@ export const STATES: WaveState[] = ['planned', 'active', 'done'];
 
 /** The points the log curve is pinned at (see bundleLineCount). */
 export const DURATIONS = [5, 15, 25, 60, 120, 240, 480, 1440];
+
+/**
+ * Calm water (H15a2). Mirrors what the seed puts on today's timeline, so the
+ * grammar is inspectable beside plain bundles rather than only in situ.
+ */
+export const CALM_CASES: {
+  label: string;
+  minutes: number;
+  state: WaveState;
+  calm: { from: number; to: number }[];
+}[] = [
+  {
+    label: '2h, 20m break in the middle third',
+    minutes: 120,
+    state: 'done',
+    calm: [{ from: 1 / 3, to: 1 / 3 + 20 / 120 }],
+  },
+  {
+    label: 'running, 10m break near the head',
+    minutes: 90,
+    state: 'active',
+    calm: [{ from: 5 / 90, to: 15 / 90 }],
+  },
+  { label: 'the same 2h with no break', minutes: 120, state: 'done', calm: [] },
+];

@@ -73,7 +73,7 @@ begin
   for row_spec in
     select *
       from (values
-        ('focus-am',   focus,     'spec rewrite',                           interval '-240 minutes', interval '-150 minutes', false),
+        ('focus-am',   focus,     'spec rewrite',                           interval '-300 minutes', interval '-180 minutes', false),
         ('place-noon', place,     'kitsilano beach',                        interval '-120 minutes', interval '-120 minutes', false),
         ('locked',     day,       'the thing I am not saying out loud yet', interval '-75 minutes',  interval '-75 minutes',  false),
         ('live',       focus,     'session 2',                              interval '-50 minutes',  null,                    false),
@@ -125,6 +125,46 @@ begin
         skipped := skipped + 1;
     end;
   end if;
+
+  -- Calm water, so the grammar can be judged without waiting for real time:
+  -- a Break in the middle third of the finished session, and one already
+  -- ended near the head of the running one (H15a2).
+  select id into parent_id from public.my_categories
+   where user_id = me and name = 'Break';
+  if parent_id is null then
+    insert into public.my_categories (user_id, name, icon, default_mode, position)
+    values (me, 'Break', '🌊', 'timed', 9)
+    returning id into parent_id;
+  end if;
+
+  for row_spec in
+    select *
+      from (values
+        ('brk-past', md5(me::text || ':focus-am')::uuid, interval '-255 minutes', interval '-235 minutes'),
+        ('brk-live', md5(me::text || ':live')::uuid,     interval '-45 minutes',  interval '-35 minutes')
+      ) as v(slug, parent, starts, ends)
+  loop
+    begin
+      if exists (select 1 from public.ripples where id = row_spec.parent) then
+        insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
+        values (
+          md5(me::text || ':' || row_spec.slug)::uuid, me, parent_id, null,
+          (local_now + row_spec.starts)::date,
+          (local_now + row_spec.starts)::time,
+          (local_now + row_spec.ends) at time zone tz,
+          row_spec.parent
+        )
+        on conflict (id) do update
+           set occurred_on   = excluded.occurred_on,
+               occurred_time = excluded.occurred_time,
+               ended_at      = excluded.ended_at;
+        seeded := seeded + 1;
+      end if;
+    exception
+      when others then
+        skipped := skipped + 1;
+    end;
+  end loop;
 
   -- Fixed-hour rows: a date-only note, yesterday, and one far enough back to
   -- show a quiet day.
