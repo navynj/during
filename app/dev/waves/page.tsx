@@ -107,17 +107,30 @@ export default function WavesFixturePage() {
         title="Ripple"
         hint="Concentric rings spreading from a commit, staggered so they read as one disturbance travelling outward."
       >
-        <div className="border-pool-200 flex flex-wrap items-center gap-16 border-t pt-8">
-          <CommitRing>
-            <span className="bg-pool-100 text-main-900 flex h-8 w-8 items-center justify-center rounded-full text-lg">
-              +
-            </span>
-          </CommitRing>
-          <CommitRing size={92} contentSize={48} rings={4}>
-            <span className="bg-pool-100 text-pool-500 flex h-12 w-12 items-center justify-center rounded-full text-sm">
-              YL
-            </span>
-          </CommitRing>
+        <div className="border-pool-200 flex flex-wrap items-end gap-16 border-t pt-8">
+          <Ripple caption="commit — full strength">
+            <CommitRing>
+              <span className="bg-pool-100 text-main-900 flex h-8 w-8 items-center justify-center rounded-full text-lg">
+                +
+              </span>
+            </CommitRing>
+          </Ripple>
+
+          <Ripple caption="Add ripple slot — a ghost, opacity 0.35">
+            <CommitRing opacity={0.35}>
+              <span className="bg-pool-100 text-main-900 flex h-8 w-8 items-center justify-center rounded-full text-lg">
+                +
+              </span>
+            </CommitRing>
+          </Ripple>
+
+          <Ripple caption="friend, live">
+            <CommitRing size={92} contentSize={48} rings={4}>
+              <span className="bg-pool-100 text-pool-500 flex h-12 w-12 items-center justify-center rounded-full text-sm">
+                YL
+              </span>
+            </CommitRing>
+          </Ripple>
         </div>
       </Section>
     </main>
@@ -139,6 +152,15 @@ function Section({
       <p className="text-pool-500 mb-4 text-sm">{hint}</p>
       {children}
     </section>
+  );
+}
+
+function Ripple({ caption, children }: { caption: string; children: React.ReactNode }) {
+  return (
+    <figure className="flex flex-col items-center gap-3">
+      {children}
+      <figcaption className="text-pool-500 max-w-32 text-center text-xs">{caption}</figcaption>
+    </figure>
   );
 }
 

@@ -2,7 +2,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { WaveBundle, WaveLine } from '@/components/ui/waves';
+import { CommitRing, WaveBundle, WaveLine } from '@/components/ui/waves';
 
 /**
  * jsdom has no matchMedia, and the reduced-motion gate is the whole point of
@@ -137,5 +137,24 @@ describe('the active line travels rather than stretches', () => {
     // The moving line's path is wider than the box it is drawn into.
     expect(moving.getAttribute('d')!.length).toBeGreaterThan(still.getAttribute('d')!.length);
     expect(moving.closest('g')?.getAttribute('transform')).toBe('translate(-10 0)');
+  });
+});
+
+describe('CommitRing opacity', () => {
+  it('fades rings and content together from the wrapper', () => {
+    const { container } = render(
+      <CommitRing opacity={0.35}>
+        <span data-testid="content">+</span>
+      </CommitRing>,
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.opacity).toBe('0.35');
+    expect(wrapper.querySelector('[data-testid="content"]')).toBeTruthy();
+  });
+
+  it('is full strength when not asked for', () => {
+    const { container } = render(<CommitRing />);
+    expect((container.firstElementChild as HTMLElement).style.opacity).toBe('');
   });
 });

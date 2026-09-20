@@ -12,6 +12,12 @@ export type CommitRingProps = {
   gap?: number;
   /** How many rings travel outward. Three reads as water; one reads as a pulse. */
   rings?: number;
+  /**
+   * Overall strength, 0 to 1. The Add-ripple slot is a ghost — an invitation,
+   * not a record — so it rides at reduced opacity while a real commit plays at
+   * full. Applied to the wrapper, so rings and content fade as one piece.
+   */
+  opacity?: number;
   className?: string;
   children?: React.ReactNode;
 };
@@ -37,6 +43,7 @@ export function CommitRing({
   contentSize = 32,
   gap = 6,
   rings = 3,
+  opacity,
   className = '',
   children,
 }: CommitRingProps) {
@@ -49,7 +56,7 @@ export function CommitRing({
   return (
     <span
       className={`relative inline-flex items-center justify-center ${WAVE_COLOR_CLASS} ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, opacity }}
     >
       {Array.from({ length: rings }, (_, index) => (
         <span
