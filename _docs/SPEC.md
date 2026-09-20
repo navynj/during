@@ -1,4 +1,4 @@
-# During: Product Spec (v0.4)
+# During: Product Spec (v0.5)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). The motion of an in-progress timed is open, pending an in-context call on Home Daily.
 
 ---
 
@@ -78,7 +78,7 @@ Home / Lanes / Pools / Locker + FAB
   1. Friends strip (live = bold ring + elapsed; past-TTL members absent).
   2. Header: month + date pager (`< 15 SAT >`). **One pager governs the whole page**; it is the only date navigation.
   3. Daily Note area: records that belong to the date without a time. **Several per day allowed**, stacked; empty state shows the "Add a Daily Note" prompt. Weekly zoom shows the Weekly Note area.
-  4. Time axis: **top to bottom = early to late.** My Ripples sit at their time position (timed = wave bundle whose vertical span = its duration; drop = single wave line; category badge at the bundle head; planned/future items render dotted at reduced opacity).
+  4. Time axis: **top to bottom = early to late.** My Ripples sit at their time position (timed = wave bundle whose vertical span = its duration; drop = single wave line; category badge at the bundle head; planned/future items render at reduced opacity).
   5. **"Add ripple" ghost slot at the end of the flow**: the seat of the next record and an input entry point (time prefilled = now). New records append downward in time order.
   6. **Friend rail, far right:** a thin vertical line where friends' activity sits at its time-of-day position, sharing the main axis's time coordinates. Same-hour adjacency is the rail's information.
   7. Bottom resident area: active Splash bar (only when one exists) + Lanes preview strip.
@@ -117,20 +117,20 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 **Laws:**
 1. **Time owns the tone and opacity channels.** Past: backgrounds sink stepwise (white, then #F1F3F7, then #D8DCE8); scrolling into older sections = going deeper. Future: the item itself renders at reduced opacity, dotted. Tone and opacity never encode ownership (mine vs others).
 2. **Undulation = activity.** More waves = more happened. Impression-level (calm / some / lots), log-scaled, never a precise count or a participation gauge.
-3. **Only living things move.** In-progress timed grows its last wave line; finished water is still. New drop = one expanding ring, settling to a single ring. reduced-motion fallback mandatory.
-4. **Dotted = not yet.** Lane ropes, planned Ripples, the empty "your lane" slot.
+3. **Only living things move.** An in-progress timed animates; finished water is still. New drop = a **ripple: three rings spreading outward, staggered**, their opacity front-loaded against their travel (H9c) — one event per commit, never a loop. reduced-motion fallback mandatory, and every design must read correctly static. *Open (H9):* whether an in-progress timed `grow`s its most recent line or `travel`s the whole bundle through a clipped window. Both are implemented; `grow` is the default until the call is made on Home Daily.
+4. **Dotted = not yet.** Lane ropes and the empty "your lane" slot. **Not planned Ripples** (H9b): at the wave's 1px amplitude a dashed stroke becomes a row of dots and stops reading as a wave, so planned renders at reduced opacity instead.
 5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. A solid #0507C9 **content** surface is reserved for live Swim/Splash cards, where the fill is what encodes liveness. Interactive **chrome** — the FAB, primary action buttons, the active nav item — may use solid #0507C9 as the action color: chrome styling is not encoding, so it does not compete for the channel (H8).
 6. **Vocabulary may be taught; visual encodings may not.** If an encoding needs explanation, it is rejected.
 
 **Palette (the only custom tokens):**
-- Main ramp, content vitality: **#0507C9** live/now, **#787BE2** recent, **#D3D7F6** settled/past.
+- Main ramp: **#0507C9** is the whole of it in practice — waves, live states, emphasis text and interactive chrome. **#787BE2** is a chip foreground only (H8). **#D3D7F6** is **reserved and currently unused** (H9a): the wave vitality ramp it belonged to no longer exists, because a wave keeps its strength wherever it sits and the past is carried by the sinking background instead.
 - Gray ramp, structure: **#F1F3F7** surfaces, **#D8DCE8** deeper surfaces / dividers / lane ropes, **#6B79A3** muted and secondary text.
 - Ink: **#313338** body text.
 - **Text rule (H8):** #787BE2 is a **chip foreground and a wave tone, nothing else**. Its only text use is the foreground of category chips and other small tag-like chips; otherwise it appears solely as the "recent" tone inside the wave ramp. Text hierarchy: **#313338** default, **#0507C9** emphasis, **#6B79A3** muted or secondary. #D3D7F6 is never text. Enforced by `scripts/check-tokens.sh`, which fails the lint if main-400 is used outside the chip and wave components.
 - **No other colors, with one exception: category emojis keep their native colors** (the only off-palette element).
 - Dark mode: undefined for now. When designed it must be a night pool, never inverted colors.
 
-**Ripple grammar:** timed = multi-line wave bundle (vertical span = duration span, cap ~8 to 10 lines), drop = single wave line. Category badge on the avatar corner (rows) or bundle head (timeline), so text is 100% note. Display format: `category · note`.
+**Ripple grammar:** timed = multi-line wave bundle (line count log-scaled on duration, capped at 10; constant gap between lines, so only the count varies), drop = single wave line. Planned renders at reduced opacity, badge included. Category badge on the avatar corner (rows) or bundle head (timeline), so text is 100% note. Display format: `category · note`.
 
 **Design system follows Tailwind conventions:** spacing, radius, and type use the default scale; the three ramps above are the only custom tokens.
 
