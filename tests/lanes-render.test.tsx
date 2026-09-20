@@ -284,7 +284,13 @@ describe('the strip makes a lane rather than pointing at one', () => {
 
     fireEvent.click(slot);
 
-    expect(container.querySelector('[role="dialog"]')!.getAttribute('aria-label')).toBe('New lane');
+    const sheet = container.querySelector('[role="dialog"]')!;
+    expect(sheet.getAttribute('aria-label')).toBe('New lane');
     expect(getByText('Add lane')).toBeTruthy();
+
+    // Outside the strip, because the strip is `sticky z-10` and so makes a
+    // stacking context: a sheet inside one cannot rise above anything outside
+    // it, and the tab bar was landing on top of it.
+    expect(container.querySelector('nav')!.contains(sheet)).toBe(false);
   });
 });
