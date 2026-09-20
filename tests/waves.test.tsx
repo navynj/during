@@ -77,26 +77,37 @@ describe('WaveBundle', () => {
     expect(getByText('🔍')).toBeTruthy();
   });
 
-  it.each([
-    ['grow', 'wave-grow'],
-    ['travel', 'wave-travel'],
-  ] as const)('moves every line together in %s mode', (mode, className) => {
-    const { container } = render(<WaveBundle durationMinutes={120} state="active" motion={mode} />);
+  it('grows only the most recent line — the rest is settled water', () => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" motion="grow" />);
+    const paths = [...container.querySelectorAll('path')];
+    const growing = container.querySelectorAll('path.wave-grow');
+
+    expect(paths).toHaveLength(7);
+    expect(growing).toHaveLength(1);
+    expect(paths[paths.length - 1]).toBe(growing[0]);
+  });
+
+  it('travels every line together — the whole record is still flowing', () => {
+    const { container } = render(
+      <WaveBundle durationMinutes={120} state="active" motion="travel" />,
+    );
     const paths = container.querySelectorAll('path');
 
     expect(paths).toHaveLength(7);
-    expect(container.querySelectorAll(`path.${className}`)).toHaveLength(paths.length);
+    expect(container.querySelectorAll('path.wave-travel')).toHaveLength(paths.length);
   });
 
   it('grows by default', () => {
     const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
 
-    expect(container.querySelectorAll('path.wave-grow').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('path.wave-grow')).toHaveLength(1);
     expect(container.querySelectorAll('path.wave-travel')).toHaveLength(0);
   });
 
-  it('gives no line a delay, so the bundle stays in phase', () => {
-    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+  it('gives no line a delay, so a travelling bundle stays in phase', () => {
+    const { container } = render(
+      <WaveBundle durationMinutes={120} state="active" motion="travel" />,
+    );
 
     for (const path of container.querySelectorAll('path')) {
       expect((path as SVGElement).style.animationDelay).toBe('');

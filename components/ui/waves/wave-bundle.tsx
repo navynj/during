@@ -45,6 +45,17 @@ export function WaveBundle({
   // still stack reads as that line being broken rather than the record living.
   const isLiving = state === 'active' && !prefersReducedMotion;
 
+  // The two modes differ in scope, not just in shape. `grow` is the most
+  // recent line stretching at the leading edge of the record, so only the last
+  // line moves and the ones above it are already settled water. `travel` is
+  // the whole record still flowing, so every line moves in phase — one line
+  // sliding inside a still stack would read as that line being broken.
+  function lineMotion(index: number): WaveMotion | undefined {
+    if (!isLiving) return undefined;
+    if (motion === 'grow') return index === lines - 1 ? 'grow' : undefined;
+    return motion;
+  }
+
   return (
     // The fade sits on the wrapper, so the category badge goes with the waves:
     // a planned record is one faint thing, not faint waves under a solid icon.
@@ -56,7 +67,7 @@ export function WaveBundle({
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine key={index} width={width} motion={isLiving ? motion : undefined} />
+          <WaveLine key={index} width={width} motion={lineMotion(index)} />
         ))}
       </div>
     </div>

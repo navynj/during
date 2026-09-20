@@ -13,8 +13,8 @@ import { DURATIONS, SEED_ROWS, STATES } from './fixtures';
 export const metadata = { title: 'Waves · fixture' };
 
 const MOTION_HINT: Record<string, string> = {
-  grow: 'the waveform stretches and compresses in place',
-  travel: 'the waveform stays rigid and the water moves past',
+  grow: 'the most recent line stretches in place; the lines above it are settled water',
+  travel: 'the whole record flows — every line moves in phase, undistorted',
 };
 
 const STATE_HINT: Record<string, string> = {
