@@ -30,7 +30,14 @@ export function LanesStrip({
   const { openSheet } = useInputSheet();
 
   return (
-    <nav aria-label="Categories" className="bg-pool-100 -mx-6 mt-8 px-2 py-5">
+    // Pinned to the bottom of the page, directly on the tab bar: the strip is
+    // a resident of the screen (SPEC 5.7), not the tail of the timeline, so it
+    // stays put while the day scrolls under it.
+    <nav
+      aria-label="Categories"
+      className="bg-pool-100 border-pool-200 sticky z-10 -mx-6 mt-8 border-t px-2 py-4"
+      style={{ bottom: 'calc(var(--tab-bar-h) + env(safe-area-inset-bottom, 0px))' }}
+    >
       <ul className="no-scrollbar divide-pool-200 flex divide-x overflow-x-auto">
         {categories.map((category) => {
           const count = countsByCategory[category.id] ?? 0;

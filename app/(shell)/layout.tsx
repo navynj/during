@@ -7,7 +7,7 @@ export default function ShellLayout({ children }: LayoutProps<'/'>) {
     // page reach the same sheet.
     <InputSheetProvider>
       <div className="flex min-h-dvh flex-col">
-        <div className="mx-auto w-full max-w-xl flex-1 px-6">{children}</div>
+        <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6">{children}</div>
         <TabBar />
       </div>
     </InputSheetProvider>

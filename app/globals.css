@@ -24,6 +24,10 @@
   /* Ink — body text */
   --color-ink: #313338;
 
+  /* The tab bar's own height, so anything that has to sit exactly on top of
+   * it can say so instead of guessing. Not a design token — a measurement. */
+  --tab-bar-h: 3.75rem;
+
   /* Typeface. The type SIZE scale stays Tailwind's default; only the family is
    * ours, so `font-sans` and body agree instead of drifting apart. */
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;

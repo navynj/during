@@ -21,8 +21,12 @@ export function TabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-pool-200 sticky bottom-0 border-t bg-white">
-      <div className="mx-auto flex max-w-xl items-center justify-around px-6 py-3">
+    <nav
+      className="border-pool-200 sticky bottom-0 z-20 border-t bg-white"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      {/* A fixed height, because the Lanes strip sits exactly on top of it. */}
+      <div className="mx-auto flex h-[var(--tab-bar-h)] max-w-xl items-center justify-around px-6">
         {TABS.map((tab) => {
           const active = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
           const Icon = tab.icon;

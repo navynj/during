@@ -43,11 +43,15 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const anchor = anchorFor(date, today);
 
   return (
-    <main className="flex flex-1 flex-col">
-      <DatePager date={date} />
-      <DailyNoteArea notes={notes} />
-      <div className="bg-main-900 h-px" />
-      <TimeAxis ripples={timeline} timeZone={profile.timezone} now={new Date()} />
+    <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
+      {/* The day takes the slack, so on a quiet day the strip still sits at the
+          bottom instead of floating halfway up the screen. */}
+      <div className="flex-1">
+        <DatePager date={date} />
+        <DailyNoteArea notes={notes} />
+        <div className="bg-main-900 h-px" />
+        <TimeAxis ripples={timeline} timeZone={profile.timezone} now={new Date()} />
+      </div>
 
       <LanesStrip categories={categories} countsByCategory={countsByCategory} />
 
