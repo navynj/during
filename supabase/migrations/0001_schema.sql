@@ -440,21 +440,36 @@ create policy "views are readable by the ripple's author"
   on public.ripple_views for select
   using (public.ripple_author(ripple_id) = auth.uid());
 
--- Opening a Ripple records the view. Authors do not witness themselves, so
--- they cannot inflate their own count.
-create policy "views are recorded by a viewer who can see the ripple"
-  on public.ripple_views for insert
-  with check (
-    viewer_id = auth.uid()
-    and public.can_see_ripple(ripple_id)
-    and public.ripple_author(ripple_id) <> auth.uid()
-  );
+-- There is no write policy: every view goes through record_ripple_view()
+-- below. A client-side upsert would need to read back the row it is
+-- overwriting, and that read is exactly what author-only SELECT forbids.
+-- One door also means the caller never handles the composite key.
 
--- Re-opening refreshes viewed_at through an upsert; the count does not move.
-create policy "a viewer may refresh their own view"
-  on public.ripple_views for update
-  using (viewer_id = auth.uid() and public.can_see_ripple(ripple_id))
-  with check (viewer_id = auth.uid());
+create function public.record_ripple_view(rid uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.can_see_ripple(rid) then
+    raise exception 'ripple not visible' using errcode = '42501';
+  end if;
+
+  -- Authors do not witness themselves, so opening one's own Ripple is a
+  -- no-op rather than an error: it happens constantly (A6).
+  if public.ripple_author(rid) = auth.uid() then
+    return;
+  end if;
+
+  -- Re-opening refreshes viewed_at; the count is people, not openings.
+  insert into public.ripple_views (ripple_id, viewer_id, viewed_at)
+  values (rid, auth.uid(), now())
+  on conflict (ripple_id, viewer_id) do update set viewed_at = now();
+end;
+$$;
+
+revoke execute on function public.record_ripple_view(uuid) from anon;
 
 -- --- lists -----------------------------------------------------------------
 

@@ -532,6 +532,7 @@ export type Database = {
     Functions: {
       can_see_ripple: { Args: { rid: string }; Returns: boolean }
       is_linked: { Args: { other: string }; Returns: boolean }
+      record_ripple_view: { Args: { rid: string }; Returns: undefined }
       ripple_author: { Args: { rid: string }; Returns: string }
       ripple_is_locked: { Args: { rid: string }; Returns: boolean }
     }
