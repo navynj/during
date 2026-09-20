@@ -1,8 +1,9 @@
 'use client';
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
-import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
+
+import { DailyNoteRow } from './daily-note-row';
 
 /**
  * SPEC 5.3: records that belong to the date without a time. Several per day
@@ -10,21 +11,12 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
  * They sit above the axis because they have no position on it.
  */
 export function DailyNoteArea({ notes }: { notes: RippleWithCategory[] }) {
-  const { openRipple } = useRippleSheet();
   const { openSheet } = useInputSheet();
 
   return (
     <div className="flex flex-col gap-1 pb-3">
       {notes.map((note) => (
-        <button
-          key={note.id}
-          type="button"
-          onClick={() => openRipple(note.id)}
-          className="text-ink flex items-baseline gap-2 text-left text-sm"
-        >
-          {note.category?.icon ? <span aria-hidden>{note.category.icon}</span> : null}
-          <span>{note.note}</span>
-        </button>
+        <DailyNoteRow key={note.id} note={note} />
       ))}
 
       {/*

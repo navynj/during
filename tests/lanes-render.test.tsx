@@ -294,3 +294,47 @@ describe('the strip makes a lane rather than pointing at one', () => {
     expect(container.querySelector('nav')!.contains(sheet)).toBe(false);
   });
 });
+
+describe('a day in the Trail has the same two regions Home has', () => {
+  const note = ripple({
+    id: 'note',
+    note: 'Condition Nienzo (2.0/5.0)',
+    occurred_time: null,
+    started_at: null,
+    ended_at: null,
+  });
+
+  it('heads the section with a record that has no time, rather than crashing on it', () => {
+    // A date-only record belongs to the day without a position on its axis
+    // (SPEC 5.3). Drawn as a timeline row it has no clock to print, which is
+    // what took the Locker down.
+    const { getByText } = render(
+      <InputSheetProvider>
+        <Trail days={groupByDay([note])} timeZone={TZ} now={NOW} />
+      </InputSheetProvider>,
+    );
+
+    expect(getByText('Condition Nienzo (2.0/5.0)')).toBeTruthy();
+  });
+
+  it('keeps the timed records on the axis below them', () => {
+    const { container } = render(
+      <InputSheetProvider>
+        <Trail days={groupByDay([note, ripple({ id: 'timed' })])} timeZone={TZ} now={NOW} />
+      </InputSheetProvider>,
+    );
+
+    // One row on the axis, not two: the note is not a row.
+    expect(container.querySelectorAll('ol > li')).toHaveLength(1);
+  });
+
+  it('does not invite a new note here: the Trail reads, Home records', () => {
+    const { queryByText } = render(
+      <InputSheetProvider>
+        <Trail days={groupByDay([note])} timeZone={TZ} now={NOW} />
+      </InputSheetProvider>,
+    );
+
+    expect(queryByText('Add a Daily Note')).toBeNull();
+  });
+});

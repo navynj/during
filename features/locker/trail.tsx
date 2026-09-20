@@ -1,9 +1,11 @@
 import Link from 'next/link';
 
+import { DailyNoteRow } from '@/features/home-daily/daily-note-row';
 import { RippleRow } from '@/features/home-daily/ripple-row';
 import { monthsBack } from '@/features/lanes/matrix';
 import { depthSurface } from '@/lib/depth';
 import { EMPTY } from '@/lib/empty-states';
+import { splitByRegion } from '@/lib/queries/ripples';
 import type { TrailDay } from '@/lib/queries/trail';
 import { formatPagerDate } from '@/lib/time';
 
@@ -58,6 +60,10 @@ function DaySection({
   opensMonth: boolean;
 }) {
   const { year, month, day: number, weekday, full } = formatPagerDate(day.date);
+  // The same two regions Home has: a record with no time belongs to the day
+  // without claiming a position on its axis (SPEC 5.3), so it heads the
+  // section rather than being drawn as a row with no clock.
+  const { notes, timeline } = splitByRegion(day.ripples);
 
   return (
     // The section carries its own ground, and the rows read it back through
@@ -87,8 +93,16 @@ function DaySection({
         </Link>
       </header>
 
+      {notes.length > 0 ? (
+        <div className="flex flex-col gap-1 pb-2">
+          {notes.map((note) => (
+            <DailyNoteRow key={note.id} note={note} />
+          ))}
+        </div>
+      ) : null}
+
       <ol className="pb-4">
-        {day.ripples.map((ripple) => (
+        {timeline.map((ripple) => (
           <RippleRow key={ripple.id} ripple={ripple} timeZone={timeZone} now={now} />
         ))}
       </ol>
