@@ -56,7 +56,7 @@ covers this.
 | --------------- | --------------------------------------------------------- |
 | `pnpm dev`      | Next.js dev server                                        |
 | `pnpm build`    | Production build; must pass with zero type errors         |
-| `pnpm lint`     | ESLint                                                    |
+| `pnpm lint`     | ESLint, plus the design-token guard                       |
 | `pnpm format`   | Prettier write                                            |
 | `pnpm test`     | Vitest; the RLS suite needs a running local stack         |
 | `pnpm db:start` | Boots the local stack with `.env.local` exported          |

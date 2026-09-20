@@ -6,13 +6,14 @@
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint && ./scripts/check-tokens.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "db:start": "set -a; [ -f .env.local ] && . ./.env.local; set +a; supabase start",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > lib/database.types.ts"
+    "db:types": "supabase gen types typescript --local > lib/database.types.ts",
+    "check:tokens": "./scripts/check-tokens.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

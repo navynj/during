@@ -49,7 +49,14 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
   - Main ramp (content vitality): `#0507C9` live/now, `#787BE2` recent, `#D3D7F6` settled/past
   - Gray ramp (structure): `#F1F3F7` surfaces, `#D8DCE8` deeper surfaces / dividers / lane ropes, `#6B79A3` muted text
   - Ink: `#313338` body text
-- `#787BE2` doubles as the accent text color: labels, time markers, headings (bold or generous sizes; ~3.7:1 on white passes large-text contrast). Body copy and long-form text stay `#313338` / `#6B79A3`. `#D3D7F6` is never used for text.
+- **`#787BE2` (`main-400`) is a chip foreground and a wave tone. Nothing else.** Its only text use is the foreground of category chips and other small tag-like chips; otherwise it exists solely inside the wave vitality ramp as the "recent" tone. It is not a general accent color, and it never colors headings, labels, time markers, or chrome.
+- Text colors, in full:
+  - Default text: `#313338` (ink).
+  - Emphasis / accent text: `#0507C9` (`main-900`).
+  - Muted or secondary text, only where the hierarchy needs it: `#6B79A3` (`pool-500`).
+  - `#D3D7F6` is never text.
+  - Active or selected states in chrome (tab bar, pagers) are carried by ink and weight, not by a ramp color.
+- `pnpm lint` fails on `main-400` or `#787BE2` used outside `components/ui/chips/` and `components/ui/waves/` (see `scripts/check-tokens.sh`). If a new directory legitimately renders chips or waves, add it to that allowlist rather than working around the check.
 - Category emojis keep their native colors: the single allowed off-palette element.
 - **Motion: only living things move.** An in-progress timed grows its last wave line; a new drop plays one expanding ring that settles to a single ring. Nothing else animates. `prefers-reduced-motion` fallback is mandatory, and every design must read correctly when static.
 - Wave grammar: timed = multi-line bundle whose vertical span equals its duration (cap 8 to 10 lines, log-scaled impression); drop = single wave line. Wave counts are impressions (calm / some / lots), never precise gauges.

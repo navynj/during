@@ -3,13 +3,17 @@
 /*
  * SPEC 7: the three ramps are the ONLY custom tokens. Spacing, radius and type
  * stay on the Tailwind default scale — nothing else belongs in this block.
+ *
+ * The main ramp reaches the screen in exactly two places: wave rendering and
+ * chip foregrounds. Text is ink by default, main-900 for emphasis, pool-500
+ * where the hierarchy needs muting. scripts/check-tokens.sh enforces it.
  * Dark mode is deliberately absent: SPEC 7 defers it to a designed night pool
  * and forbids inversion, so the scaffold ships no `prefers-color-scheme` block.
  */
 @theme {
   /* Main ramp — content vitality */
-  --color-main-900: #0507c9; /* live / now */
-  --color-main-400: #787be2; /* recent; doubles as accent text at bold/large sizes */
+  --color-main-900: #0507c9; /* live / now; also emphasis text */
+  --color-main-400: #787be2; /* recent wave tone; as text, chip foregrounds ONLY */
   --color-main-100: #d3d7f6; /* settled / past — never used for text */
 
   /* Gray ramp — structure */
