@@ -36,14 +36,14 @@ after adding them.
 
 ## Everyday commands
 
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Next.js dev server |
-| `pnpm build` | Production build; must pass with zero type errors |
-| `pnpm lint` | ESLint |
-| `pnpm format` | Prettier write |
-| `pnpm test` | Vitest; the RLS suite needs a running local stack |
-| `pnpm db:reset` | Re-runs every migration, then `supabase/seed.sql` |
+| Command         | What it does                                              |
+| --------------- | --------------------------------------------------------- |
+| `pnpm dev`      | Next.js dev server                                        |
+| `pnpm build`    | Production build; must pass with zero type errors         |
+| `pnpm lint`     | ESLint                                                    |
+| `pnpm format`   | Prettier write                                            |
+| `pnpm test`     | Vitest; the RLS suite needs a running local stack         |
+| `pnpm db:reset` | Re-runs every migration, then `supabase/seed.sql`         |
 | `pnpm db:types` | Regenerates `lib/database.types.ts` from the local schema |
 
 ## Layout
