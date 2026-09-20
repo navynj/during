@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   // app's status bar rather than a browser's.
   appleWebApp: { capable: true, title: 'During', statusBarStyle: 'default' },
   icons: { apple: '/apple-touch-icon.png' },
+  // Next emits only the modern `mobile-web-app-capable`. iOS before 16.4 reads
+  // the Apple-prefixed name and nothing else, and 16.4+ ignores it in favour
+  // of the manifest — so carrying both costs one tag and covers both.
+  other: { 'apple-mobile-web-app-capable': 'yes' },
 };
 
 /**
