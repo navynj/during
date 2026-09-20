@@ -104,7 +104,7 @@ export function InputSheet({
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             {/* No scroll indicator: a bar under a row of chips reads as a
                 gauge, which law 2 forbids. They scroll silently. */}
-            <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+            <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
               {categories.map((category) => (
                 <CategoryChip
                   key={category.id}

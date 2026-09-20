@@ -30,7 +30,7 @@ export function LanesStrip({
   const { openSheet } = useInputSheet();
 
   return (
-    <nav aria-label="Categories" className="bg-pool-100 -mx-6 mt-8 px-6 py-5">
+    <nav aria-label="Categories" className="bg-pool-100 -mx-6 mt-8 px-2 py-5">
       <ul className="no-scrollbar divide-pool-200 flex divide-x overflow-x-auto">
         {categories.map((category) => {
           const count = countsByCategory[category.id] ?? 0;

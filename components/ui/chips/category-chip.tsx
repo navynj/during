@@ -24,7 +24,9 @@ export function CategoryChip({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+      // Small on purpose: the row is the whole category vocabulary, and a
+      // chip the size of a button showed three of them before scrolling.
+      className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
         selected
           ? 'border-ink bg-ink text-white'
           : 'border-pool-200 text-main-400 hover:bg-pool-100 bg-white'
