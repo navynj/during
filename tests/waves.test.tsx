@@ -77,26 +77,46 @@ describe('WaveBundle', () => {
     expect(getByText('🔍')).toBeTruthy();
   });
 
-  it('moves every line together while in progress', () => {
-    const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
+  it.each([
+    ['grow', 'wave-grow'],
+    ['travel', 'wave-travel'],
+  ] as const)('moves every line together in %s mode', (mode, className) => {
+    const { container } = render(<WaveBundle durationMinutes={120} state="active" motion={mode} />);
     const paths = container.querySelectorAll('path');
-    const moving = container.querySelectorAll('path.wave-travel');
 
     expect(paths).toHaveLength(7);
-    expect(moving).toHaveLength(paths.length);
+    expect(container.querySelectorAll(`path.${className}`)).toHaveLength(paths.length);
+  });
+
+  it('grows by default', () => {
+    const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
+
+    expect(container.querySelectorAll('path.wave-grow').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('path.wave-travel')).toHaveLength(0);
   });
 
   it('gives no line a delay, so the bundle stays in phase', () => {
     const { container } = render(<WaveBundle durationMinutes={120} state="active" />);
 
-    for (const path of container.querySelectorAll('path.wave-travel')) {
+    for (const path of container.querySelectorAll('path')) {
       expect((path as SVGElement).style.animationDelay).toBe('');
     }
   });
 
   it('holds still when the record is finished', () => {
     const { container } = render(<WaveBundle durationMinutes={60} state="done" />);
+
     expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
+    expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
+  });
+
+  it('leaves grow mode at its natural width — only travel needs overhang', () => {
+    const grow = render(<WaveBundle durationMinutes={60} state="active" motion="grow" />);
+    const done = render(<WaveBundle durationMinutes={60} state="done" />);
+
+    expect(grow.container.querySelector('path')!.getAttribute('d')).toBe(
+      done.container.querySelector('path')!.getAttribute('d'),
+    );
   });
 });
 
@@ -106,6 +126,7 @@ describe('reduced motion (law 3)', () => {
     const { container } = render(<WaveBundle durationMinutes={60} state="active" />);
 
     expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
+    expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
   });
 
   it('still renders every wave, so the design reads correctly static', () => {
@@ -138,7 +159,7 @@ describe('planned fades as one piece', () => {
 
 describe('the active line travels rather than stretches', () => {
   it('draws a longer path and clips it, instead of scaling', () => {
-    const active = render(<WaveBundle durationMinutes={60} state="active" />);
+    const active = render(<WaveBundle durationMinutes={60} state="active" motion="travel" />);
     const done = render(<WaveBundle durationMinutes={60} state="done" />);
 
     const moving = active.container.querySelector('path.wave-travel') as SVGPathElement;
