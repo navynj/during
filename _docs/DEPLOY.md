@@ -18,35 +18,50 @@ pnpm dlx vercel login             # or use the dashboard, below
 The Google Cloud console change in step 3 is by hand, deliberately: it is the
 one place where a wrong value fails silently.
 
-## 1. The Supabase project
+## 1. The Supabase project — DONE
 
-Free tier allows two active projects per org. G3's answer to the slot limit is
-a **second free org** — create the project there rather than deleting anything.
+**Project `during`, ref `yjwkjvzbbujoapeuyjul`, region `us-west-1`**, in the
+Whaleblue Studio org. It already existed; no second project was created.
+
+**G3's second-free-org plan turned out to be unnecessary.** The org holds two
+projects — `Plot`, which is INACTIVE (paused, so it does not hold an active
+slot), and `during`. Nothing had to be deleted or moved. G3's reasoning still
+stands for the day a third project is wanted.
 
 ```bash
-supabase projects create during --org-id <second-org> --region us-west-1
-supabase link --project-ref <ref>
-pnpm db:push                      # refuses without a same-day backup
+supabase link --project-ref yjwkjvzbbujoapeuyjul
+pnpm backup                       # mandatory; the free tier keeps none
+pnpm db:push                      # refuses without a dump from today
 ```
 
-Region: `us-west-1` is the closest to Vancouver, and Seoul traffic crosses the
-Pacific either way.
+Applied `0001`–`0004`, `"seeds":[]` — nothing seeded prod. Migration `0003`
+created the private `ripple-media` bucket, confirmed present and `public =
+false`.
 
-`pnpm db:push` applies `0001`–`0004`. Migration `0003` creates the private
-`ripple-media` bucket and its owner-prefix write policies, so there is no
-bucket to make by hand — confirm it exists rather than creating it.
-
-### Verify RLS live, before anything else goes near it
+### Verified live
 
 ```bash
 pnpm verify:prod        # signed out, every table must be empty or refused
 ```
 
-It walks all thirteen tables with the anon key and refuses to run against a
-local URL. Empty counts as a pass: `select` with no policy returns zero rows
-rather than an error, and zero rows is the right answer to "what may a
-stranger see". It also checks that the media bucket will not serve an object
-without a signature.
+All thirteen tables empty, unsigned bucket read refused (400).
+
+**On its own that is a weak signal against an empty database** — every table
+is empty regardless, so it cannot tell "RLS on" from "no data". What settles
+it is the shipped schema: 13 tables, **13 with RLS enabled, none missing**, 21
+policies, 10 functions, all four triggers (`ripples_set_started_at`,
+`ripples_check_inner`, `ripples_parent_contains_children`,
+`ripples_touch_last_active`) and the `ripples_top_level_no_overlap` exclusion
+constraint. Checked against the live catalogue:
+
+```bash
+supabase db query --linked "select tgname from pg_trigger t
+  join pg_class c on c.oid = t.tgrelid
+  where not tgisinternal and relname = 'ripples';"
+```
+
+`pnpm verify:prod` keeps its value once real records exist, which is when a
+missing policy would actually leak something.
 
 Then, signed in on the deployed site, confirm a second account cannot see your
 rows. The local suite proves the policies; this proves they shipped.
@@ -86,8 +101,19 @@ every redirect from `NEXT_PUBLIC_SITE_URL` for exactly this reason, and the
 timezone travels in a cookie rather than a query parameter because a query
 string is enough to miss the match.
 
-Authentication → Providers → Google: paste the same client ID and secret the
-local stack uses. They are in `.env.local`; they do **not** go to Vercel.
+Authentication → Providers → Google: **enable it** (currently off on prod) and
+paste the same client ID and secret the local stack uses. They are in
+`.env.local`; they do **not** go to Vercel.
+
+### Why this is by hand and not `supabase config push`
+
+`config push` has no scope filter — it is the whole file or nothing, and
+`supabase config diff` against this project reports **17 differences**. Most
+are local-dev conveniences that have no business on production: MFA enrolment
+off, OTP length 6, email confirmations off, Twilio disabled, a smaller pooler.
+Pushing two correct values by dragging fifteen wrong ones along is not a
+trade worth making, so `config.toml` stays the local stack's config and prod
+auth is set in the dashboard.
 
 ## 3. Google Cloud console — by hand
 

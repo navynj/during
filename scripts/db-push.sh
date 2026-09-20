@@ -15,10 +15,29 @@ if ! ls backups/"${today}"-*.sql >/dev/null 2>&1; then
 fi
 echo "  ✓ backup from today: $(ls -t backups/"${today}"-*.sql | head -1)"
 
-# Which migrations have not reached prod yet. `migration list` prints a table
-# with local and remote columns; a row missing its remote version is pending.
-pending="$(supabase migration list --linked 2>/dev/null |
-  awk -F'|' 'NF>2 && $1 ~ /[0-9]/ { gsub(/ /,"",$1); gsub(/ /,"",$2); if ($2 == "") print $1 }' || true)"
+# Which migrations have not reached prod yet.
+#
+# `migration list` prints JSON in some setups and an ASCII table in others, so
+# both are parsed and a parse that finds nothing is a FAILURE rather than an
+# empty list — silently deciding "nothing is pending" would skip the
+# destructive-DDL check below, which is the one thing here that cannot be
+# allowed to no-op.
+listing="$(supabase migration list --linked 2>/dev/null | grep -v '^Initialising\|^Connecting' || true)"
+
+if echo "$listing" | grep -q '"migrations"'; then
+  pending="$(echo "$listing" | python3 -c '
+import json, sys
+rows = json.loads(sys.stdin.read())["migrations"]
+print("\n".join(r["local"] for r in rows if r["local"] and not r.get("remote")))
+')"
+elif echo "$listing" | grep -q '|'; then
+  pending="$(echo "$listing" |
+    awk -F'|' 'NF>2 && $1 ~ /[0-9]/ { gsub(/ /,"",$1); gsub(/ /,"",$2); if ($2 == "") print $1 }')"
+else
+  echo "✖ Could not read the migration list. Refusing to push blind:" >&2
+  echo "$listing" | head -5 >&2
+  exit 1
+fi
 
 if [ -n "$pending" ]; then
   echo "  → pending: $(echo "$pending" | tr '\n' ' ')"
