@@ -34,7 +34,11 @@ export function NowBand({
   openBreakId?: string | null;
 }) {
   return (
-    <li className="live-surface -mx-6 px-6 py-3">
+    // Clear of the rows either side: the band is its own surface, and butted
+    // straight against a neighbouring row it read as one continuous block.
+    // The rope stops at its edges, which is true — the band interrupts the
+    // axis rather than sitting on it.
+    <li className="live-surface -mx-6 my-3 px-6 py-3">
       {/* Tapping the band opens the focus screen; the Stop chip below is
           outside this link, so an irreversible write never shares a gesture
           with "look closer" (H15d). */}
