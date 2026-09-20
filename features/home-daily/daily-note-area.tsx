@@ -12,36 +12,37 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
 export function DailyNoteArea({ notes }: { notes: RippleWithCategory[] }) {
   const { openRipple } = useRippleSheet();
   const { openSheet } = useInputSheet();
-  if (notes.length === 0) {
-    return (
-      // An invitation, never a reproach — SPEC 1's no-guilt hypothesis.
-      // Ghosted like the Add ripple slot: #0507C9 faded, not a paler token.
-      // It opens the sheet with no time, which is what a Daily Note is.
+
+  return (
+    <div className="flex flex-col gap-1 pb-3">
+      {notes.map((note) => (
+        <button
+          key={note.id}
+          type="button"
+          onClick={() => openRipple(note.id)}
+          className="text-ink flex items-baseline gap-2 text-left text-sm"
+        >
+          {note.category?.icon ? <span aria-hidden>{note.category.icon}</span> : null}
+          <span>{note.note}</span>
+        </button>
+      ))}
+
+      {/*
+        The prompt stays whether or not the day already has notes: several are
+        allowed per day (H5), so it is a standing invitation rather than an
+        empty state. An invitation, never a reproach — SPEC 1's no-guilt
+        hypothesis. Ghosted like the Add ripple slot: #0507C9 faded, not a
+        paler token. It opens the sheet with no time, which is what a Daily
+        Note is.
+      */}
       <button
         type="button"
         onClick={() => openSheet({ allDay: true })}
-        className="text-main-900 pb-3 text-left text-sm"
+        className="text-main-900 self-start text-left text-sm"
         style={{ opacity: 0.35 }}
       >
         Add a Daily Note
       </button>
-    );
-  }
-
-  return (
-    <ul className="flex flex-col gap-1 pb-3">
-      {notes.map((note) => (
-        <li key={note.id}>
-          <button
-            type="button"
-            onClick={() => openRipple(note.id)}
-            className="text-ink flex items-baseline gap-2 text-left text-sm"
-          >
-            {note.category?.icon ? <span aria-hidden>{note.category.icon}</span> : null}
-            <span>{note.note}</span>
-          </button>
-        </li>
-      ))}
-    </ul>
+    </div>
   );
 }

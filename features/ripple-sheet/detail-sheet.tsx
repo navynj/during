@@ -26,6 +26,8 @@ export function DetailSheet({
   timeZone,
   onClose,
   onEdit,
+  onOpenInner,
+  onAddInner,
 }: {
   ripple: RippleWithCategory;
   inner: RippleWithCategory[];
@@ -33,6 +35,10 @@ export function DetailSheet({
   timeZone: string;
   onClose: () => void;
   onEdit: () => void;
+  /** Inner rows open their own sheet: a record inside is still a record. */
+  onOpenInner?: (id: string) => void;
+  /** Present for a session, finished or running. */
+  onAddInner?: () => void;
 }) {
   const kind = rippleKind(ripple, timeZone);
   const [confirming, setConfirming] = useState(false);
@@ -101,7 +107,14 @@ export function DetailSheet({
           </ul>
         ) : null}
 
-        {inner.length > 0 ? <InnerList inner={inner} timeZone={timeZone} /> : null}
+        {kind === 'timed' || inner.length > 0 ? (
+          <InnerList
+            inner={inner}
+            timeZone={timeZone}
+            onOpen={onOpenInner}
+            onAdd={kind === 'timed' ? onAddInner : undefined}
+          />
+        ) : null}
 
         <footer className="border-pool-200 flex items-center gap-3 border-t pt-3">
           <button
@@ -183,30 +196,60 @@ function Clock({
 }
 
 /**
- * The records inside a session. A break's first visible face: it carries its
- * parent's category (H15a2), so what distinguishes it here is its span.
+ * The records inside a session, each opening its own sheet. A break's first
+ * visible face: it carries its parent's category (H15a2), so what
+ * distinguishes it here is its span.
  */
-function InnerList({ inner, timeZone }: { inner: RippleWithCategory[]; timeZone: string }) {
+function InnerList({
+  inner,
+  timeZone,
+  onOpen,
+  onAdd,
+}: {
+  inner: RippleWithCategory[];
+  timeZone: string;
+  onOpen?: (id: string) => void;
+  onAdd?: () => void;
+}) {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-pool-500 text-xs font-medium">Inside this session</h2>
+
       <ul className="divide-pool-200 divide-y">
         {inner.map((child) => {
           const minutes = rippleDurationMinutes(child, timeZone);
           return (
-            <li key={child.id} className="flex items-baseline gap-2 py-2 text-sm">
-              <span className="text-pool-500 w-12 shrink-0 text-xs tabular-nums">
-                {child.occurred_time?.slice(0, 5)}
-              </span>
-              <span className="text-ink min-w-0 flex-1">
-                {child.category?.icon ? <span aria-hidden>{child.category.icon} </span> : null}
-                {child.note ?? (minutes > 0 ? 'Break' : 'No note')}
-              </span>
-              {minutes > 0 ? <DurationChip minutes={minutes} /> : null}
+            <li key={child.id}>
+              <button
+                type="button"
+                onClick={() => onOpen?.(child.id)}
+                className="flex w-full items-baseline gap-2 py-2 text-left text-sm"
+              >
+                <span className="text-pool-500 w-12 shrink-0 text-xs tabular-nums">
+                  {child.occurred_time?.slice(0, 5)}
+                </span>
+                <span className="text-ink min-w-0 flex-1">
+                  {child.category?.icon ? <span aria-hidden>{child.category.icon} </span> : null}
+                  {child.note ?? (minutes > 0 ? 'Break' : 'No note')}
+                </span>
+                {minutes > 0 ? <DurationChip minutes={minutes} /> : null}
+              </button>
             </li>
           );
         })}
       </ul>
+
+      {/* Available on a finished session too: remembering something that
+          happened during it is the same act as recording it at the time. */}
+      {onAdd ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="text-main-900 self-start text-sm font-medium"
+        >
+          + Add to this session
+        </button>
+      ) : null}
     </section>
   );
 }

@@ -7,6 +7,7 @@ import { InputSheet, type SheetContext } from '@/features/input-sheet/input-shee
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 
 import { DetailSheet } from './detail-sheet';
+import { defaultInnerTime } from './inner-slot';
 
 type Api = { openRipple: (id: string) => void };
 const Context = createContext<Api | null>(null);
@@ -38,42 +39,78 @@ export function RippleSheetHost({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [addingTo, setAddingTo] = useState<string | null>(null);
   const router = useRouter();
 
   const openRipple = useCallback((id: string) => {
     setOpenId(id);
     setEditing(false);
+    setAddingTo(null);
   }, []);
   const api = useMemo(() => ({ openRipple }), [openRipple]);
 
-  const ripple = ripples.find((r) => r.id === openId) ?? null;
+  // An inner ripple is a record like any other, so it is looked up in both
+  // lists and opens the same sheet.
+  const ripple = ripples.find((r) => r.id === openId) ?? inner.find((r) => r.id === openId) ?? null;
   const locked = ripple ? lockedIds.includes(ripple.id) : false;
+  const innerOf = ripple ? inner.filter((child) => child.parent_ripple_id === ripple.id) : [];
+  const parentOf = ripple?.parent_ripple_id
+    ? (ripples.find((r) => r.id === ripple.parent_ripple_id) ?? null)
+    : null;
+
+  const addParent = addingTo
+    ? (ripples.find((r) => r.id === addingTo) ?? inner.find((r) => r.id === addingTo) ?? null)
+    : null;
 
   function close(): void {
     setOpenId(null);
     setEditing(false);
+    setAddingTo(null);
   }
 
   return (
     <Context.Provider value={api}>
       {children}
 
-      {ripple && !editing ? (
+      {ripple && !editing && !addingTo ? (
         <DetailSheet
           ripple={ripple}
-          inner={inner.filter((child) => child.parent_ripple_id === ripple.id)}
+          inner={innerOf}
           locked={locked}
           timeZone={sheetContext.timeZone}
           onClose={close}
           onEdit={() => setEditing(true)}
+          onOpenInner={openRipple}
+          onAddInner={() => setAddingTo(ripple.id)}
         />
       ) : null}
 
       {ripple && editing ? (
         <InputSheet
           context={sheetContext}
-          prefill={{}}
+          // Editing an inner ripple stays in inner mode: the parent is what it
+          // has to fit inside, so the sheet keeps saying so.
+          prefill={{ parentRippleId: parentOf?.id ?? ripple.parent_ripple_id ?? undefined }}
           editing={{ ripple, locked }}
+          onClose={close}
+          onCommitted={() => {
+            close();
+            router.refresh();
+          }}
+        />
+      ) : null}
+
+      {addParent ? (
+        <InputSheet
+          context={sheetContext}
+          prefill={{
+            parentRippleId: addParent.id,
+            time: defaultInnerTime(
+              addParent,
+              inner.filter((child) => child.parent_ripple_id === addParent.id),
+              sheetContext.timeZone,
+            ),
+          }}
           onClose={close}
           onCommitted={() => {
             close();

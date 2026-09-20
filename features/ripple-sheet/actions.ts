@@ -7,7 +7,7 @@ import { removeRippleMedia } from '@/lib/media';
 import { EXCLUSION_VIOLATION, findCollision } from '@/lib/queries/compose';
 import { createClient } from '@/lib/supabase/server';
 import type { CommitResult } from '@/features/input-sheet/commit';
-import { resolveEnd, strayMessage } from './end-rules';
+import { parentBoundsMessage, resolveEnd, strayMessage } from './end-rules';
 
 const Edit = z.object({
   id: z.uuid(),
@@ -94,11 +94,7 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
       }
     }
     if (/within its parent/i.test(error.message)) {
-      return {
-        ok: false,
-        reason: 'error',
-        message: 'That time falls outside the session this record sits in.',
-      };
+      return { ok: false, reason: 'error', message: await describeParent(supabase, edit.id) };
     }
     // The blocker is a record inside this session, so say which one.
     const strayId = error.message.match(/inner ripple ([0-9a-f-]{36})/i)?.[1];
@@ -178,4 +174,43 @@ async function describeStray(
 
   if (!data) return 'That span leaves a record inside this session outside it.';
   return strayMessage(data);
+}
+
+/** The bounds an inner ripple has to fit inside, said in the author's clock. */
+async function describeParent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  childId: string,
+): Promise<string> {
+  const { data: child } = await supabase
+    .from('ripples')
+    .select('parent_ripple_id, author_id')
+    .eq('id', childId)
+    .maybeSingle();
+  if (!child?.parent_ripple_id) {
+    return 'That time falls outside the session this record sits in.';
+  }
+
+  const [{ data: parent }, { data: profile }] = await Promise.all([
+    supabase
+      .from('ripples')
+      .select('occurred_time, ended_at')
+      .eq('id', child.parent_ripple_id)
+      .maybeSingle(),
+    supabase.from('profiles').select('timezone').eq('id', child.author_id).maybeSingle(),
+  ]);
+  if (!parent) return 'That time falls outside the session this record sits in.';
+
+  const zone = profile?.timezone ?? 'UTC';
+  return parentBoundsMessage({
+    occurred_time: parent.occurred_time,
+    ended_at: parent.ended_at,
+    endWallClock: parent.ended_at
+      ? new Intl.DateTimeFormat('en-GB', {
+          timeZone: zone,
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }).format(new Date(parent.ended_at))
+      : null,
+  });
 }

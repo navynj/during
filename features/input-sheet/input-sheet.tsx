@@ -72,7 +72,10 @@ export function InputSheet({
   const [nestInto, setNestInto] = useState<string | null>(prefill.parentRippleId ?? null);
   const parentRippleId = nestInto;
   const inner = parentRippleId !== null;
-  const parent = inner && running?.id === parentRippleId ? running : null;
+  const parent = inner
+    ? (ripples.find((r) => r.id === parentRippleId) ??
+      (running?.id === parentRippleId ? running : null))
+    : null;
   const [pickingTime, setPickingTime] = useState(false);
   const [pending, startTransition] = useTransition();
 

@@ -4,7 +4,6 @@ import { anchorFor, ROW_SURFACE } from '@/features/home-daily/depth';
 import { splitByRegion, type RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
-  endWallClock,
   minutesIntoDay,
   rippleDurationMinutes,
   rippleKind,

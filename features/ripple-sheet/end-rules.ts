@@ -51,3 +51,24 @@ export function strayMessage(stray: {
 
   return `That span leaves ${label}${at ? ` at ${at}` : ''} outside this session.`;
 }
+
+/**
+ * What a refused inner edit should say.
+ *
+ * The constraint knows the record does not fit; only the parent knows what it
+ * would have to fit inside. Naming the bounds turns "outside its parent" into
+ * something the author can act on without opening another sheet.
+ */
+export function parentBoundsMessage(parent: {
+  occurred_time: string | null;
+  ended_at: string | null;
+  endWallClock: string | null;
+}): string {
+  const start = parent.occurred_time?.slice(0, 5);
+  if (!start) return 'That time falls outside the session this record sits in.';
+
+  if (parent.ended_at === null) {
+    return `That time is before this session, which started at ${start}.`;
+  }
+  return `That time is outside this session, which ran ${start}–${parent.endWallClock}.`;
+}

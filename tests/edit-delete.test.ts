@@ -294,3 +294,72 @@ describe('correcting a finished end (H17)', () => {
     expect(Date.parse(data!.ended_at!)).toBe(Date.parse(utc('12:00')));
   });
 });
+
+describe('inner ripples are records like any other', () => {
+  it('is clamped by the parent when its own time moves', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00') });
+    const inside = await insert({
+      time: '09:30',
+      endedAt: utc('09:45'),
+      parent: parent.data![0].id,
+    });
+
+    const { error } = await asAdmin()
+      .from('ripples')
+      .update({ occurred_time: '13:00', ended_at: utc('13:15') })
+      .eq('id', inside.data![0].id);
+
+    expect(error?.message).toMatch(/within its parent/i);
+  });
+
+  it('accepts a retroactive addition to a finished session', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00') });
+
+    const { error } = await insert({
+      time: '10:15',
+      endedAt: utc('10:15'),
+      parent: parent.data![0].id,
+    });
+
+    // Remembering something that happened during it is the same act as
+    // recording it at the time.
+    expect(error).toBeNull();
+  });
+
+  it('refuses a record inside a record', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00') });
+    const inside = await insert({
+      time: '09:30',
+      endedAt: utc('10:00'),
+      parent: parent.data![0].id,
+    });
+
+    const { error } = await insert({
+      time: '09:40',
+      endedAt: utc('09:40'),
+      parent: inside.data![0].id,
+    });
+
+    expect(error?.message).toMatch(/cannot carry inner ripples/i);
+  });
+
+  it('takes its own media when deleted, leaving the session alone', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00'), media: ['keep.jpg'] });
+    const inside = await insert({
+      time: '09:30',
+      endedAt: utc('09:45'),
+      parent: parent.data![0].id,
+      media: ['gone.jpg'],
+    });
+
+    await asAdmin().from('ripples').delete().eq('id', inside.data![0].id);
+
+    const { data } = await asAdmin()
+      .from('ripples')
+      .select('id, media')
+      .in('id', [parent.data![0].id, inside.data![0].id]);
+
+    expect(data).toHaveLength(1);
+    expect(data![0].media).toEqual(['keep.jpg']);
+  });
+});
