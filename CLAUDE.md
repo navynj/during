@@ -18,21 +18,22 @@ During (during.today): a one-line diary that assembles itself. While you write i
 
 When the spec is silent, choose the smallest implementation consistent with DECISIONS and say so in the commit message. If it smells like a product decision, ask instead of deciding.
 
-## Current scope: v1a only
+## Current scope: P1 (solo-complete)
 
-Build exactly this, in roughly this order:
+Scope is cut into phases, solo-first (H15). **P1 makes the app complete for one person, before anyone is invited.** Build in roughly this order:
 
-1. Auth (social login) and profile bootstrap (category seed from preset)
-2. Link: mutual friendship via invite link
-3. Input sheet: category chips, single note field, time defaults to now, past time, date-only records, lock, Drop / Timer dual commit, ghost landing on the timeline behind the sheet
-4. Home Daily: chronological timeline (top = early), wave rendering (timed = bundle, drop = single line), Daily Note area, friend rail on the far right sharing the time axis, Add ripple ghost slot, scroll anchors (today = now, other days = top)
-5. Ripple mini half-sheet: tap a wave, see note, time, view count; opening it records a view event
-6. Delete (hard delete, including media)
-7. Presence TTL: hardcoded 3 days, computed at render, expired members absent from strips (no badge)
-8. Empty states: functional copy for zero-friend Home, zero-ripple day, empty Locker Trail
-9. Locker Trail: full personal scroll including locked ripples
+1. Auth (social login) and profile bootstrap (category seed from preset) — done
+2. Wave system, Home Daily read view — done
+3. Input sheet: category chips, single note field, segmented time toggle, audience chip, Drop / Timer dual commit, ghost landing on the sheet's rail — done
+4. Ripple mini half-sheet: tap a wave, see note, time, media, lock state. **No view count in P1** — counting needs an audience
+5. Delete (hard delete, including media); photo attach
+6. Designed empty-state copy: empty day, empty Trail, empty Lanes
+7. Lanes read-only matrix; Locker Trail (full personal scroll including locked ripples)
+8. Deploy: cloud Supabase + Vercel, because daily use on a phone requires it
 
-Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everything inside them, Lists UI, Spotify, Home Weekly, Lanes matrix, one year ago, notifications, recurrence, dark mode. Tab slots are full by design: never add a tab. v1b adds Home Weekly, read-only Lanes, and a Spotify now-playing suggestion (fetched client-side when the sheet opens, no background jobs).
+Explicitly NOT in P1 (do not scaffold, stub, or placeholder): Link and invites, the friend rail, view counts, presence TTL surfacing — all P2. Pools and everything inside them, Lists UI, Home Weekly — P3 or later. Tab slots are full by design: never add a tab. A tab appears only when its screen ships.
+
+**P1.5** is a dogfood window: daily personal use and small fixes, first candidate the Spotify now-playing suggestion. **P2** adds the Link world and is where the witnessing experiment runs. **P1/P1.5 validate input cost and recall value only — solo usage decay is not evidence of product failure**, because the witnessed hook is absent by design until P2.
 
 ## Stack
 
@@ -81,9 +82,11 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
 - Comments explain why, not what. When implementing a spec rule, reference it: `// SPEC 7, law 3: only living things move`.
 - Conventional commits, small and frequent. One migration per schema change.
 
-## Definition of done for v1a
+## Definition of done for P1
 
-A two-account demo works end to end: sign up, link via invite, drop from all three entry points (FAB, timeline slot, and chip prefill), ghost landing visible while the sheet is open, waves render correctly for drop / timed / planned / date-only, the friend rail shows the other account at the same hour, tapping a ripple opens the mini sheet and increments its view count for the author, delete removes row and media, a 3-day-stale account disappears from the strip, and every empty state shows designed copy instead of a blank.
+I can run my own day through it, on my own phone, without help. Drop from all three entry points; a chip-only zero-character drop; run and stop a timer with ticking elapsed; file an inner ripple into a running session; plan tonight's dinner; write an all-day note; watch a deliberate overlap get caught and named. Tap a ripple to read it back, attach a photo, delete one and have the media go with it. Browse a month by category in Lanes and by day in the Trail. Every empty state shows designed copy instead of a blank.
+
+No friend appears anywhere in that list. That is the point: P1 is finished when the app is worth opening daily with nobody watching (H15).
 
 <!-- BEGIN:nextjs-agent-rules -->
 

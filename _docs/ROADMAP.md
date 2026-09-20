@@ -1,30 +1,43 @@
 # During Roadmap
 
-Session-sized milestones. One session = one Claude Code working block with a demoable definition of done. Order within v1a is dependency order; do not pull later sessions forward. The tab bar grows with scope: a tab appears only when its screen ships.
+Session-sized milestones. One session = one Claude Code working block with a demoable definition of done. Order within a phase is dependency order; do not pull later sessions forward. The tab bar grows with scope: a tab appears only when its screen ships.
 
-## v1a: close the loop (write / witnessed / recall)
+Scope is cut into **phases**, solo-first (H15). The app becomes complete for one person before anyone is invited: the founding constraint is that a user is complete with zero pools, and friends' onboarding is a one-shot resource that should not be spent on a build which has not yet proven it is worth opening daily.
 
-| # | Session | Builds | Done when |
-| --- | --- | --- | --- |
-| S0 | Foundation | Repo, Tailwind tokens, full schema migration + RLS, typed clients, Google auth + profile bootstrap (timezone, category seed), shell (Home + Locker + FAB), seed fixtures | Fresh clone reaches signed-in empty Home in 10 min; RLS test proves locked ripples invisible to a linked friend |
-| S1 | Wave system | SVG primitives in `components/ui/waves/`: single wave line (drop), bundle with duration span + 8 to 10 line log cap (timed), dotted + reduced-opacity variant (planned/future), expanding-ring commit animation, growing-last-line live animation, `prefers-reduced-motion` fallbacks. Storybook-style fixture page rendering every state from seed data | Every ripple state in the seed renders correctly on the fixture page, static and animated, and looks right against `_docs/mockups/` |
-| S2 | Home Daily read | Timeline axis (top = early), ripples placed by occurred_time, Daily Note area (several per day), date pager with author-tz boundaries, scroll anchors (today = now, other days = top, pager resets), section sinking backgrounds | Seed data renders as the mockup's Home Daily; anchors behave per SPEC section 5 |
-| S3 | Input sheet | Half-sheet with chips, single note field, time control (now default, past, future = planned, date-only), lock chip, Drop / Timer dual commit, ghost landing on the visible timeline, three entry points (FAB blank, Add-ripple slot = time prefill, chip = category prefill), commit ring, timer stop flow for in-progress timed | A chip-only zero-character drop lands with one ring; ghost tracks time/category edits live; future time disables Timer |
-| S4 | Link + rail | Invite link create/accept (mutual link), friends strip with live ring + elapsed, far-right friend rail sharing the time axis, Realtime updates when a friend drops, TTL 3d computed at read (expired = absent, no badge) | Two browsers: A drops, B's rail shows it at the right hour within seconds; a stale seed user is absent from strips |
-| S5 | Witness + care | Ripple mini half-sheet (note, time, media, view count), view event recorded on open, view count visible to author only, delete (hard, with media), photo attach + upload, empty states with final copy (zero-friend Home, empty day, empty Trail) | A views B's ripple; B's count increments; delete removes row + storage object; every empty state shows designed copy |
-| S6 | Locker Trail + ship | Locker tab: full personal scroll including locked ripples (date-sectioned, waves + notes), cloud Supabase project promotion (slot from cleanup or second free org), Vercel deploy, OAuth redirect config, invite 2 to 3 friends | during.today serves the loop end to end for real accounts |
+*Mapping from the old labels, stated once:* v1a splits across P1 and P2; v1b's Lanes matrix moves into P1 and its Spotify suggestion into P1.5; v1.5 becomes P3. The v1a/v1b/v1.5 labels are retired.
 
-**Checkpoint after S6: run the experiment.** 4 to 6 weeks of real use, then review SPEC section 1 hypotheses against their decide-by signals (reaction migration, "who saw this?" asks, quoting friction, cross-day scroll requests, recording persistence). Decisions land in DECISIONS.md as group I before any v1.5 work begins.
+## P1: solo-complete
 
-## v1b: quality of daily life (during/after the experiment window)
+| # | Session | Builds | Done when | Status |
+| --- | --- | --- | --- | --- |
+| S0 | Foundation | Repo, Tailwind tokens, full schema migration + RLS, typed clients, Google auth + profile bootstrap (timezone, category seed), shell (Home + Locker + FAB), seed fixtures | Fresh clone reaches signed-in empty Home in 10 min; RLS test proves locked ripples invisible to a linked friend | done |
+| S1 | Wave system | SVG primitives in `components/ui/waves/`: wave line (drop), bundle (timed, log-scaled line count at constant gap), planned at reduced opacity, multi-ring commit ripple, travelling motion for in-progress, `prefers-reduced-motion` fallbacks, fixture page at `/dev/waves` | Every ripple state in the seed renders correctly, static and animated, and looks right against `_docs/mockups/` | done |
+| S2 | Home Daily read | Ordered time axis (top = early), ripples placed by occurred_time, Daily Note area (several per day), date pager with author-tz boundaries, scroll anchors, duration chips, timeline exclusivity + inner ripples | Seed data renders as the mockup's Home Daily; anchors behave per SPEC 5 | done |
+| S3 | Input sheet | Half-sheet with chips, single note field, segmented time toggle, audience chip, Drop / Timer dual commit, progressive landing rail, three entry points, running-session stop, collision surfaced as UX | A chip-only zero-character drop lands; the rail shows the ghost when the time is touched; a deliberate overlap is caught and named | done |
+| S4 | Ripple mini sheet | Half-sheet on tap: note, time, media, lock state, inner ripples with their own entry point. **No view count** — that is P2, because it needs an audience to count | Tapping a ripple opens it; an inner ripple can be filed into its parent from here |  |
+| S5 | Care | Hard delete including storage objects, photo attach + upload, final empty-state copy (empty day, empty Trail, empty Lanes) | Delete removes row and media; every empty state shows designed copy |  |
+| S6 | Recall | Lanes read-only matrix (my categories x days, locked included unmarked; tab appears now); Locker Trail (full personal scroll including locked ripples, date-sectioned, sinking sections per law 1) | A month of my own records is browsable by category and by day |  |
+| S7 | Ship for one | Cloud Supabase promotion (slot from cleanup or second free org), Vercel deploy, OAuth redirect config, PWA-ish phone usability pass | during.today serves my own day from my phone |  |
 
-- Home Weekly zoom (7-day condensed columns, waves only, opens at top)
-- Lanes tab, read-only matrix (my categories x days, locked included unmarked); tab appears now
-- Spotify suggestion: client-side now-playing fetch when the sheet opens, one-tap prefill; no background jobs, no token storage beyond the session
-- Suggestion row v1: yesterday's repeated drop for one-tap re-drop
-- Quiet-day handling polish; rail wave unification decision from real render
+## P1.5: dogfood window
 
-## v1.5: Pool world (only after the checkpoint)
+Daily personal use, small fixes, no new surfaces unless use demands them.
+
+- First candidate: Spotify now-playing suggestion — client-side fetch when the sheet opens, one-tap prefill, no background jobs, no stored tokens.
+- Quiet-day handling polish.
+
+**What this window can conclude (H15):** input cost and recall value only — whether a record is cheap enough to make, and whether the archive is worth returning to. **Solo usage decay is not evidence of product failure.** The witnessed hook is absent by design until P2, so its absence explains a decay that says nothing about the product with friends present.
+
+## P2: Link world
+
+- Link + invite link (mutual), friends strip with live ring + elapsed
+- Friend rail on the far right, sharing the time axis; Realtime updates when a friend drops
+- View-count UI: opening a Ripple records a view event; the count is visible to the author only
+- Presence TTL surfacing: 3d hardcoded, computed at read, expired members absent with no badge
+
+**The witnessing experiment runs here.** 4 to 6 weeks with real friends, then SPEC section 1's hypotheses are reviewed against their decide-by signals (reaction migration, "who saw this?" asks, quoting friction, cross-day scroll requests, recording persistence). Decisions land in DECISIONS.md as group I before any P3 work begins.
+
+## P3: Pool world (only after the P2 review)
 
 - Pool create + invite code; join screen = mapping privacy contract (pre-checked matches, residual categories unchecked, lurker join first-class)
 - Pools tab (Lobby: my pools + join with code, activity ripple badges); tab appears now
@@ -33,12 +46,12 @@ Session-sized milestones. One session = one Claude Code working block with a dem
 - Splash tab (boards + joint ripples filter); participants on ripples
 - Swim: FAB entry + lane long-press, live intruding card, focus screen = enlarged lane card + my timer, nothing more
 
-## v2+ (mapped, reserved, untouched)
+## Later, unscheduled
 
-Lists UI and multi-pool routing settings; notifications (Splash opened / Swim started / Link request only, max 2/day); Splash-born ephemeral pools; open/searchable pools; desktop score layout + ambient window; couple weekly grouping on Splash; recurrence engine; note-convention parsing; photo book export; dark mode (night pool); TTL setting UI (instant/1d/3d/7d).
+Home Weekly zoom; one year ago today; background auto-collection (timeline autofill; Spotify first); Lists UI and multi-pool routing settings; notifications (Splash opened / Swim started / Link request only, max 2/day); Splash-born ephemeral pools; open/searchable pools; desktop score layout + ambient window; couple weekly grouping on Splash; recurrence engine; note-convention parsing; photo book export; dark mode (night pool); TTL setting UI (instant/1d/3d/7d).
 
 ## Standing rules
 
-- The v1a list never grows mid-session; new ideas go to this file's v2+ section or DECISIONS.md.
+- A phase's list never grows mid-session; new ideas go to "Later, unscheduled" or to DECISIONS.md.
 - Any schema change after S0 is one migration with a one-line rationale in the commit.
-- Hypothesis features (reactions, viewer lists, chat) are not built even if requested casually during the experiment window; they wait for the checkpoint review.
+- Hypothesis features (reactions, viewer lists, chat) are not built even if requested casually during a dogfood window; they wait for the P2 review.

@@ -1,4 +1,4 @@
-# During: Product Spec (v0.12)
+# During: Product Spec (v0.13)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional (H11). v0.9 applies H12 (the ghost lands on a compressed axis inside the sheet). v0.10: inner ripples are created from the parent Ripple's detail sheet, not the input sheet. v0.11 applies H13 (the landing rail is progressive; time is a segmented toggle). v0.12 applies H14 (law 1's sinking is scoped to sections within a scroll; a paged day keeps its ground).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples). v0.8 corrects section 5.4: the axis is ordered, not time-proportional (H11). v0.9 applies H12 (the ghost lands on a compressed axis inside the sheet). v0.10: inner ripples are created from the parent Ripple's detail sheet, not the input sheet. v0.11 applies H13 (the landing rail is progressive; time is a segmented toggle). v0.12 applies H14 (law 1's sinking is scoped to sections within a scroll; a paged day keeps its ground). v0.13 applies H15 (scope re-cut into solo-first phases; v1a/v1b/v1.5 retired).
 
 ---
 
@@ -162,21 +162,27 @@ occurred vs created separated (backfill lands on the right day); occurred_on and
 
 ## 9. Scope
 
-**v1a (close the loop: write / witnessed / recall):** auth (social login) + profile bootstrap (timezone capture, category seed), Link + invite link, input sheet (chips, single note, lock, now/past/future/date-only time, Drop/Timer, ghost landing), Home Daily (wave rendering, Daily Note area, friend rail, scroll anchors), Ripple mini half-sheet (note, time, media, view count; opening records a view event; count visible to the author only), delete (hard, including media), presence TTL hardcoded 3d computed at read, designed empty states, Locker Trail (full personal scroll including locked ripples). Responsive web (Vercel) + Supabase.
+Scope is cut into **phases**, not versions (H15). The build is solo-first: the app becomes complete for one person before anyone is invited, because the founding constraint is that a user is complete with zero pools and the archive is worth keeping with nobody watching.
 
-**v1b:** Home Weekly zoom, Lanes read-only matrix, Spotify now-playing as a client-side fetch when the input sheet opens (no background jobs, no stored tokens), suggestion row v1 (yesterday's repeat for one-tap re-drop).
+*Mapping, stated once:* the old v1a splits across **P1** (everything except the social half) and **P2** (Link, rail, view count, presence). Old v1b's Lanes matrix moves into P1; its Spotify suggestion into P1.5; Home Weekly is deferred. Old v1.5 becomes **P3** unchanged. The v1a/v1b/v1.5 labels are retired.
 
-**Checkpoint after v1a ships to real friends:** 4 to 6 weeks of use, then review the section 1 hypotheses against their decide-by signals; decisions land in DECISIONS.md as group I before any v1.5 work.
+**P1 — solo-complete.** Auth (social login) + profile bootstrap (timezone capture, category seed); input sheet (chips, single note, audience, now/past/future/all-day time, Drop/Timer, ghost landing); Home Daily (wave rendering, Daily Note area, scroll anchors, Lanes strip); Ripple mini half-sheet — note, time, media, lock state, **no view count**; delete (hard, including media); photo attach; designed empty-state copy; Lanes read-only matrix; Locker Trail (full personal scroll including locked Ripples); deploy to cloud Supabase + Vercel, because daily use on a phone requires it.
 
-**v1.5 (Pool world):** Pool create/join + mapping contract screen, Swimmers (Daily score / Weekly matrix), pool Lanes, Splash tab (boards + joint filter), Swim (lane card, live card, FAB entry), suggestion row full version.
+**P1.5 — dogfood window.** Daily personal use and small fixes. First candidate: Spotify now-playing as a client-side fetch when the input sheet opens — no background jobs, no stored tokens.
 
-**v2+:** one year ago today (empty by definition for the first 12 months), background auto-collection (timeline autofill; Spotify first), multi-pool routing UI (category x pool mapping settings), Lists UI, notifications (Splash opened / Swim started / Link request only; <= 2/day), Splash-born ephemeral pools, open/searchable pools, desktop score layout and ambient window, weekly-group view for couples (Splash grouping), recurrence engine, note-convention parsing (scores), photo book export, dark mode (night pool), TTL setting UI.
+**P2 — Link world.** Link + invite link, friend rail, view-count UI (opening a Ripple records a view event; the count is visible to the author only), presence TTL surfacing (hardcoded 3d, computed at read). **The witnessing experiment runs here**: the section 1 hypotheses about being witnessed are not answerable before an audience exists.
+
+**What each phase can conclude (H15).** P1 and P1.5 validate **input cost and recall value only** — whether a record is cheap enough to make, and whether the archive is worth returning to. **Solo usage decay is not evidence of product failure**, because the witnessed hook is absent by design until P2.
+
+**P3 — Pool world.** Pool create/join + mapping contract screen, Swimmers (Daily score / Weekly matrix), pool Lanes, Splash tab (boards + joint filter), Swim (lane card, live card, FAB entry), suggestion row full version.
+
+**Later, unscheduled:** Home Weekly zoom, one year ago today (empty by definition for the first 12 months), background auto-collection (timeline autofill; Spotify first), multi-pool routing UI (category x pool mapping settings), Lists UI, notifications (Splash opened / Swim started / Link request only; <= 2/day), Splash-born ephemeral pools, open/searchable pools, desktop score layout and ambient window, weekly-group view for couples (Splash grouping), recurrence engine, note-convention parsing (scores), photo book export, dark mode (night pool), TTL setting UI.
 
 ## 10. Open items
 
 - Onboarding flow beyond functional empty states (first drop before first invite; "everyone's submerged" roster copy).
 - Home-Lanes-Detail person/pool filter chips in mockup: undecided whether that view includes others' content (would be a new axis decision) or is mine-only (then remove chips).
 - Friend-rail wave unification; quiet-day row compression thresholds.
-- Swim focus screen: lane card enlarged + my timer, nothing more (one-liner, v1.5).
+- Swim focus screen: lane card enlarged + my timer, nothing more (one-liner, P3).
 - E2EE stance: rejected in favor of access control (RLS); revisit only if positioning changes.
 - Monetization: explicitly a non-goal (portfolio + personal use).
