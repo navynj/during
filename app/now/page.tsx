@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation';
 
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { getInnerRipples, getRunningSession, runningBreak } from '@/lib/queries/compose';
-import { getMyProfile } from '@/lib/queries/profile';
+import { getRipplesForDate, splitByRegion } from '@/lib/queries/ripples';
+import { todayIn } from '@/lib/time';
+import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
 import { startInstant } from '@/lib/ripple-kind';
 import { createClient } from '@/lib/supabase/server';
 
@@ -33,6 +35,14 @@ export default async function NowPage() {
   const onBreak = runningBreak(inner);
   const breakStartedAt = onBreak ? startInstant(onBreak, profile.timezone) : null;
 
+  // The sheet opens over this surface, so it needs the same context Home
+  // gives it — fetched here rather than navigating to fetch it.
+  const date = todayIn(profile.timezone);
+  const [categories, today] = await Promise.all([
+    getMyCategories(supabase),
+    getRipplesForDate(supabase, profile.id, date),
+  ]);
+
   return (
     <FocusScreen
       ripple={running}
@@ -41,6 +51,13 @@ export default async function NowPage() {
       openBreak={onBreak?.id ?? null}
       breakStartedAt={breakStartedAt?.toISOString() ?? null}
       breakInitialSeconds={breakStartedAt ? secondsSince(breakStartedAt) : 0}
+      sheetContext={{
+        categories,
+        ripples: splitByRegion(today).timeline,
+        running,
+        timeZone: profile.timezone,
+        date,
+      }}
     />
   );
 }

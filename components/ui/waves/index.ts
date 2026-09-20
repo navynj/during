@@ -16,6 +16,9 @@ export {
   WAVE_STROKE,
   WAVE_GAP,
   WAVE_WAVELENGTH,
+  DEEP_SCALE,
+  waveHeight,
+  waveWavelength,
   travellingWaveWidth,
 } from './wave-math';
 export type { WaveState } from './wave-math';

@@ -145,17 +145,30 @@ describe('the focus screen', () => {
     expect(container.querySelector('a[href="/"]')).not.toBeNull();
   });
 
-  it('files into the session it is showing', () => {
-    const { getByLabelText } = focus();
-    const add = getByLabelText('Add to this session');
+  it('files into the session it is showing, without leaving it', () => {
+    const { getByLabelText, container } = focus();
 
-    expect(add.getAttribute('data-href')).toBe(`/?session=${running.id}`);
+    // A button, not a link: navigating away would unmount the surface and
+    // stop the water (H15, item 3).
+    const add = getByLabelText('Add to this session');
+    expect(add.tagName).toBe('BUTTON');
+    expect(container.querySelector('a[href^="/?session="]')).toBeNull();
   });
 
   it('stops behind a confirm, like the band', () => {
-    const { getByText } = focus();
-    fireEvent.click(getByText(/^Stop ·/));
+    const { getByLabelText, getByText } = focus();
+    fireEvent.click(getByLabelText(/^Stop ·/));
     expect(getByText('Stop now')).toBeTruthy();
+  });
+
+  it('gives Stop the centre and Break a side', () => {
+    const { getByLabelText } = focus();
+    const stop = getByLabelText(/^Stop ·/);
+    const brk = getByLabelText('Break');
+
+    // Stop is the record-ending control, so it carries the size.
+    expect(stop.className).toMatch(/h-24/);
+    expect(brk.className).toMatch(/h-16/);
   });
 });
 
@@ -253,11 +266,13 @@ describe('a break, on the surfaces (H15a2)', () => {
     expect(onBreak.container.textContent).toContain('On a break');
   });
 
-  it('offers Resume while on a break and Take a break otherwise', () => {
+  it('says Break and Resume in words, with no pause glyph', () => {
     const idle = render(
       <FocusScreen ripple={running} startedAt={running.started_at!} initialSeconds={60} />,
     );
-    expect(idle.getByLabelText('Take a break')).toBeTruthy();
+    // A pause icon would promise the clock stops, and ours does not (H15a2).
+    expect(idle.getByLabelText('Break').textContent).toBe('Break');
+    expect(idle.container.querySelector('.lucide-pause')).toBeNull();
     cleanup();
 
     const paused = render(
@@ -270,7 +285,8 @@ describe('a break, on the surfaces (H15a2)', () => {
         breakInitialSeconds={60}
       />,
     );
-    expect(paused.getByLabelText('Resume')).toBeTruthy();
+    expect(paused.getByLabelText('Resume').textContent).toBe('Resume');
+    expect(paused.container.querySelector('.lucide-pause')).toBeNull();
   });
 
   it('still shows the session clock, unpaused, during a break', () => {

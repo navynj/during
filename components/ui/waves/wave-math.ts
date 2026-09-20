@@ -66,11 +66,22 @@ export const WAVE_HEIGHT = 4;
 /**
  * The drawn weight. Finer than the export's 2px: waves sit among 14px text on
  * the timeline, and the full-weight pen read louder than the notes beside it.
- * Only the pen — the path below is the exported geometry, untouched.
+ * Only the pen — the path below is the exported geometry, untouched. The pen
+ * does not scale with the preset: a deeper wave is a bigger wave, not a
+ * heavier line.
  */
 export const WAVE_STROKE = 1.5;
 /** Constant pitch between lines: only the count varies with duration. */
 export const WAVE_GAP = 2;
+
+/**
+ * How large the wave is drawn. `1` is the Figma export as pinned; `deep` is
+ * the same path family at twice the amplitude and wavelength, for the live
+ * surface — at full width the pinned geometry read flat, like ticker tape.
+ * The shape is scaled, never redrawn.
+ */
+export const DEEP_SCALE = 2;
+
 const MIDLINE = WAVE_HEIGHT / 2;
 const CONTROL_OFFSET = 4 / 3;
 const SEGMENT = 5;
@@ -81,31 +92,57 @@ const SEGMENT = 5;
  */
 const INSET = 1;
 
+/** One full period: down then up. The travel loop shifts by exactly this. */
+export const WAVE_WAVELENGTH = SEGMENT * 2;
+
+export function waveHeight(scale = 1): number {
+  return WAVE_HEIGHT * scale;
+}
+
+export function waveWavelength(scale = 1): number {
+  return WAVE_WAVELENGTH * scale;
+}
+
 /** Figma writes 5 decimals; matching that keeps diffs against the export readable. */
 function round(value: number): string {
   return String(Number(value.toFixed(5)));
 }
 
-export function waveLinePath(width: number): string {
-  const usable = Math.max(SEGMENT, width - INSET * 2);
-  const count = Math.max(1, Math.round(usable / SEGMENT));
-  const segment = usable / count;
+/**
+ * One wave line as an SVG path.
+ *
+ * The geometry is taken from the Figma export, not approximated: four cubic
+ * segments of 5px, control points at a third and two thirds of each segment
+ * offset 4/3 from the midline, alternating below then above. A cubic with both
+ * controls at the same offset peaks at 3/4 of it, so the visible amplitude is
+ * 1px and the stroke lands inside the 4px box.
+ *
+ * `scale` multiplies that whole family — segment, midline and control offset
+ * together — so a deep wave is the same curve enlarged rather than a second
+ * shape. The end inset does not scale: it clears the round cap, which is a
+ * property of the pen.
+ */
+export function waveLinePath(width: number, scale = 1): string {
+  const segment = SEGMENT * scale;
+  const midline = MIDLINE * scale;
+  const controlOffset = CONTROL_OFFSET * scale;
 
-  let path = `M${round(INSET)} ${round(MIDLINE)}`;
+  const usable = Math.max(segment, width - INSET * 2);
+  const count = Math.max(1, Math.round(usable / segment));
+  const step = usable / count;
+
+  let path = `M${round(INSET)} ${round(midline)}`;
   for (let i = 0; i < count; i += 1) {
-    const start = INSET + i * segment;
+    const start = INSET + i * step;
     // The first segment bulges down, matching the export.
-    const controlY = MIDLINE + (i % 2 === 0 ? CONTROL_OFFSET : -CONTROL_OFFSET);
+    const controlY = midline + (i % 2 === 0 ? controlOffset : -controlOffset);
     path +=
-      `C${round(start + segment / 3)} ${round(controlY)}` +
-      ` ${round(start + (2 * segment) / 3)} ${round(controlY)}` +
-      ` ${round(start + segment)} ${round(MIDLINE)}`;
+      `C${round(start + step / 3)} ${round(controlY)}` +
+      ` ${round(start + (2 * step) / 3)} ${round(controlY)}` +
+      ` ${round(start + step)} ${round(midline)}`;
   }
   return path;
 }
-
-/** One full period: down then up. The travel loop shifts by exactly this. */
-export const WAVE_WAVELENGTH = SEGMENT * 2;
 
 /**
  * Path width for a line that travels horizontally inside its box.
@@ -116,11 +153,12 @@ export const WAVE_WAVELENGTH = SEGMENT * 2;
  * without that, shifting by one wavelength would not land on an identical
  * shape and the loop would visibly jump.
  */
-export function travellingWaveWidth(visibleWidth: number): number {
-  const needed = visibleWidth + WAVE_WAVELENGTH * 3;
-  const segments = Math.ceil((needed - INSET * 2) / SEGMENT);
+export function travellingWaveWidth(visibleWidth: number, scale = 1): number {
+  const segment = SEGMENT * scale;
+  const needed = visibleWidth + waveWavelength(scale) * 3;
+  const segments = Math.ceil((needed - INSET * 2) / segment);
   const evenSegments = segments % 2 === 0 ? segments : segments + 1;
-  return evenSegments * SEGMENT + INSET * 2;
+  return evenSegments * segment + INSET * 2;
 }
 
 /** A bundle's rendered height, given constant pitch. */

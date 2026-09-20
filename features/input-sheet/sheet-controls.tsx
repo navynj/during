@@ -39,12 +39,18 @@ export function TimeControl({
   timeZone,
   onChange,
   onEditingChange,
+  allowAllDay = true,
 }: {
   draft: Draft;
   planned: boolean;
   timeZone: string;
   onChange: (time: string | null) => void;
   onEditingChange?: (editing: boolean) => void;
+  /**
+   * False inside a session: a child has to lie within its parent's span, and
+   * a date-only record has no time to be contained by (H10).
+   */
+  allowAllDay?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const allDay = draft.time === null;
@@ -81,9 +87,11 @@ export function TimeControl({
           </Segment>
         )}
 
-        <Segment selected={allDay} onClick={() => onChange(null)}>
-          All day
-        </Segment>
+        {allowAllDay ? (
+          <Segment selected={allDay} onClick={() => onChange(null)}>
+            All day
+          </Segment>
+        ) : null}
       </div>
 
       {/* The microcopy SPEC 6 asks for, shown only when it is true. */}

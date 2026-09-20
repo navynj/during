@@ -2,28 +2,30 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
-import { ChevronDown, Pause, Play, Plus } from 'lucide-react';
+import { useState, useTransition } from 'react';
+import { ChevronDown, Plus } from 'lucide-react';
 
-import { WaveLine } from '@/components/ui/waves';
+import { DEEP_SCALE, WaveLine } from '@/components/ui/waves';
 import { StopControl } from '@/features/home-daily/stop-control';
-import { endBreak, startBreak } from './break';
 import { formatStopwatch, useElapsedSeconds } from '@/features/home-daily/use-elapsed';
+import { InputSheet, type SheetContext } from '@/features/input-sheet/input-sheet';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
+
+import { endBreak, startBreak } from './break';
 
 /**
  * H15a: a running timed, at full size. A solid #0507C9 surface — which law 5
- * now reads as "a live session" rather than "a Swim or Splash card" — with the
- * elapsed time at display size and slow white water crossing it.
+ * now reads as "a live session" — with the elapsed time at display size and
+ * slow white water crossing it at the deep preset, because at full width the
+ * timeline's geometry read flat.
  *
  * Absent on purpose, and not to be added back without revisiting H15: no goal
  * duration, no percent, no progress bar (gauges and targets, rejected by F2
- * and the no-guilt hypothesis); no pause (`ended_at` is a single instant —
- * a pausable timer needs intervals and invites the accounting this app
- * exists to avoid); no co-swimmers row until people exist, in P2.
+ * and the no-guilt hypothesis); no pause — Break records the rest instead,
+ * and the session's clock never stops (H15a2).
  *
- * Type sizes and the band positions are eyed from
- * _docs/mockups/timer-focus.png, not exported.
+ * Type sizes and the control row are eyed from _docs/mockups/timer-focus.png,
+ * not exported.
  */
 export function FocusScreen({
   ripple,
@@ -32,6 +34,7 @@ export function FocusScreen({
   openBreak,
   breakStartedAt,
   breakInitialSeconds,
+  sheetContext,
 }: {
   ripple: RippleWithCategory;
   startedAt: string;
@@ -40,9 +43,12 @@ export function FocusScreen({
   openBreak?: string | null;
   breakStartedAt?: string | null;
   breakInitialSeconds?: number;
+  /** Lets the sheet open over this surface instead of navigating away. */
+  sheetContext?: SheetContext;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [addingInner, setAddingInner] = useState(false);
   const seconds = useElapsedSeconds(startedAt, initialSeconds);
   const category = ripple.category?.name ?? 'Focus';
   const onBreak = Boolean(openBreak);
@@ -55,7 +61,6 @@ export function FocusScreen({
           Collapse
         </Link>
 
-        {/* SPEC 7's display format, carried onto the live surface. */}
         <span className="flex max-w-[60%] items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm text-white">
           {ripple.category?.icon ? <span aria-hidden>{ripple.category.icon}</span> : null}
           <span className="truncate">
@@ -66,13 +71,12 @@ export function FocusScreen({
       </header>
 
       <div className="relative flex flex-1 flex-col items-center justify-center">
-        {/* The water crosses the whole surface, behind the clock. */}
+        {/* Law 2: rest is the same channel at its low value, so on a break the
+            water stops moving rather than turning into something else. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 flex flex-col gap-10 opacity-40"
+          className="pointer-events-none absolute inset-x-0 flex flex-col gap-12 opacity-40"
         >
-          {/* Law 2: rest is the same channel at its low value, so the water
-              stops moving rather than turning into something else. */}
           <FullWidthWave still={onBreak} />
           <FullWidthWave still={onBreak} />
           <FullWidthWave still={onBreak} />
@@ -84,35 +88,18 @@ export function FocusScreen({
         </p>
 
         {/* Beside the session's clock, never subtracted from it: the session
-            keeps gross wall-clock time, and no net figure is shown anywhere
-            (H15a2). */}
+            keeps gross wall-clock time and no net figure is shown (H15a2). */}
         {onBreak && breakStartedAt ? (
           <BreakClock since={breakStartedAt} initialSeconds={breakInitialSeconds ?? 0} />
         ) : null}
       </div>
 
-      <div className="flex items-center justify-center gap-6 pb-4">
-        <RoundAction
-          href={`/?session=${ripple.id}`}
-          label="Add to this session"
-          onNavigate={() => router.push(`/?session=${ripple.id}`)}
-        >
-          <Plus aria-hidden size={18} />
-        </RoundAction>
-
-        <StopControl
-          rippleId={ripple.id}
-          since={startedAt}
-          initialMinutes={Math.round(seconds / 60)}
-          tone="on-live"
-          openBreakId={openBreak ?? null}
-          onStopped={() => router.push('/')}
-        />
-
-        <button
-          type="button"
+      <div className="flex items-center justify-center gap-8 pb-4">
+        {/* No pause glyph: a pause icon promises the clock stops, and ours
+            does not. The word says what actually happens. */}
+        <SideAction
+          label={onBreak ? 'Resume' : 'Break'}
           disabled={pending}
-          aria-label={onBreak ? 'Resume' : 'Take a break'}
           onClick={() =>
             startTransition(async () => {
               if (onBreak && openBreak) await endBreak(openBreak);
@@ -120,23 +107,51 @@ export function FocusScreen({
               router.refresh();
             })
           }
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/40 text-white disabled:opacity-50"
-        >
-          {onBreak ? <Play aria-hidden size={18} /> : <Pause aria-hidden size={18} />}
-        </button>
+        />
+
+        <StopControl
+          rippleId={ripple.id}
+          since={startedAt}
+          initialMinutes={Math.round(seconds / 60)}
+          tone="on-live"
+          variant="primary"
+          openBreakId={openBreak ?? null}
+          onStopped={() => router.push('/')}
+        />
+
+        <SideAction
+          label="Add"
+          title="Add to this session"
+          icon={<Plus aria-hidden size={18} />}
+          onClick={() => setAddingInner(true)}
+        />
       </div>
+
+      {/* The sheet opens over the surface rather than navigating to it: this
+          screen never unmounts, so the water behind the scrim keeps moving. */}
+      {addingInner && sheetContext ? (
+        <InputSheet
+          context={sheetContext}
+          prefill={{ parentRippleId: ripple.id }}
+          onClose={() => setAddingInner(false)}
+          onCommitted={() => {
+            setAddingInner(false);
+            router.refresh();
+          }}
+        />
+      ) : null}
     </main>
   );
 }
 
 /**
- * One wave line stretched across the surface. Built from the same component as
- * every other wave — only the ink inverts, from `--wave-ink` on .live-surface.
+ * One wave line stretched across the surface, at the deep preset: the same
+ * curve enlarged, not a second shape.
  */
 function FullWidthWave({ still = false }: { still?: boolean }) {
   return (
     <span className="flex justify-center overflow-hidden">
-      <WaveLine width={440} travelling={!still} />
+      <WaveLine width={440} travelling={!still} scale={DEEP_SCALE} />
     </span>
   );
 }
@@ -151,27 +166,30 @@ function BreakClock({ since, initialSeconds }: { since: string; initialSeconds: 
   );
 }
 
-function RoundAction({
-  href,
+function SideAction({
   label,
-  onNavigate,
-  children,
+  title,
+  icon,
+  disabled = false,
+  onClick,
 }: {
-  href: string;
   label: string;
-  onNavigate: () => void;
-  children: React.ReactNode;
+  title?: string;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      aria-label={label}
-      title={label}
-      onClick={onNavigate}
-      data-href={href}
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/40 text-white"
+      aria-label={title ?? label}
+      title={title ?? label}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-full border border-white/40 text-[11px] font-medium text-white disabled:opacity-50"
     >
-      {children}
+      {icon}
+      {label}
     </button>
   );
 }

@@ -72,9 +72,10 @@ body {
   }
   to {
     /* Exactly one wavelength: the path is periodic, so the last frame is
-       pixel-identical to the first and the loop has no seam. Linear, because
+       pixel-identical to the first and the loop has no seam. The distance is
+       set per line, because a deeper wave has a longer one. Linear, because
        any easing would read as the water hesitating. */
-    transform: translateX(-10px);
+    transform: translateX(var(--wave-shift, -10px));
   }
 }
 

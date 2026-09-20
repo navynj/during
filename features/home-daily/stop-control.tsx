@@ -19,6 +19,7 @@ export function StopControl({
   since,
   initialMinutes,
   tone,
+  variant = 'chip',
   openBreakId = null,
   onStopped,
 }: {
@@ -26,6 +27,8 @@ export function StopControl({
   since: string;
   initialMinutes: number;
   tone: 'on-live' | 'on-light';
+  /** `primary` is the focus screen's centre control. */
+  variant?: 'chip' | 'primary';
   /**
    * A break still running inside this session. Closed first, because a
    * parent's span shrinks to its end and a child still running would be left
@@ -43,6 +46,13 @@ export function StopControl({
       ? 'bg-white text-main-900'
       : 'bg-pool-100 text-main-900 border border-pool-200';
 
+  // Stop is the primary control on the focus screen: the one thing that ends
+  // the record gets the size, and Break sits beside it.
+  const shape =
+    variant === 'primary'
+      ? 'h-24 w-24 flex-col rounded-full text-sm font-medium'
+      : 'rounded-full px-3 py-1 text-xs font-medium';
+
   if (confirming) {
     return (
       <span className="flex items-center gap-2">
@@ -55,7 +65,7 @@ export function StopControl({
               onStopped?.();
             })
           }
-          className={`rounded-full px-3 py-1 text-xs font-medium disabled:opacity-50 ${base}`}
+          className={`flex items-center justify-center disabled:opacity-50 ${shape} ${base}`}
         >
           {pending ? 'Stopping…' : 'Stop now'}
         </button>
@@ -74,9 +84,19 @@ export function StopControl({
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      className={`rounded-full px-3 py-1 text-xs font-medium tabular-nums ${base}`}
+      // The primary variant splits its label across two lines, which reads
+      // poorly aloud; the whole phrase goes on the element instead.
+      aria-label={`Stop · ${formatDuration(minutes)}`}
+      className={`flex items-center justify-center tabular-nums ${shape} ${base}`}
     >
-      Stop · {formatDuration(minutes)}
+      {variant === 'primary' ? (
+        <>
+          <span>Stop</span>
+          <span className="text-xs opacity-70">{formatDuration(minutes)}</span>
+        </>
+      ) : (
+        <>Stop · {formatDuration(minutes)}</>
+      )}
     </button>
   );
 }
