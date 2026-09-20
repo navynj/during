@@ -1,4 +1,4 @@
-# During: Decision Log (v0.11)
+# During: Decision Log (v0.12)
 
 Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chronological within each. Group H records spec-review amendments; where H supersedes an earlier entry, the earlier entry stays as history with a note.
 
@@ -90,7 +90,7 @@ Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chr
 
 **E1. Preset chips = category layer, free text = detail layer.** category (enum) + note split is what makes Locker aggregation possible; presets also declare culture (resting equals focus in rank). Chip alone = valid zero-character entry.
 
-**E2. drop/timed split: only explicit timers claim duration.** Drops display "dropped Xm ago", never elapsed. Fake-duration TTL rejected. Category carries a default mode.
+**E2. drop/timed split: duration is claimed, never inferred.** Drops display "dropped Xm ago", never elapsed. Fake-duration TTL rejected. Category carries a default mode. (Restated by H18: what E2 rejected was **system-fabricated** duration — a TTL that decides on the author's behalf how long something lasted. A span the author types in is not that; it is an explicit claim, the same claim a timer makes, made after the fact. The original wording said "only explicit timers claim duration", which read the prohibition as being about the timer rather than about fabrication.)
 
 **E3. Dual commit buttons (Drop / Timer) replace long-press mode flip.** No hidden gesture, no mode state; choice deferred to commit moment. Future time disables the timer.
 
@@ -222,7 +222,7 @@ Sinking is therefore reserved for surfaces that actually stack sections: the Loc
 
 A Break category was tried first, created lazily on first use. It then had to be hidden from the chip row, the Lanes strip and every picker, because a resident Break chip is a standing suggestion to take one. **A category that must be hidden from category surfaces is the wrong shape**: the hiding was the design telling us the thing was not a category.
 
-Inheriting the parent's category makes the identity **structural instead of nominal**. Inner composition is Drop-only (SPEC 6), so the Break button on the focus screen is the only thing that produces a *timed* child — which means "a timed inner ripple" and "a break" are the same set, with nothing to label, rename or hide. Rejected: a boolean column, which is a flag for a distinction the structure already makes.
+Inheriting the parent's category makes the identity **structural instead of nominal**. Inner composition is Drop-only (SPEC 6), so the Break button on the focus screen is the only thing that produces a *timed* child — which means "a timed inner ripple" and "a break" are the same set, with nothing to label, rename or hide. (Loosened by H18: inner mode now has no Timer rather than no span, so a typed span may sit inside a session and a break is no longer the only timed child. Identification by span is unaffected — that is why it was chosen over a name.) Rejected: a boolean column, which is a flag for a distinction the structure already makes.
 
 This keeps every reason pause was rejected. **The parent session is never split**: its span stays one interval, its duration chip stays **gross wall-clock**, and **no net time is displayed anywhere** — not on the chip, not on the focus screen, not in Lanes. The moment the app subtracts breaks from a session it has started keeping score of how much of your hour was *real*, which is the accounting the no-guilt hypothesis exists to refuse. What you get instead is a record of the break itself, which is a fact rather than a deduction.
 
@@ -271,3 +271,15 @@ When an inner ripple is the blocker, the message names it — "that span leaves 
 **Delete is hard and takes the inside with it.** A session's inner ripples cascade, and the confirm says how many rather than asking twice. Media goes with the rows, gathered before the delete because afterwards nothing says which objects were theirs. No undo, no grace period, no "moved to trash": what you remove is removed.
 
 **Media stores paths, and visibility is checked against the Ripple.** `ripples.media` holds storage paths, never URLs — a URL is a credential with an expiry baked in, so a row holding one rots. Serving signs on demand, after checking the *Ripple's* visibility through the viewer's own session. S0 rejected a path-prefix read policy for this reason: `<owner>/…` can only answer "is this mine", and in P2 a linked friend must see media on a Ripple they may see while still being refused a locked one. The write side keeps the prefix policy, which is the right question for an upload.
+
+**H18. Kind is end-presence, at the input surface too. The present is written by the Timer.**
+
+A Ripple is timed because it *has a span*, not because a timer produced it. The database already said so — `ended_at` null or equal to the start is a drop, later is a span (SPEC 8) — and `rippleKind` has only ever read those two columns. The input surface was the last place still treating kind as provenance, which is why a span could be recorded only by living through it: a meeting that happened while the phone was in a bag had no way in, and a backfilled session had to be invented by starting and immediately stopping a timer.
+
+So the time control gains an optional end. Commit stays **Drop** regardless of span, because Drop means *set this record down* and the kind derives from the end field; making the button name track the kind would restore the mode state E3 removed, and it would put the same record behind two different buttons depending on a field's value.
+
+**The one line that cannot be crossed: a typed span may not straddle now.** It must lie wholly in the past or wholly in the future, and a straddling span is refused with the offer to start the Timer instead. Why: an in-progress record is the one thing on the surface that is *alive* — the now band, the focus screen, the travelling water, the whole of SPEC 7's law 3 — and the Timer is what makes it live. Letting an end be typed into the present would mean a record that claims to be running while nothing is running it, whose end is a prediction the author has already been billed for. A future span is honest by contrast: it renders planned, like every other future record, and says so.
+
+Rejected: (a) a separate "log a past session" surface — a second editor, which H17 settled against; (b) a duration input beside the times — exclusion and containment both validate on times, so times are the unit of truth and a duration field would be a second way to say the same thing that has to be kept in agreement; (c) allowing a straddling span and quietly clamping the end to now — a silent rewrite of what the author typed.
+
+**Consequence for inner ripples:** "inner composition is Drop-only" loosens into **"inner mode has no Timer"**. A typed span is allowed inside a session, validated by containment. This costs nothing that H15a2 relied on: a break was made identifiable by its *span* rather than by a name or a flag precisely so that the identification would not depend on breaks being the only producer of one — and that choice now pays, because they no longer are.

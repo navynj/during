@@ -6,7 +6,7 @@ During (during.today): a one-line diary that assembles itself. While you write i
 
 ## Source of truth
 
-- `_docs/SPEC.md`: the product spec (v0.5). Authoritative for behavior, vocabulary, IA, visual system, schema, and scope. Read the relevant section before building any screen.
+- `_docs/SPEC.md`: the product spec (v0.20). Authoritative for behavior, vocabulary, IA, visual system, schema, and scope. Read the relevant section before building any screen.
 - `_docs/DECISIONS.md`: the decision log with rationale and rejected alternatives. Do not re-litigate settled decisions. If implementation genuinely forces a revisit, stop and flag it; never silently deviate.
 - `_docs/mockups/`: current Figma exports. Visual reference for layout and the wave grammar. Some predate SPEC v0.2; where a mockup and SPEC conflict, SPEC wins. Flag the conflict instead of guessing.
 
