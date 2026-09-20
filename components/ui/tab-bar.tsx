@@ -22,7 +22,10 @@ export function TabBar() {
 
   return (
     <nav
-      className="border-pool-200 sticky bottom-0 z-20 border-t bg-white"
+      // No rule on top: the Lanes strip sits flush here, and its #F1F3F7
+      // ground already separates the two. A hairline between them read as a
+      // border on the strip.
+      className="sticky bottom-0 z-20 bg-white"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* A fixed height, because the Lanes strip sits exactly on top of it. */}

@@ -35,7 +35,7 @@ export function LanesStrip({
     // stays put while the day scrolls under it.
     <nav
       aria-label="Categories"
-      className="bg-pool-100 border-pool-200 sticky z-10 -mx-6 mt-8 border-t px-2 py-4"
+      className="bg-pool-100 sticky z-10 -mx-6 mt-8 px-2 py-4"
       style={{ bottom: 'calc(var(--tab-bar-h) + env(safe-area-inset-bottom, 0px))' }}
     >
       <ul className="no-scrollbar divide-pool-200 flex divide-x overflow-x-auto">
