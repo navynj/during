@@ -54,14 +54,3 @@ export function isPlanned(draft: Draft, timeZone: string): boolean {
 export function canRunTimer(draft: Draft, timeZone: string): boolean {
   return draft.time !== null && !isPlanned(draft, timeZone);
 }
-
-/** Which commit button leads, from the category's own default mode (E1/E2). */
-export function primaryCommit(
-  draft: Draft,
-  categories: MyCategory[],
-  timeZone: string,
-): 'drop' | 'timer' {
-  const category = categories.find((c) => c.id === draft.categoryId);
-  if (!category || category.default_mode === 'drop') return 'drop';
-  return canRunTimer(draft, timeZone) ? 'timer' : 'drop';
-}

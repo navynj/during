@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  canRunTimer,
-  emptyDraft,
-  isPlanned,
-  primaryCommit,
-  type Draft,
-} from '@/features/input-sheet/draft';
+import { canRunTimer, emptyDraft, isPlanned, type Draft } from '@/features/input-sheet/draft';
 import type { MyCategory } from '@/lib/queries/profile';
 
 const TZ = 'UTC';
@@ -68,12 +62,6 @@ describe('a future time makes it a plan', () => {
     expect(canRunTimer(draft({ time: '23:59' }), TZ)).toBe(false);
     expect(canRunTimer(draft({ time: '00:00' }), TZ)).toBe(true);
   });
-
-  it('makes Drop the primary even for a timed category', () => {
-    const cats = [category({ default_mode: 'timed' })];
-    expect(primaryCommit(draft({ time: '23:59' }), cats, TZ)).toBe('drop');
-    expect(primaryCommit(draft({ time: '00:00' }), cats, TZ)).toBe('timer');
-  });
 });
 
 describe('for the whole day', () => {
@@ -83,16 +71,5 @@ describe('for the whole day', () => {
     expect(isPlanned(d, TZ)).toBe(false);
     // Nothing without a time can run a timer: there is no moment to run from.
     expect(canRunTimer(d, TZ)).toBe(false);
-  });
-});
-
-describe('the category shapes the commit', () => {
-  it('leads with Drop for a drop-default category (E1/E2)', () => {
-    const cats = [category({ default_mode: 'drop' })];
-    expect(primaryCommit(draft(), cats, TZ)).toBe('drop');
-  });
-
-  it('leads with Timer for a timed-default category', () => {
-    expect(primaryCommit(draft(), [category({ default_mode: 'timed' })], TZ)).toBe('timer');
   });
 });

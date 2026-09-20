@@ -107,3 +107,17 @@ body {
     animation: none;
   }
 }
+
+/*
+ * A scrollbar under a row of chips reads as a gauge — a bar whose length says
+ * "this much of something" — which SPEC 7 law 2 forbids. Overflowing rows
+ * scroll silently instead.
+ */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

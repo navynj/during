@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * A category chip. The one place #787BE2 is a foreground (H8): selected fills
- * with ink and reverses, unselected carries the chip colour on a pale ground.
+ * A category chip. Selected takes the action colour as a fill (H8); ink is a
+ * text colour and never a surface. Unselected is an outline carrying #787BE2,
+ * the one place the palette allows it as a foreground.
  *
  * Shape follows _docs/mockups/Home - Input.png by eye — a first pass, to be
  * replaced by the Figma export's radius and padding.

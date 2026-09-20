@@ -9,7 +9,7 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
 import { commitRipple, type CommitResult } from './commit';
-import { canRunTimer, emptyDraft, isPlanned, primaryCommit, type Draft } from './draft';
+import { canRunTimer, emptyDraft, isPlanned, type Draft } from './draft';
 import { MiniAxis } from './mini-axis';
 import { AudienceChip, TimeControl } from './sheet-controls';
 import { CollisionNotice } from './collision-notice';
@@ -46,7 +46,6 @@ export function InputSheet({
 
   const planned = isPlanned(draft, timeZone);
   const timerAvailable = canRunTimer(draft, timeZone) && draft.parentRippleId === null;
-  const primary = primaryCommit(draft, categories, timeZone);
   const selected = categories.find((c) => c.id === draft.categoryId) ?? null;
 
   function commit(mode: 'drop' | 'timer', parentRippleId: string | null = draft.parentRippleId) {
@@ -103,7 +102,9 @@ export function InputSheet({
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {/* No scroll indicator: a bar under a row of chips reads as a
+                gauge, which law 2 forbids. They scroll silently. */}
+            <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
               {categories.map((category) => (
                 <CategoryChip
                   key={category.id}
@@ -128,6 +129,7 @@ export function InputSheet({
             <TimeControl
               draft={draft}
               planned={planned}
+              timeZone={timeZone}
               onChange={(time) => setDraft((d) => ({ ...d, time }))}
             />
 
@@ -161,9 +163,10 @@ export function InputSheet({
             type="button"
             disabled={pending || !draft.categoryId}
             onClick={() => commit('drop')}
-            className={`flex-1 rounded-full py-3 text-base font-medium disabled:opacity-50 ${
-              primary === 'drop' ? 'bg-main-900 text-white' : 'border-pool-200 text-ink border'
-            }`}
+            // Drop is the primary action, always: H8 gives chrome primary
+            // actions the action colour, and an outlined Drop beside a filled
+            // Timer read as the weaker of the two.
+            className="bg-main-900 flex-1 rounded-full py-3 text-base font-medium text-white disabled:opacity-50"
           >
             {planned ? 'Save as plan' : 'Drop'}
           </button>
@@ -174,9 +177,7 @@ export function InputSheet({
             onClick={() => commit('timer')}
             aria-label="Start a timer"
             title={timerAvailable ? 'Start a timer' : 'A plan has not started yet'}
-            className={`flex h-12 w-12 items-center justify-center rounded-full disabled:opacity-40 ${
-              primary === 'timer' ? 'bg-main-900 text-white' : 'border-pool-200 text-ink border'
-            }`}
+            className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white disabled:opacity-40"
           >
             <Timer aria-hidden size={20} />
           </button>

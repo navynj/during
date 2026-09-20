@@ -25,7 +25,7 @@ export function LanesStrip({
 
   return (
     <nav aria-label="Categories" className="border-pool-200 mt-6 border-t pt-4">
-      <ul className="flex gap-4 overflow-x-auto pb-2">
+      <ul className="no-scrollbar flex gap-4 overflow-x-auto">
         {categories.map((category) => {
           const count = countsByCategory[category.id] ?? 0;
           return (
