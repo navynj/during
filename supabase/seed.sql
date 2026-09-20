@@ -110,6 +110,21 @@ select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note, day.d, 
           'slept badly, worked anyway', null, null, false)
        ) as v(id, category, note, at, ends, planned);
 
+-- An inner ripple (H10): a drop that happened *during* the morning focus
+-- session. Concurrency is containment, not overlap — this is a full Ripple
+-- with its own category, so Locker still counts it, but it does not claim a
+-- row on the top-level axis.
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
+select 'b1000000-0000-0000-0000-000000000008',
+       '11111111-1111-1111-1111-111111111111',
+       'a1000000-0000-0000-0000-000000000003',
+       'something instrumental, to keep going',
+       day.d, '09:40',
+       (day.d + '09:40'::time) at time zone 'America/Vancouver',
+       'b1000000-0000-0000-0000-000000000001'
+  from day;
+
 -- Yoonji, yesterday in Vancouver.
 with day as (select (now() at time zone 'America/Vancouver')::date - 1 as d)
 insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)

@@ -64,6 +64,12 @@ export function wallClockToInstant(date: IsoDate, time: string, timeZone: string
   return new Date(naive - timeZoneOffsetMs(new Date(firstPass), timeZone));
 }
 
+/** The instant a Ripple began, or null for a date-only record. */
+export function startInstant(ripple: Ripple, timeZone: string): Date | null {
+  if (!ripple.occurred_time) return null;
+  return wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
+}
+
 export function rippleKind(ripple: Ripple, timeZone: string): RippleKind {
   if (!ripple.occurred_time) return 'date-only';
   if (!ripple.ended_at) return 'timed';

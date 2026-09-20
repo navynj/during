@@ -73,8 +73,7 @@ begin
       -- -1h30, because the sign binds only to the first field. That silently
       -- turned a 90-minute record into a 150-minute one here.
       ('focus-am',   focus,     'spec rewrite',                           interval '-240 minutes', interval '-150 minutes', false),
-      ('place-noon', place,     'kitsilano beach',                        interval '-180 minutes', interval '-180 minutes', false),
-      ('listening',  listening, 'parannoul on repeat',                    interval '-120 minutes', interval '-120 minutes', false),
+      ('place-noon', place,     'kitsilano beach',                        interval '-120 minutes', interval '-120 minutes', false),
       ('locked',     day,       'the thing I am not saying out loud yet', interval '-75 minutes',  interval '-75 minutes',  false),
       -- In progress: no end, and started long enough ago to carry five lines.
       ('live',       focus,     'session 2',                              interval '-50 minutes',  null,                    false),
@@ -85,6 +84,20 @@ begin
          occurred_time = excluded.occurred_time,
          ended_at      = excluded.ended_at,
          planned       = excluded.planned;
+
+  -- An inner ripple (H10): a drop that happened *during* the focus session.
+  -- Top-level Ripples cannot overlap, so a record inside a span is carried by
+  -- its parent rather than taking a row of its own.
+  insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
+  select md5(me::text || ':inner')::uuid, me, listening, 'something instrumental, to keep going',
+         (local_now - interval '200 minutes')::date,
+         (local_now - interval '200 minutes')::time,
+         (local_now - interval '200 minutes') at time zone tz,
+         md5(me::text || ':focus-am')::uuid
+  on conflict (id) do update
+     set occurred_on   = excluded.occurred_on,
+         occurred_time = excluded.occurred_time,
+         ended_at      = excluded.ended_at;
 
   -- Fixed-hour rows: a date-only note, yesterday, and one far enough back to
   -- show the surface at its deepest step.
@@ -106,6 +119,6 @@ begin
   values (md5(me::text || ':locked')::uuid, 'lock')
   on conflict do nothing;
 
-  raise notice 'Seeded 11 ripples for % (timezone %, today %).', target_email, tz, today;
+  raise notice 'Seeded 11 ripples (one of them inner) for % (timezone %, today %).', target_email, tz, today;
 end $$;
 SQL

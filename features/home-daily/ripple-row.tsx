@@ -1,11 +1,12 @@
+import { DurationChip, LiveDurationChip } from '@/components/ui/chips/duration-chip';
 import { WaveBundle, WaveLine } from '@/components/ui/waves';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
-  endWallClock,
   rippleDurationMinutes,
   rippleKind,
   rippleState,
+  startInstant,
 } from '@/lib/ripple-kind';
 
 import { ROPE, ROW_GRID } from './row-grid';
@@ -51,20 +52,18 @@ export function RippleRow({
       ? elapsedMinutes(ripple, timeZone, now)
       : rippleDurationMinutes(ripple, timeZone);
 
-  // A timed record spans two hours of the day, so the gutter carries both: the
-  // start beside its badge, the end beside its last wave line. A drop has one
-  // moment and a running timer has no end yet, so both show a single label.
-  const endsAt = endWallClock(ripple, timeZone);
+  // The gutter carries start times only, so the column reads as one ascending
+  // sequence. A record's length is told by its bundle and its duration tag,
+  // not by a second number that breaks the ordering.
 
   return (
     <li className={ROW_GRID}>
-      <div
-        className="text-main-900 flex flex-col justify-between pt-2 pb-4 text-xs font-light tabular-nums"
+      <time
+        className="text-main-900 pt-2 text-xs font-light tabular-nums"
         style={{ opacity: fade }}
       >
-        <time>{clock(ripple.occurred_time!)}</time>
-        {endsAt ? <time>{endsAt}</time> : null}
-      </div>
+        {clock(ripple.occurred_time!)}
+      </time>
 
       {/* The rope runs the full height of this cell, so consecutive rows join
           into one continuous line without anyone computing an offset. */}
@@ -88,9 +87,19 @@ export function RippleRow({
         </span>
       </div>
 
-      <p className="text-ink pt-1.5 text-sm" style={{ opacity: fade }}>
-        {ripple.note}
-      </p>
+      <div className="flex flex-wrap items-center gap-2 pt-1.5" style={{ opacity: fade }}>
+        <p className="text-ink text-sm">{ripple.note}</p>
+        {kind === 'timed' ? (
+          ripple.ended_at === null ? (
+            <LiveDurationChip
+              since={startInstant(ripple, timeZone)!.toISOString()}
+              initialMinutes={duration}
+            />
+          ) : (
+            <DurationChip minutes={duration} />
+          )
+        ) : null}
+      </div>
     </li>
   );
 }

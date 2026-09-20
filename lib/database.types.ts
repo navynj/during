@@ -434,8 +434,10 @@ export type Database = {
           note: string | null
           occurred_on: string
           occurred_time: string | null
+          parent_ripple_id: string | null
           participants: string[]
           planned: boolean
+          started_at: string | null
         }
         Insert: {
           author_id: string
@@ -447,8 +449,10 @@ export type Database = {
           note?: string | null
           occurred_on: string
           occurred_time?: string | null
+          parent_ripple_id?: string | null
           participants?: string[]
           planned?: boolean
+          started_at?: string | null
         }
         Update: {
           author_id?: string
@@ -460,8 +464,10 @@ export type Database = {
           note?: string | null
           occurred_on?: string
           occurred_time?: string | null
+          parent_ripple_id?: string | null
           participants?: string[]
           planned?: boolean
+          started_at?: string | null
         }
         Relationships: [
           {
@@ -476,6 +482,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "my_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ripples_parent_ripple_id_fkey"
+            columns: ["parent_ripple_id"]
+            isOneToOne: false
+            referencedRelation: "ripples"
             referencedColumns: ["id"]
           },
         ]
@@ -535,6 +548,10 @@ export type Database = {
       record_ripple_view: { Args: { rid: string }; Returns: undefined }
       ripple_author: { Args: { rid: string }; Returns: string }
       ripple_is_locked: { Args: { rid: string }; Returns: boolean }
+      ripple_span: {
+        Args: { ended: string; started: string }
+        Returns: unknown
+      }
     }
     Enums: {
       audience_target: "list" | "pool" | "lock"

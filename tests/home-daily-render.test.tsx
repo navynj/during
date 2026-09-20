@@ -42,6 +42,8 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
     planned: false,
     participants: [],
     created_at: '2026-09-19T16:00:00.000Z',
+    parent_ripple_id: null,
+    started_at: null,
     category: { name: 'Focus', icon: '🔍' },
     ...over,
   };
@@ -175,21 +177,99 @@ describe('the rope', () => {
 });
 
 describe('the time gutter', () => {
-  it('shows both ends of a timed record', () => {
-    const { getByText } = row();
+  it('shows the start only, so the column is one ascending sequence', () => {
+    const { container, getByText } = row();
+
     expect(getByText('09:00')).toBeTruthy();
-    expect(getByText('10:30')).toBeTruthy();
+    expect(container.querySelectorAll('time')).toHaveLength(1);
   });
 
-  it('shows one time for a drop', () => {
+  it('never decreases down the axis, for any day the seed can produce', () => {
+    const day = [
+      ripple({ id: 'a', occurred_time: '06:00:00', ended_at: null }),
+      ripple({ id: 'b', occurred_time: '09:00:00' }),
+      ripple({ id: 'c', occurred_time: '09:00:00', ended_at: null }),
+      ripple({ id: 'd', occurred_time: '23:59:00', ended_at: null }),
+    ];
+    const { container } = render(
+      <TimeAxis ripples={day} timeZone={TZ} now={NOW} surface="bg-white" />,
+    );
+
+    const shown = [...container.querySelectorAll('time')].map((el) => el.textContent!);
+    expect(shown).toEqual([...shown].sort());
+    // An end label in the same column would have broken this: a 09:00-10:30
+    // record followed by a 10:00 one reads 09:00, 10:30, 10:00.
+    expect(shown).toHaveLength(day.length);
+  });
+});
+
+describe('the duration tag', () => {
+  it('reports a finished timed span in hours and minutes', () => {
+    const { getByText } = row();
+    expect(getByText('1h 30m')).toBeTruthy();
+  });
+
+  it('counts up while the timer runs', () => {
+    // 09:00 start, NOW is 13:00Z = 05:00 local... the row helper fixes both,
+    // so assert on the shape rather than the figure.
+    const { container } = row({ ended_at: null });
+    const chip = container.querySelector('.text-main-400');
+
+    expect(chip).not.toBeNull();
+    expect(chip!.textContent).toMatch(/^\d+(h( \d+m)?|m)$/);
+  });
+
+  it('never appears on a drop (E2: only explicit timers claim duration)', () => {
     const at = wallClockToInstant('2026-09-19', '12:15', TZ).toISOString();
     const { container } = row({ occurred_time: '12:15:00', ended_at: at });
 
-    expect(container.querySelectorAll('time')).toHaveLength(1);
+    expect(container.querySelector('.text-main-400')).toBeNull();
+  });
+});
+
+describe('the rope', () => {
+  it('is masked by the wave stack rather than showing through it', () => {
+    // The surface travels down as a prop: a hardcoded white would blot a past
+    // day, whose page has already sunk to pool-100 or pool-200.
+    const { container } = render(
+      <RippleRow ripple={ripple()} timeZone={TZ} now={NOW} surface="bg-pool-100" />,
+    );
+
+    const stack = container.querySelector('.bg-pool-100');
+    expect(stack).not.toBeNull();
+    expect(stack!.querySelector('[data-lines]')).not.toBeNull();
+  });
+});
+
+describe('one tone (H9a)', () => {
+  it('draws every wave in #0507C9, whatever the record', () => {
+    const cases: Partial<RippleWithCategory>[] = [
+      {},
+      { ended_at: null },
+      { planned: true, ended_at: null },
+      {
+        occurred_time: '12:15:00',
+        ended_at: wallClockToInstant('2026-09-19', '12:15', TZ).toISOString(),
+      },
+    ];
+
+    for (const over of cases) {
+      const { container } = row(over);
+      for (const svg of container.querySelectorAll('svg')) {
+        const cls = svg.getAttribute('class') ?? '';
+        expect(cls).toContain('text-main-900');
+        expect(cls).not.toMatch(/text-main-(400|100)/);
+      }
+      cleanup();
+    }
   });
 
-  it('shows one time while a timer runs', () => {
-    const { container } = row({ ended_at: null });
-    expect(container.querySelectorAll('time')).toHaveLength(1);
+  it('varies only by opacity, and only where a state calls for it', () => {
+    // Lighter waves exist, but they are #0507C9 faded by state — planned, and
+    // the live trail — never a second tone (ruling 2 / H9a).
+    const done = row();
+    for (const svg of done.container.querySelectorAll('svg')) {
+      expect((svg as SVGElement).style.opacity).toBe('');
+    }
   });
 });

@@ -16,9 +16,13 @@ export type RippleWithCategory = Ripple & {
 const WITH_CATEGORY = '*, category:my_categories(name, icon)';
 
 /**
- * One author's day. Chronological top to bottom (H2), with date-only records
- * first: they belong to the day without claiming a position on its axis and
- * render in the Daily Note area above it (SPEC 5, H5).
+ * One author's day, top level only. Chronological top to bottom (H2), with
+ * date-only records first: they belong to the day without claiming a position
+ * on its axis and render in the Daily Note area above it (SPEC 5, H5).
+ *
+ * Inner ripples are excluded here rather than filtered in the view: the parent
+ * owns the row on the axis (H10), and their own display arrives with the mini
+ * sheet in S5.
  *
  * The author filter narrows, it does not protect: RLS decides what a viewer
  * may see. Without it the same call would also return linked friends' rows,
@@ -34,6 +38,7 @@ export async function getRipplesForDate(
     .select(WITH_CATEGORY)
     .eq('author_id', authorId)
     .eq('occurred_on', occurredOn)
+    .is('parent_ripple_id', null)
     .order('occurred_time', { ascending: true, nullsFirst: true })
     .order('created_at', { ascending: true })
     .returns<RippleWithCategory[]>();

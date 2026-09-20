@@ -1,4 +1,4 @@
-# During: Product Spec (v0.6)
+# During: Product Spec (v0.7)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 applies H10 (an in-progress timed travels; the grow mode is deleted).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome). v0.5 applies H9 (wave tone deleted; law 4 narrowed to ropes and empty slots; the commit ring becomes a multi-ring ripple). v0.6 settled H9's open item (an in-progress timed travels; grow deleted). v0.7 applies H10 (timeline exclusivity and inner ripples).
 
 ---
 
@@ -26,7 +26,7 @@ Rationale for the demotion: a document's authority should come from rationale, n
 
 | Term | Meaning |
 | --- | --- |
-| **Ripple** | Any record that remains. Two kinds: **drop** (a point in time, no duration claim) and **timed** (explicit timer; the only kind that shows elapsed time). |
+| **Ripple** | Any record that remains. Two kinds: **drop** (a point in time, no duration claim) and **timed** (explicit timer; the only kind that shows elapsed time). A Ripple recorded *during* a timed span is an **inner ripple**: a full Ripple with its own category and note, carried inside its parent (H10). There is no "outer ripple" — ordinary Ripples are unmarked. |
 | **Splash** | A shared collection board someone opens; others add Ripples to it (photo pools, Q&A prompts). |
 | **Swim** | A live quiet co-presence session. Per-person lanes numbered by join order; the last lane is always an empty "your lane" slot acting as the invitation. |
 | **Pool** | A group. Explicit membership. Home of shared artifacts. |
@@ -38,7 +38,7 @@ Rationale for the demotion: a document's authority should come from rationale, n
 | **Link** | Mutual friendship. The only kind; no asymmetric follow. |
 | **List** | My private labels over Links, used for audience routing. Never visible to others. |
 
-Retired vocabulary (do not reuse): Stream, Deck, Pan, Table, Event, Moment, Log.
+Retired vocabulary (do not reuse): Stream, Deck, Pan, Table, Event, Moment, Log. **Thread** is banned as a UI noun: it collides with the no-chat hypothesis (section 1).
 
 ## 3. Social graph
 
@@ -78,7 +78,7 @@ Home / Lanes / Pools / Locker + FAB
   1. Friends strip (live = bold ring + elapsed; past-TTL members absent).
   2. Header: month + date pager (`< 15 SAT >`). **One pager governs the whole page**; it is the only date navigation.
   3. Daily Note area: records that belong to the date without a time. **Several per day allowed**, stacked; empty state shows the "Add a Daily Note" prompt. Weekly zoom shows the Weekly Note area.
-  4. Time axis: **top to bottom = early to late.** My Ripples sit at their time position (timed = wave bundle whose vertical span = its duration; drop = single wave line; category badge at the bundle head; planned/future items render at reduced opacity).
+  4. Time axis: **top to bottom = early to late.** My Ripples sit at their time position (timed = wave bundle whose line count is log-scaled on duration; drop = single wave line; category badge at the bundle head; planned/future items render at reduced opacity). The gutter carries **start times only**, so the column reads as one ascending sequence; a timed Ripple's length is told by its bundle and a small duration tag, never by a second number in the gutter. **Top-level Ripples never overlap** (H10); anything concurrent is an inner ripple and does not take a row of its own.
   5. **"Add ripple" ghost slot at the end of the flow**: the seat of the next record and an input entry point (time prefilled = now). New records append downward in time order.
   6. **Friend rail, far right:** a thin vertical line where friends' activity sits at its time-of-day position, sharing the main axis's time coordinates. Same-hour adjacency is the rail's information.
   7. Bottom resident area: active Splash bar (only when one exists) + Lanes preview strip.
@@ -117,7 +117,7 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 **Laws:**
 1. **Time owns the tone and opacity channels.** Past: backgrounds sink stepwise (white, then #F1F3F7, then #D8DCE8); scrolling into older sections = going deeper. Future: the item itself renders at reduced opacity, dotted. Tone and opacity never encode ownership (mine vs others).
 2. **Undulation = activity.** More waves = more happened. Impression-level (calm / some / lots), log-scaled, never a precise count or a participation gauge.
-3. **Only living things move.** An in-progress timed **travels**: its waveform is held rigid and slid through a clipped window, every line in the bundle in phase, so what moves is the water and not the drawing of it (H10). Finished water is still. New drop = a **ripple: three rings spreading outward, staggered**, their opacity front-loaded against their travel (H9c) — one event per commit, never a loop. reduced-motion fallback mandatory, and every design must read correctly static.
+3. **Only living things move.** An in-progress timed **travels**: its waveform is held rigid and slid through a clipped window, every line in the bundle in phase, so what moves is the water and not the drawing of it (H9). Finished water is still. New drop = a **ripple: three rings spreading outward, staggered**, their opacity front-loaded against their travel (H9c) — one event per commit, never a loop. reduced-motion fallback mandatory, and every design must read correctly static.
 4. **Dotted = not yet.** Lane ropes and the empty "your lane" slot. **Not planned Ripples** (H9b): at the wave's 1px amplitude a dashed stroke becomes a row of dots and stops reading as a wave, so planned renders at reduced opacity instead.
 5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. A solid #0507C9 **content** surface is reserved for live Swim/Splash cards, where the fill is what encodes liveness. Interactive **chrome** — the FAB, primary action buttons, the active nav item — may use solid #0507C9 as the action color: chrome styling is not encoding, so it does not compete for the channel (H8).
 6. **Vocabulary may be taught; visual encodings may not.** If an encoding needs explanation, it is rejected.
@@ -147,8 +147,11 @@ my_categories(user, name, icon, default_mode drop|timed)
 lane_mappings(user, my_category, pool_lane)   -- the plumbing
 ripples(author, category, note?, media[],
         occurred_on date, occurred_time?,     -- null time = date-only record (several per day allowed)
+        started_at,                           -- the instant, resolved from the author's zone at write time
         ended_at?,                            -- null = in progress; =start for drops
+        parent_ripple_id?,                    -- set = inner ripple, contained by its parent's span (H10)
         planned bool, participants[], created_at)
+  -- exclusion constraint: top-level, non-planned spans never overlap per author
 ripple_audience(ripple, target: list|pool|lock)
 ripple_views(ripple, viewer, viewed_at)       -- witness counts; readable by the ripple's author only
 splashes(pool, type free|prompted, prompt?, ends_at?)
