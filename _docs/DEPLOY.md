@@ -83,14 +83,28 @@ Carrying the archive over stays possible later — it needs an author_id remap
 (local and prod auth are different stacks, so every uuid differs) and a manual
 re-upload of media objects. Nothing here forecloses it.
 
-## 2. Auth, in the Supabase dashboard
-
-Authentication → URL Configuration:
+## 2. Auth on the cloud project — DONE
 
 | Field | Value |
 | --- | --- |
 | Site URL | `https://during.today` |
 | Redirect URLs | `https://during.today/auth/callback` |
+| Google provider | enabled, same client ID and secret as local |
+
+Set through the Management API rather than the dashboard, three keys at a
+time:
+
+```bash
+TOKEN="$(security find-generic-password -s 'Supabase CLI' -a supabase -w)"
+curl -X PATCH "https://api.supabase.com/v1/projects/<ref>/config/auth" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"site_url":"...","uri_allow_list":"...","external_google_enabled":true,
+       "external_google_client_id":"...","external_google_secret":"..."}'
+```
+
+The token is the one `supabase login` already stored in the keychain, so
+there is no second credential to manage. Verified afterwards that
+`mfa_totp_enroll_enabled` is still true — nothing outside those keys moved.
 
 `supabase/config.toml` stays pointed at local — it is the local stack's
 config, and changing it would send local sign-ins to production.
@@ -101,11 +115,12 @@ every redirect from `NEXT_PUBLIC_SITE_URL` for exactly this reason, and the
 timezone travels in a cookie rather than a query parameter because a query
 string is enough to miss the match.
 
-Authentication → Providers → Google: **enable it** (currently off on prod) and
-paste the same client ID and secret the local stack uses. They are in
-`.env.local`; they do **not** go to Vercel.
+**Symptom when this is missing:** sign-in returns
+`Unsupported provider: provider is not enabled` (a 400, `validation_failed`).
+The provider is off, not misconfigured — nothing about the client ID or the
+redirect URIs will change it.
 
-### Why this is by hand and not `supabase config push`
+### Why not `supabase config push`
 
 `config push` has no scope filter — it is the whole file or nothing, and
 `supabase config diff` against this project reports **17 differences**. Most
