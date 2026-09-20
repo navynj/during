@@ -118,13 +118,13 @@ export function InputSheet({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="bg-ink/40 absolute inset-0"
+        className="bg-ink/40 scrim-in absolute inset-0"
       />
 
       <section
         role="dialog"
         aria-label={isEdit ? 'Edit this ripple' : inner ? 'Add into this session' : 'Add a ripple'}
-        className="relative flex max-h-[82vh] flex-col overflow-hidden rounded-t-3xl bg-white"
+        className="sheet-rise relative flex max-h-[82vh] flex-col overflow-hidden rounded-t-3xl bg-white"
       >
         {/* Containment, said in the grammar rather than in words: inside the
             blue is inside the session, the same rule the now band uses. */}

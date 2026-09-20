@@ -57,13 +57,13 @@ export function DetailSheet({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="bg-ink/40 absolute inset-0"
+        className="bg-ink/40 scrim-in absolute inset-0"
       />
 
       <section
         role="dialog"
         aria-label="Ripple"
-        className="relative flex max-h-[82vh] flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pt-5"
+        className="sheet-rise relative flex max-h-[82vh] flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pt-5"
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <header className="flex items-start justify-between gap-3">

@@ -111,7 +111,38 @@ body {
   animation: commit-ring 1600ms ease-out infinite;
 }
 
+/*
+ * A bottom sheet arrives from the bottom. Chrome, not content: law 3 governs
+ * what a record does, and a panel appearing is the app moving rather than the
+ * water. The curve decelerates hard so the sheet reads as settling into place
+ * rather than being thrown.
+ */
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-rise {
+  animation: sheet-rise 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.scrim-in {
+  animation: scrim-in 200ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .sheet-rise,
+  .scrim-in,
   .wave-travel,
   .commit-ring {
     animation: none;
