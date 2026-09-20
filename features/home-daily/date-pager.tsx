@@ -32,7 +32,7 @@ export function DatePager({ date }: { date: IsoDate }) {
           <span aria-hidden className="text-2xl/none font-medium">
             {day}
           </span>
-          <span aria-hidden className="text-xs/none font-medium tracking-wide">
+          <span aria-hidden className="text-xs/none font-medium">
             {weekday}
           </span>
         </h1>
