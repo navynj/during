@@ -8,23 +8,29 @@
 -- accounts
 -- ---------------------------------------------------------------------------
 
+-- The empty-string token columns are not decoration: GoTrue scans them into
+-- non-nullable Go strings and fails to find the user if they are null, which
+-- breaks every admin auth call against a seeded account.
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current, phone_change, phone_change_token,
+  reauthentication_token
 )
 values
   ('00000000-0000-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111',
    'authenticated', 'authenticated', 'yoonji@during.today', '', now(),
    '{"provider":"google","providers":["google"]}',
-   '{"full_name":"Yoonji"}', now() - interval '30 days', now()),
+   '{"full_name":"Yoonji"}', now() - interval '30 days', now(), '', '', '', '', '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222',
    'authenticated', 'authenticated', 'mina@during.today', '', now(),
    '{"provider":"google","providers":["google"]}',
-   '{"full_name":"Mina"}', now() - interval '30 days', now()),
+   '{"full_name":"Mina"}', now() - interval '30 days', now(), '', '', '', '', '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333',
    'authenticated', 'authenticated', 'jae@during.today', '', now(),
    '{"provider":"google","providers":["google"]}',
-   '{"full_name":"Jae"}', now() - interval '30 days', now());
+   '{"full_name":"Jae"}', now() - interval '30 days', now(), '', '', '', '', '', '', '', '');
 
 insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 select id, id, id::text,

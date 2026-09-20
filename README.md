@@ -17,8 +17,13 @@ runtime ([OrbStack](https://orbstack.dev) or Docker Desktop) running.
 ```bash
 pnpm install
 cp .env.example .env.local
-supabase start          # boots Postgres, Auth, Storage, Realtime locally
+pnpm db:start           # boots Postgres, Auth, Storage, Realtime locally
 ```
+
+Use `pnpm db:start` rather than `supabase start` directly: `config.toml` resolves
+`env(...)` from the shell environment only, so the script exports `.env.local` first.
+Started the other way, the Google client ID is passed to Google as the literal string
+`env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)` and sign-in fails with no obvious cause.
 
 `supabase start` prints an `anon key` and a `service_role key`. Paste them into
 `.env.local` as `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`, then:
@@ -31,7 +36,7 @@ Sign-in needs Google OAuth credentials. Create an OAuth client in the
 [Google Cloud console](https://console.cloud.google.com/apis/credentials) with
 `http://127.0.0.1:54321/auth/v1/callback` as an authorized redirect URI, and put the
 client ID and secret in `.env.local` as `SUPABASE_AUTH_GOOGLE_CLIENT_ID` and
-`SUPABASE_AUTH_GOOGLE_SECRET`. Restart the stack (`supabase stop && supabase start`)
+`SUPABASE_AUTH_GOOGLE_SECRET`. Restart the stack (`supabase stop && pnpm db:start`)
 after adding them.
 
 ## Everyday commands
@@ -43,6 +48,7 @@ after adding them.
 | `pnpm lint`     | ESLint                                                    |
 | `pnpm format`   | Prettier write                                            |
 | `pnpm test`     | Vitest; the RLS suite needs a running local stack         |
+| `pnpm db:start` | Boots the local stack with `.env.local` exported          |
 | `pnpm db:reset` | Re-runs every migration, then `supabase/seed.sql`         |
 | `pnpm db:types` | Regenerates `lib/database.types.ts` from the local schema |
 

@@ -53,3 +53,12 @@ export const JAE = '33333333-3333-3333-3333-333333333333';
 export const LOCKED_RIPPLE = 'b1000000-0000-0000-0000-000000000004';
 export const UNLOCKED_RIPPLE = 'b1000000-0000-0000-0000-000000000002';
 export const JAE_RIPPLE = 'b3000000-0000-0000-0000-000000000001';
+
+/** Service-role client. Bypasses RLS, so it is only ever used for fixtures. */
+export function asAdmin(): SupabaseClient<Database> {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}

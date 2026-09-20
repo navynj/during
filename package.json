@@ -10,7 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "db:start": "supabase start",
+    "db:start": "set -a; [ -f .env.local ] && . ./.env.local; set +a; supabase start",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts"
   },

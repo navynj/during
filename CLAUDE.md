@@ -68,3 +68,13 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
 ## Definition of done for v1a
 
 A two-account demo works end to end: sign up, link via invite, drop from all three entry points (FAB, timeline slot, and chip prefill), ghost landing visible while the sheet is open, waves render correctly for drop / timed / planned / date-only, the friend rail shows the other account at the same hour, tapping a ripple opens the mini sheet and increments its view count for the author, delete removes row and media, a 3-day-stale account disappears from the strip, and every empty state shows designed copy instead of a blank.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
