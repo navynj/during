@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { asUser, JAE, JAE_RIPPLE, LOCKED_RIPPLE, MINA, UNLOCKED_RIPPLE, YOONJI } from './as-user';
+import {
+  anonymous,
+  asUser,
+  JAE,
+  JAE_RIPPLE,
+  LOCKED_RIPPLE,
+  MINA,
+  UNLOCKED_RIPPLE,
+  YOONJI,
+} from './as-user';
 
 /**
  * The leak model is enforced in RLS, not in application code (CLAUDE.md), so
@@ -8,6 +17,17 @@ import { asUser, JAE, JAE_RIPPLE, LOCKED_RIPPLE, MINA, UNLOCKED_RIPPLE, YOONJI }
  * Anything provable here is provable for every future feature; anything the
  * client can reach here, it can reach from the browser.
  */
+
+describe('signed out', () => {
+  it('reaches nothing at all', async () => {
+    const anon = anonymous();
+
+    for (const table of ['ripples', 'profiles', 'links', 'my_categories'] as const) {
+      const { data } = await anon.from(table).select('*');
+      expect(data, table).toEqual([]);
+    }
+  });
+});
 
 describe('the Link path', () => {
   it('shows a linked friend an unlocked ripple', async () => {
