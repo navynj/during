@@ -171,21 +171,27 @@ describe('the active line travels rather than stretches', () => {
   });
 });
 
-describe('CommitRing opacity', () => {
-  it('fades rings and content together from the wrapper', () => {
-    const { container } = render(
-      <CommitRing opacity={0.35}>
+describe('CommitRing ring opacity', () => {
+  it('fades the rings without touching the content beside them', () => {
+    const { container, getByTestId } = render(
+      <CommitRing ringOpacity={0.35}>
         <span data-testid="content">+</span>
       </CommitRing>,
     );
 
     const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.opacity).toBe('0.35');
-    expect(wrapper.querySelector('[data-testid="content"]')).toBeTruthy();
+    const ringGroup = wrapper.querySelector('span[aria-hidden]') as HTMLElement;
+
+    expect(ringGroup.style.opacity).toBe('0.35');
+    // The outer box carries no fade, so the disc inside stays solid.
+    expect(wrapper.style.opacity).toBe('');
+    expect(ringGroup.contains(getByTestId('content'))).toBe(false);
   });
 
   it('is full strength when not asked for', () => {
     const { container } = render(<CommitRing />);
-    expect((container.firstElementChild as HTMLElement).style.opacity).toBe('');
+    const ringGroup = container.querySelector('span[aria-hidden]') as HTMLElement;
+
+    expect(ringGroup.style.opacity).toBe('');
   });
 });

@@ -13,11 +13,13 @@ export type CommitRingProps = {
   /** How many rings travel outward. Three reads as water; one reads as a pulse. */
   rings?: number;
   /**
-   * Overall strength, 0 to 1. The Add-ripple slot is a ghost — an invitation,
-   * not a record — so it rides at reduced opacity while a real commit plays at
-   * full. Applied to the wrapper, so rings and content fade as one piece.
+   * Strength of the rings alone, 0 to 1. The Add-ripple slot is a ghost — an
+   * invitation, not a record — so its rings sit back while the disc it circles
+   * stays solid. Deliberately does not touch `children`: the caller decides
+   * what inside the circle fades, because the disc and the glyph on it usually
+   * want different answers.
    */
-  opacity?: number;
+  ringOpacity?: number;
   className?: string;
   children?: React.ReactNode;
 };
@@ -43,7 +45,7 @@ export function CommitRing({
   contentSize = 32,
   gap = 6,
   rings = 3,
-  opacity,
+  ringOpacity,
   className = '',
   children,
 }: CommitRingProps) {
@@ -56,25 +58,28 @@ export function CommitRing({
   return (
     <span
       className={`relative inline-flex items-center justify-center ${WAVE_COLOR_CLASS} ${className}`}
-      style={{ width: size, height: size, opacity }}
+      style={{ width: size, height: size }}
     >
-      {Array.from({ length: rings }, (_, index) => (
-        <span
-          key={index}
-          aria-hidden
-          className={`absolute rounded-full border border-current ${
-            prefersReducedMotion ? '' : 'commit-ring'
-          }`}
-          style={{
-            // At rest the rings nest outward from the gap to the bound; in
-            // motion they all start at the gap and travel the same distance.
-            inset: prefersReducedMotion ? inset * (1 - index / rings) : inset,
-            opacity: prefersReducedMotion ? 0.3 - index * 0.09 : undefined,
-            animationDelay: prefersReducedMotion ? undefined : `${index * STAGGER_MS}ms`,
-            ['--ring-travel' as string]: travel,
-          }}
-        />
-      ))}
+      {/* Rings are grouped so their strength is one value, and so it cannot
+          reach the content sitting beside them. */}
+      <span aria-hidden className="absolute inset-0" style={{ opacity: ringOpacity }}>
+        {Array.from({ length: rings }, (_, index) => (
+          <span
+            key={index}
+            className={`absolute rounded-full border border-current ${
+              prefersReducedMotion ? '' : 'commit-ring'
+            }`}
+            style={{
+              // At rest the rings nest outward from the gap to the bound; in
+              // motion they all start at the gap and travel the same distance.
+              inset: prefersReducedMotion ? inset * (1 - index / rings) : inset,
+              opacity: prefersReducedMotion ? 0.3 - index * 0.09 : undefined,
+              animationDelay: prefersReducedMotion ? undefined : `${index * STAGGER_MS}ms`,
+              ['--ring-travel' as string]: travel,
+            }}
+          />
+        ))}
+      </span>
       {children}
     </span>
   );

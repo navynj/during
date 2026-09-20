@@ -142,10 +142,10 @@ export default function WavesFixturePage() {
             </CommitRing>
           </Ripple>
 
-          <Ripple caption="Add ripple slot — a ghost, opacity 0.35">
-            <CommitRing opacity={0.35}>
+          <Ripple caption="Add ripple slot — rings and glyph fade, the disc stays solid">
+            <CommitRing ringOpacity={0.35}>
               <span className="bg-pool-100 text-main-900 flex h-8 w-8 items-center justify-center rounded-full text-lg">
-                +
+                <span style={{ opacity: 0.35 }}>+</span>
               </span>
             </CommitRing>
           </Ripple>
