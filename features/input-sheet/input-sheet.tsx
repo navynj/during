@@ -16,15 +16,19 @@ import {
   endInstantFor,
   isFinishedSpan,
   isPlanned,
+  nowTime,
+  todayFor,
   type Draft,
   type Prefill,
 } from './draft';
 import { MediaField } from './media-field';
 import { updateRipple } from '@/features/ripple-sheet/actions';
 import { MiniAxis } from './mini-axis';
-import { AudienceChip, EndTimeControl, TimeControl } from './sheet-controls';
+import { AudienceChip, TimeControl } from './sheet-controls';
 import { CollisionNotice } from './collision-notice';
 import { RunningTimerNotice } from './running-timer-notice';
+import { spanVerdict } from './span-rules';
+import { StraddleNotice } from './straddle-notice';
 
 export type SheetContext = {
   categories: MyCategory[];
@@ -65,10 +69,11 @@ export function InputSheet({
   // default state the sheet is chips, note, toggle and commit — nothing else.
   const [openedAt] = useState(() => draft.time);
   const isEdit = Boolean(editing);
-  // Only a record that has already finished has an end to correct (H17).
-  const editableEnd = Boolean(
-    editing && isFinishedSpan(editing.ripple) && draft.time && draft.endTime,
-  );
+  // The end is the sheet's field, so it is offered on every record (H18) —
+  // except a running session, whose end is the act of stopping and nothing
+  // else. That exception is H17's, and it survives.
+  const edited = editing?.ripple;
+  const isRunning = Boolean(edited && edited.started_at !== null && edited.ended_at === null);
   const [nestInto, setNestInto] = useState<string | null>(prefill.parentRippleId ?? null);
   const parentRippleId = nestInto;
   const inner = parentRippleId !== null;
@@ -90,15 +95,33 @@ export function InputSheet({
 
     const startInstant =
       draft.time === null ? null : wallClockToInstant(date, draft.time, timeZone).toISOString();
+    // The Timer writes the present, so a timed commit never carries one.
+    const endInstant =
+      mode === 'timer' || isRunning || draft.time === null || draft.endTime === null
+        ? null
+        : endInstantFor(
+            draft.endTime,
+            timeZone,
+            editing && isFinishedSpan(editing.ripple) ? editing.ripple.ended_at : null,
+            editing ? editing.ripple.occurred_on : date,
+          );
+
+    // Refused here as well as on the server, so the offer to let it run can be
+    // made before a round trip rather than after one (H18).
+    if (
+      startInstant &&
+      endInstant &&
+      spanVerdict(Date.parse(startInstant), Date.parse(endInstant), Date.now()) === 'straddles'
+    ) {
+      setResult({ ok: false, reason: 'straddles' });
+      return;
+    }
 
     if (editing) {
       startTransition(async () => {
         const outcome = await updateRipple({
           id: editing.ripple.id,
-          endInstant:
-            editableEnd && draft.endTime
-              ? endInstantFor(editing.ripple.ended_at!, draft.endTime, timeZone)
-              : null,
+          endInstant,
           categoryId: draft.categoryId!,
           note: draft.note,
           occurredOn: editing.ripple.occurred_on,
@@ -124,6 +147,7 @@ export function InputSheet({
         locked: draft.audience === 'only-me',
         parentRippleId: parent,
         startInstant,
+        endInstant,
       });
 
       if (outcome.ok) {
@@ -216,17 +240,12 @@ export function InputSheet({
                 planned={planned}
                 timeZone={timeZone}
                 onChange={(time) => setDraft((d) => ({ ...d, time }))}
+                onChangeEnd={(endTime) => setDraft((d) => ({ ...d, endTime }))}
                 onEditingChange={setPickingTime}
                 allowAllDay={!inner}
+                allowEnd={!isRunning}
+                maxEnd={date === todayFor(timeZone) ? nowTime(timeZone) : undefined}
               />
-
-              {editableEnd && draft.time && draft.endTime ? (
-                <EndTimeControl
-                  startTime={draft.time}
-                  endTime={draft.endTime}
-                  onChange={(endTime) => setDraft((d) => ({ ...d, endTime }))}
-                />
-              ) : null}
 
               {askingToSwap && running ? (
                 <RunningTimerNotice
@@ -243,7 +262,26 @@ export function InputSheet({
                 />
               ) : null}
 
-              {result && !result.ok ? (
+              {result && !result.ok && result.reason === 'straddles' ? (
+                <StraddleNotice
+                  from={draft.time ?? ''}
+                  pending={pending}
+                  // No offer where no timer may be started: inside a session
+                  // there is no Timer, and an edit cannot make a record live.
+                  onRunInstead={
+                    isEdit || inner
+                      ? undefined
+                      : () => {
+                          setDraft((d) => ({ ...d, endTime: null }));
+                          setResult(null);
+                          if (running) setAskingToSwap(true);
+                          else commit('timer');
+                        }
+                  }
+                />
+              ) : null}
+
+              {result && !result.ok && result.reason !== 'straddles' ? (
                 <CollisionNotice
                   result={result}
                   onNest={(parentId) => {
@@ -274,8 +312,9 @@ export function InputSheet({
               {isEdit ? 'Update' : inner ? 'Drop into session' : planned ? 'Save as plan' : 'Drop'}
             </button>
 
-            {/* Drop-only inside a session: timed children exist today only as
-              Breaks, and generalising them is an open item (SPEC 10). */}
+            {/* Inner mode has no Timer, which is not the same as Drop-only: a
+              span may be typed inside a session, but only the surface can
+              start one running (H18). */}
             <button
               type="button"
               hidden={inner || isEdit}

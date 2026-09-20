@@ -85,6 +85,8 @@ describe('a record inside a session is still a record', () => {
     });
 
     expect(queryByText('+ Add to this session')).toBeNull();
+    // And it claims no duration: a demoted record stops showing the chip.
+    expect(queryByText(/^\d+h/)).toBeNull();
   });
 
   it('warns that deleting the session takes what is inside it with it', () => {

@@ -12,7 +12,8 @@ export function CollisionNotice({
   onNest,
   pending,
 }: {
-  result: Extract<CommitResult, { ok: false }>;
+  /** A straddling span has its own notice, because it has its own way out. */
+  result: Extract<CommitResult, { ok: false; reason: 'collision' | 'error' }>;
   onNest: (parentId: string) => void;
   pending: boolean;
 }) {

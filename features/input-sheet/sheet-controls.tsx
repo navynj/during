@@ -28,34 +28,54 @@ export function formatClock(time: string): string {
 }
 
 /**
- * Two mutually exclusive segments, one control: a time, or the whole day.
+ * Two mutually exclusive segments, one control: a time, or the whole day —
+ * and, optionally, an end (H18).
  *
  * A segmented toggle rather than prose links, because the two are states of
  * one thing and the old copy made them read as two separate commands. Selected
  * uses the same grammar as a category chip — solid action colour, white text —
  * so "chosen" looks the same everywhere in the sheet.
+ *
+ * The end lives inside the same control rather than beside it: `13:33 → 15:00`
+ * is one statement about when this happened, and splitting it into two fields
+ * would make the span look like a second thing the author is filling in.
  */
 export function TimeControl({
   draft,
   planned,
   timeZone,
   onChange,
+  onChangeEnd,
   onEditingChange,
   allowAllDay = true,
+  allowEnd = true,
+  maxEnd,
 }: {
   draft: Draft;
   planned: boolean;
   timeZone: string;
   onChange: (time: string | null) => void;
+  /** Absent leaves the control end-less: a running session, whose end is stop's to write. */
+  onChangeEnd?: (end: string | null) => void;
   onEditingChange?: (editing: boolean) => void;
   /**
    * False inside a session: a child has to lie within its parent's span, and
    * a date-only record has no time to be contained by (H10).
    */
   allowAllDay?: boolean;
+  allowEnd?: boolean;
+  /**
+   * The latest end that has already happened — now, on today's page, and
+   * absent on any other day, where every hour is already past.
+   */
+  maxEnd?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const allDay = draft.time === null;
+  // All day never takes an end: a day is not a span you can stop inside.
+  const endable = allowEnd && !allDay && Boolean(onChangeEnd);
+  const end = allDay ? null : draft.endTime;
+  const minutes = draft.time && end ? minutesBetween(draft.time, end) : 0;
 
   function setEditingState(next: boolean): void {
     setEditing(next);
@@ -89,17 +109,86 @@ export function TimeControl({
           </Segment>
         )}
 
+        {end ? (
+          <>
+            <span aria-hidden className="text-pool-500 px-0.5 text-xs">
+              &rarr;
+            </span>
+            <input
+              type="time"
+              lang="en"
+              value={end}
+              onChange={(event) => event.target.value && onChangeEnd!(event.target.value)}
+              aria-label="End time"
+              className="bg-main-900 rounded-full px-2 py-1 text-xs text-white tabular-nums"
+            />
+            <button
+              type="button"
+              onClick={() => onChangeEnd!(null)}
+              aria-label="Remove the end"
+              className="text-pool-500 px-1.5 text-xs"
+            >
+              &times;
+            </button>
+          </>
+        ) : null}
+
         {allowAllDay ? (
-          <Segment selected={allDay} onClick={() => onChange(null)}>
+          <Segment
+            selected={allDay}
+            onClick={() => {
+              onChange(null);
+              onChangeEnd?.(null);
+            }}
+          >
             All day
           </Segment>
         ) : null}
       </div>
 
+      {/* Light, and only where there is a time to end: the default record is a
+          point, so the span is asked for rather than offered as a field. */}
+      {endable && !end ? (
+        <button
+          type="button"
+          onClick={() => onChangeEnd!(firstEnd(draft.time!, maxEnd))}
+          className="text-main-900 text-xs font-medium opacity-60 hover:opacity-100"
+        >
+          + end
+        </button>
+      ) : null}
+
+      {end ? (
+        <span data-derived-duration className="text-pool-500 text-xs tabular-nums">
+          {minutes > 0 ? formatDuration(minutes) : 'ends before it starts'}
+        </span>
+      ) : null}
+
       {/* The microcopy SPEC 6 asks for, shown only when it is true. */}
       {planned ? <span className="text-pool-500">Later today — this saves as a plan.</span> : null}
     </div>
   );
+}
+
+/**
+ * Where a new end starts out. An hour is a guess, but a guess that is visibly
+ * wrong is faster to correct than an empty field is to fill, and the author is
+ * standing in the control already.
+ *
+ * Held back to now where now is in the day, so adding an end to something that
+ * started half an hour ago proposes a span that has finished rather than one
+ * the Timer will have to refuse (H18). A start that *is* now still lands on a
+ * straddling span, and that refusal is the right thing to show: what is
+ * happening now is the Timer's to write.
+ */
+function firstEnd(time: string, maxEnd?: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  // Clamped rather than wrapped: an end before its own start is not a span,
+  // and a record that crosses midnight is not made by adding an hour.
+  const at = Math.min(hours * 60 + minutes + 60, 23 * 60 + 59);
+  const anHour = `${String(Math.floor(at / 60)).padStart(2, '0')}:${String(at % 60).padStart(2, '0')}`;
+
+  return maxEnd && maxEnd > time && maxEnd < anHour ? maxEnd : anHour;
 }
 
 function Segment({
@@ -158,42 +247,6 @@ export function AudienceChip({
     >
       {locked ? 'Only me' : 'Everyone'}
     </button>
-  );
-}
-
-/**
- * The end of a finished record, with its duration shown beside it.
- *
- * Duration is not an input. Exclusion and containment both validate on times,
- * so times are the unit of truth; a duration field would be a second way to
- * say the same thing, and the two would disagree the moment one was rounded.
- */
-export function EndTimeControl({
-  startTime,
-  endTime,
-  onChange,
-}: {
-  startTime: string;
-  endTime: string;
-  onChange: (time: string) => void;
-}) {
-  const minutes = minutesBetween(startTime, endTime);
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-pool-500 text-xs">Ends</span>
-      <input
-        type="time"
-        lang="en"
-        value={endTime}
-        onChange={(event) => event.target.value && onChange(event.target.value)}
-        aria-label="End time"
-        className="text-main-900 border-pool-200 rounded border px-2 py-1 text-xs tabular-nums"
-      />
-      <span data-derived-duration className="text-pool-500 text-xs tabular-nums">
-        {minutes > 0 ? formatDuration(minutes) : 'ends before it starts'}
-      </span>
-    </div>
   );
 }
 

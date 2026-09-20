@@ -34,12 +34,12 @@ describe('who may write an end (H17)', () => {
     ).toBe(END);
   });
 
-  it('keeps a drop a point: its end follows its start (E2)', () => {
+  it('keeps a drop a point when the edit says nothing about an end', () => {
     const moved = '2027-07-08T20:00:00.000Z';
     expect(
       resolveEnd(
         { started_at: START, ended_at: START },
-        { occurredTime: '13:00', startInstant: moved, endInstant: END },
+        { occurredTime: '13:00', startInstant: moved },
       ),
     ).toBe(moved);
   });
@@ -51,6 +51,45 @@ describe('who may write an end (H17)', () => {
         { occurredTime: null, startInstant: null, endInstant: END },
       ),
     ).toBeNull();
+  });
+});
+
+describe('the end is an ordinary field (H18)', () => {
+  it('promotes a drop the moment one is added', () => {
+    expect(
+      resolveEnd(
+        { started_at: START, ended_at: START },
+        { occurredTime: '09:00', startInstant: START, endInstant: END },
+      ),
+    ).toBe(END);
+  });
+
+  it('demotes a span back to a point when it is cleared', () => {
+    // Which is what a drop is: a record whose end is its start.
+    expect(
+      resolveEnd(
+        { started_at: START, ended_at: END },
+        { occurredTime: '09:00', startInstant: START, endInstant: null },
+      ),
+    ).toBe(START);
+  });
+
+  it('still refuses to invent an end for a running session', () => {
+    expect(
+      resolveEnd(
+        { started_at: START, ended_at: null },
+        { occurredTime: '09:00', startInstant: START, endInstant: END },
+      ),
+    ).toBeNull();
+  });
+
+  it('gives a date-only record an end the moment it gets a time', () => {
+    expect(
+      resolveEnd(
+        { started_at: null, ended_at: null },
+        { occurredTime: '09:00', startInstant: START, endInstant: END },
+      ),
+    ).toBe(END);
   });
 });
 

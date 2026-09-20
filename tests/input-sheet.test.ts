@@ -25,6 +25,7 @@ function draft(over: Partial<Draft> = {}): Draft {
     time: '09:00',
     audience: 'everyone',
     media: [],
+    endTime: null,
     ...over,
   };
 }

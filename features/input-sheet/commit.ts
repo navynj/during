@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { EXCLUSION_VIOLATION, findCollision } from '@/lib/queries/compose';
 import { createClient } from '@/lib/supabase/server';
 
+import { spanVerdict } from './span-rules';
+
 /**
  * What the sheet can tell the author when a write is refused. The exclusion
  * constraint is a product rule (H10), so its rejection is a sentence, not a
@@ -14,6 +16,8 @@ import { createClient } from '@/lib/supabase/server';
 export type CommitResult =
   | { ok: true; rippleId: string }
   | { ok: false; reason: 'collision'; withNote: string | null; withId: string; canNest: boolean }
+  /** A typed span that has not finished. The present is written by the Timer (H18). */
+  | { ok: false; reason: 'straddles' }
   | { ok: false; reason: 'error'; message: string };
 
 const Draft = z.object({
@@ -31,6 +35,11 @@ const Draft = z.object({
   parentRippleId: z.uuid().nullable(),
   /** The instant the chosen wall clock refers to, resolved in the browser. */
   startInstant: z.string().datetime().nullable(),
+  /**
+   * A typed end (H18). Null is no end, which is a drop; a timer commit never
+   * carries one, because stopping is what writes that.
+   */
+  endInstant: z.string().datetime().nullable(),
 });
 
 export type Draft = z.infer<typeof Draft>;
@@ -46,8 +55,12 @@ export async function commitRipple(input: Draft): Promise<CommitResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: 'error', message: 'Sign in again to record this.' };
 
-  // A drop ends where it starts; a timer has not ended yet (SPEC 8).
-  const endedAt = draft.mode === 'timer' ? null : draft.startInstant;
+  // A drop ends where it starts, a typed span ends where it says, and a timer
+  // has not ended yet (SPEC 8).
+  const endedAt = draft.mode === 'timer' ? null : (draft.endInstant ?? draft.startInstant);
+
+  const refusal = checkSpan(draft.startInstant, draft.mode === 'timer' ? null : draft.endInstant);
+  if (refusal) return refusal;
 
   const { data, error } = await supabase
     .from('ripples')
@@ -66,7 +79,12 @@ export async function commitRipple(input: Draft): Promise<CommitResult> {
 
   if (error) {
     if (error.code === EXCLUSION_VIOLATION && draft.startInstant) {
-      const clash = await findCollision(supabase, user.id, new Date(draft.startInstant));
+      const clash = await findCollision(
+        supabase,
+        user.id,
+        new Date(draft.startInstant),
+        endedAt && endedAt !== draft.startInstant ? new Date(endedAt) : null,
+      );
       if (clash) {
         return {
           ok: false,
@@ -102,4 +120,22 @@ export async function stopSession(rippleId: string): Promise<CommitResult> {
 
   revalidatePath('/');
   return { ok: true, rippleId };
+}
+
+/**
+ * The two things a typed span can get wrong, checked on the server because the
+ * client's copy of the rule is a convenience and this one is the rule (H18).
+ */
+function checkSpan(
+  startInstant: string | null,
+  endInstant: string | null | undefined,
+): Extract<CommitResult, { ok: false }> | null {
+  if (!startInstant || !endInstant) return null;
+
+  const verdict = spanVerdict(Date.parse(startInstant), Date.parse(endInstant), Date.now());
+  if (verdict === 'backwards') {
+    return { ok: false, reason: 'error', message: 'That end is before the start.' };
+  }
+  if (verdict === 'straddles') return { ok: false, reason: 'straddles' };
+  return null;
 }

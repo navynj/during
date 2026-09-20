@@ -13,23 +13,27 @@ export type EndEdit = {
 /**
  * What a record's end becomes after an edit.
  *
- * H17, refined: stop is the only **initial** writer of an end. A running
- * session's end is written by the act of stopping and an edit cannot invent
- * one; once written it is a past fact, and past facts are correctable — the
- * same reasoning that lets `occurred` be edited.
+ * H18: the end is an ordinary field, so an edit may add one (a drop becomes
+ * timed), change one, or clear one (a timed becomes a drop). H17's exception
+ * survives untouched: a *running* session's end is written by the act of
+ * stopping, and an edit cannot invent one.
  */
 export function resolveEnd(before: Before, edit: EndEdit): string | null {
   // Nothing without a time has an end to speak of.
   if (edit.occurredTime === null) return null;
 
-  // A drop is a point: its end follows its start rather than being set.
-  const wasPoint = before.ended_at !== null && before.ended_at === before.started_at;
-  if (wasPoint) return edit.startInstant;
-
   // Still running: only stopping may write this.
-  if (before.ended_at === null) return null;
+  if (before.started_at !== null && before.ended_at === null) return null;
 
-  return edit.endInstant ?? before.ended_at;
+  // Absent means the edit says nothing about the end, which is not the same as
+  // clearing it: a span keeps what it had, and a point keeps following its start.
+  if (edit.endInstant === undefined) {
+    const wasPoint = before.ended_at !== null && before.ended_at === before.started_at;
+    return wasPoint ? edit.startInstant : (before.ended_at ?? edit.startInstant);
+  }
+
+  // A cleared end turns a span back into a point, which is what a drop is.
+  return edit.endInstant ?? edit.startInstant;
 }
 
 /**

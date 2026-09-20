@@ -13,6 +13,7 @@ const draft: Draft = {
   time: '09:19',
   audience: 'everyone',
   media: [],
+  endTime: null,
 };
 
 /**

@@ -7,6 +7,7 @@ import { removeRippleMedia } from '@/lib/media';
 import { EXCLUSION_VIOLATION, findCollision } from '@/lib/queries/compose';
 import { createClient } from '@/lib/supabase/server';
 import type { CommitResult } from '@/features/input-sheet/commit';
+import { spanVerdict } from '@/features/input-sheet/span-rules';
 import { parentBoundsMessage, resolveEnd, strayMessage } from './end-rules';
 
 const Edit = z.object({
@@ -23,9 +24,9 @@ const Edit = z.object({
   /** The instant the chosen wall clock refers to, resolved in the browser. */
   startInstant: z.string().datetime().nullable(),
   /**
-   * Only for a record that has already finished. Stop remains the sole
-   * *initial* writer of an end (H17); once written, the end is a past fact
-   * and past facts are correctable.
+   * The record's end after this edit: a time adds or corrects one, null
+   * clears it back to a point, and absent says nothing about it (H18). A
+   * running session ignores this — stopping is what writes its end (H17).
    */
   endInstant: z.string().datetime().nullable().optional(),
 });
@@ -35,11 +36,12 @@ export type Edit = z.infer<typeof Edit>;
 /**
  * Corrects a Ripple in place.
  *
- * `ended_at` is editable once the record has finished, and never before: a
- * running session's end is written by the act of stopping, so an edit cannot
- * invent one. `created_at` is not editable at all — the occurred/created
- * separation exists so a correction edits when it *happened* while the diary
- * still remembers when you wrote it.
+ * `ended_at` is an ordinary field (H18): adding one makes a drop timed and
+ * clearing one makes a timed a drop. The exception is a *running* session,
+ * whose end is written by the act of stopping, so an edit cannot invent one.
+ * `created_at` is not editable at all — the occurred/created separation exists
+ * so a correction edits when it *happened* while the diary still remembers
+ * when you wrote it.
  *
  * Moving a Ripple in time re-runs the exclusion constraint and, for a session,
  * the containment check on its children. Both are surfaced as sentences.
@@ -64,8 +66,14 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
 
   const endedAt = resolveEnd(before, edit);
 
-  if (endedAt && edit.startInstant && Date.parse(endedAt) <= Date.parse(edit.startInstant)) {
-    return { ok: false, reason: 'error', message: 'That end is before the start.' };
+  // A point ends where it starts, so only a real span is judged here.
+  if (endedAt && edit.startInstant && endedAt !== edit.startInstant) {
+    const verdict = spanVerdict(Date.parse(edit.startInstant), Date.parse(endedAt), Date.now());
+    if (verdict === 'backwards') {
+      return { ok: false, reason: 'error', message: 'That end is before the start.' };
+    }
+    // The present is written by the Timer, and an edit is not the Timer (H18).
+    if (verdict === 'straddles') return { ok: false, reason: 'straddles' };
   }
 
   const { error } = await supabase
@@ -82,7 +90,12 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
 
   if (error) {
     if (error.code === EXCLUSION_VIOLATION && edit.startInstant) {
-      const clash = await findCollision(supabase, user.id, new Date(edit.startInstant));
+      const clash = await findCollision(
+        supabase,
+        user.id,
+        new Date(edit.startInstant),
+        endedAt && endedAt !== edit.startInstant ? new Date(endedAt) : null,
+      );
       if (clash && clash.id !== edit.id) {
         return {
           ok: false,

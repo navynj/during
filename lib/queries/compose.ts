@@ -36,22 +36,33 @@ export async function getRunningSession(
  * the record in the way and, when it is a session, offer to file the new one
  * inside it. Run after a 23P01 rather than before every write: the database
  * is the authority, and a check beforehand would be a race.
+ *
+ * A typed span passes its end too (H18), because the record in the way may
+ * begin after the span does; searching only under the start would find
+ * nothing and leave the author with the raw constraint.
  */
 export async function findCollision(
   supabase: DuringClient,
   authorId: string,
   at: Date,
+  until: Date | null = null,
 ): Promise<RippleWithCategory | null> {
-  const instant = at.toISOString();
+  const from = at.toISOString();
+  const to = (until ?? at).toISOString();
 
-  const { data, error } = await supabase
+  const candidates = supabase
     .from('ripples')
     .select('*, category:my_categories(name, icon)')
     .eq('author_id', authorId)
     .is('parent_ripple_id', null)
     .eq('planned', false)
-    .lte('started_at', instant)
-    .or(`ended_at.is.null,ended_at.gt.${instant}`)
+    .or(`ended_at.is.null,ended_at.gt.${from}`);
+
+  // Half-open, matching the constraint: a span ending where another starts is
+  // adjacent, while a point has to be caught at its own instant.
+  const { data, error } = await (
+    until ? candidates.lt('started_at', to) : candidates.lte('started_at', from)
+  )
     .order('started_at', { ascending: false })
     .limit(1)
     .returns<RippleWithCategory[]>();
@@ -60,9 +71,17 @@ export async function findCollision(
   const candidate = data[0];
   if (!candidate) return null;
 
-  // A drop's span is a point, so it only collides with an identical instant.
+  // A drop's span is a point, so it collides only where it actually sits.
   const isPoint = candidate.ended_at !== null && candidate.ended_at === candidate.started_at;
-  if (isPoint && candidate.started_at !== instant) return null;
+  if (isPoint) {
+    // Compared as instants: Postgres renders +00:00 where the client sent Z,
+    // so the same moment is two different strings.
+    const started = Date.parse(candidate.started_at!);
+    const inside = until
+      ? started >= Date.parse(from) && started < Date.parse(to)
+      : started === Date.parse(from);
+    if (!inside) return null;
+  }
 
   return candidate;
 }

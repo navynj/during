@@ -63,6 +63,7 @@ async function insert(row: {
   endedAt?: string | null;
   parent?: string | null;
   media?: string[];
+  planned?: boolean;
 }) {
   const id = crypto.randomUUID();
   written.push(id);
@@ -77,10 +78,11 @@ async function insert(row: {
       occurred_on: DAY,
       occurred_time: row.time,
       ended_at: row.endedAt ?? null,
+      planned: row.planned ?? false,
       parent_ripple_id: row.parent ?? null,
       media: row.media ?? [],
     })
-    .select('id, created_at, started_at');
+    .select('id, created_at, started_at, ended_at');
 }
 
 describe('editing revalidates the rules it moves through', () => {
@@ -361,5 +363,78 @@ describe('inner ripples are records like any other', () => {
 
     expect(data).toHaveLength(1);
     expect(data![0].media).toEqual(['keep.jpg']);
+  });
+});
+
+describe('a span typed in is a span (H18)', () => {
+  it('lands as timed, with the duration its times imply', async () => {
+    const { data, error } = await insert({ time: '09:00', endedAt: utc('10:30') });
+
+    expect(error).toBeNull();
+    expect(Date.parse(data![0].ended_at!) - Date.parse(data![0].started_at!)).toBe(90 * 60 * 1000);
+  });
+
+  it('takes the axis like any other span: a drop inside it is refused', async () => {
+    await insert({ time: '09:00', endedAt: utc('10:30') });
+
+    const { error } = await insert({ time: '09:45', endedAt: utc('09:45') });
+
+    expect(error?.code).toBe('23P01');
+  });
+
+  it('collides with a record that starts after it does', async () => {
+    // The blocker is not under the start, which is why findCollision has to
+    // be given the end as well.
+    await insert({ time: '10:00', endedAt: utc('10:00') });
+
+    const { error } = await insert({ time: '09:00', endedAt: utc('11:00') });
+
+    expect(error?.code).toBe('23P01');
+  });
+
+  it('is exempt while it is still a plan, like every other future record', async () => {
+    await insert({ time: '09:00', endedAt: utc('11:00') });
+
+    const { error } = await insert({ time: '09:30', endedAt: utc('10:00'), planned: true });
+
+    expect(error).toBeNull();
+  });
+});
+
+describe('a span typed inside a session', () => {
+  it('is accepted when it lies within its parent', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00') });
+
+    const { error } = await insert({
+      time: '09:30',
+      endedAt: utc('10:15'),
+      parent: parent.data![0].id,
+    });
+
+    expect(error).toBeNull();
+  });
+
+  it('is refused when its end runs past the session', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00') });
+
+    const { error } = await insert({
+      time: '10:30',
+      endedAt: utc('11:30'),
+      parent: parent.data![0].id,
+    });
+
+    expect(error?.message).toMatch(/within its parent/i);
+  });
+
+  it('may end exactly where its parent does: half-open, so that is inside', async () => {
+    const parent = await insert({ time: '09:00', endedAt: utc('11:00') });
+
+    const { error } = await insert({
+      time: '10:30',
+      endedAt: utc('11:00'),
+      parent: parent.data![0].id,
+    });
+
+    expect(error).toBeNull();
   });
 });

@@ -14,11 +14,12 @@ export type Draft = {
   /** Storage paths, never URLs: a URL expires and the row would rot. */
   media: string[];
   /**
-   * Only set in edit mode, for a record that has already finished. Times are
-   * the unit of truth — exclusion and containment both validate on them — so
-   * duration is shown beside these and never typed into.
+   * The optional end (H18). `null` is no end, which is a drop; a time makes
+   * this a timed Ripple whether it was typed or timed. Times are the unit of
+   * truth — exclusion and containment both validate on them — so duration is
+   * derived beside this and never typed into.
    */
-  endTime?: string | null;
+  endTime: string | null;
 };
 
 export type Prefill = {
@@ -44,6 +45,9 @@ export function emptyDraft(categories: MyCategory[], timeZone: string, prefill: 
     time: prefill.allDay ? null : (prefill.time ?? nowTime(timeZone)),
     audience: 'everyone',
     media: [],
+    // No end by default: most records are a point, and the span is the thing
+    // you ask for.
+    endTime: null,
   };
 }
 
@@ -70,9 +74,12 @@ export function isPlanned(draft: Draft, timeZone: string): boolean {
   return draft.time > nowTime(timeZone);
 }
 
-/** Only an explicit timer claims duration (E2), and a plan has not started. */
+/**
+ * A plan has not started, and a record that already has an end is finished —
+ * the Timer writes the present, so it has nothing to do with either.
+ */
 export function canRunTimer(draft: Draft, timeZone: string): boolean {
-  return draft.time !== null && !isPlanned(draft, timeZone);
+  return draft.time !== null && draft.endTime === null && !isPlanned(draft, timeZone);
 }
 
 /**
@@ -121,19 +128,26 @@ function wallClockOf(instant: string, timeZone: string): string {
 }
 
 /**
- * The instant an edited end refers to.
+ * The instant a typed end refers to.
  *
- * The end keeps whatever *date* it already had, so a session running past
- * midnight can have its end time corrected without the edit quietly dragging
- * it back a day.
+ * An end that already exists keeps whatever *date* it had, so a session
+ * running past midnight can have its end time corrected without the edit
+ * quietly dragging it back a day. A new end falls on the record's own day.
  */
-export function endInstantFor(originalEnd: string, endTime: string, timeZone: string): string {
-  const day = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(originalEnd));
+export function endInstantFor(
+  endTime: string,
+  timeZone: string,
+  originalEnd: string | null,
+  fallbackDate: IsoDate,
+): string {
+  const day = originalEnd
+    ? new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(originalEnd))
+    : fallbackDate;
 
   return wallClockToInstant(day, endTime, timeZone).toISOString();
 }
