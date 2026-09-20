@@ -4,9 +4,9 @@
   "buildCommand": "pnpm verify && next build",
   "redirects": [
     {
-      "source": "/(.*)",
-      "has": [{ "type": "host", "value": "www.during.today" }],
-      "destination": "https://during.today/$1",
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www\\.(?<apex>.*)" }],
+      "destination": "https://:apex/:path*",
       "permanent": true
     }
   ]

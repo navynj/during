@@ -179,9 +179,16 @@ public identifier, and RLS is what protects the data.
 
 ### Domain
 
-Vercel → Settings → Domains: add `during.today` and `www.during.today`.
-Follow the registrar instructions Vercel prints. `vercel.json` already
-redirects `www` to the apex permanently.
+Vercel → Settings → Domains: add the apex and its `www`. Follow the registrar
+instructions Vercel prints.
+
+**The domain is nowhere in the repo.** `vercel.json` redirects `www` to the
+apex by matching `www\.(?<apex>.*)` and sending the request to `:apex`, so it
+works for whatever domain the project is attached to. The app learns its
+origin from `NEXT_PUBLIC_SITE_URL` and nothing else — `lib/site.ts` is the
+only reader — so one build serves a preview, a local run and production.
+`pnpm lint` fails if the production domain appears in `app/`, `features/`,
+`components/`, `lib/`, or the config files.
 
 ## 5. Prod smoke
 
