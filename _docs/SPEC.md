@@ -1,4 +1,4 @@
-# During: Product Spec (v0.3)
+# During: Product Spec (v0.4)
 
 > A one-line diary that assembles itself. While you write it, your presence shows on the surface for a few close friends.
 
@@ -6,7 +6,7 @@ Domain: during.today. UI language: English. First users: 1:1 friends (most gener
 
 The reward loop: **being witnessed is the hook, the personal archive is the retention.** Records are written for oneself; sharing is a side effect (a leak, not a broadcast).
 
-Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2; accent text rule).
+Revision notes: v0.2 dissolved the former "Non-negotiables" section (product prohibitions became MVP hypotheses; system rules moved into their operating sections). v0.3 applies H6 (v1 restructured into v1a/v1b) and H7 (palette mid tone corrected to #787BE2). v0.4 applies H8 (#787BE2 scoped to chip foregrounds and the wave ramp; law 5 split into content surfaces vs interactive chrome).
 
 ---
 
@@ -119,14 +119,14 @@ Theme: swimming pool. Stop before skeuomorphism: no wave textures, no floats, no
 2. **Undulation = activity.** More waves = more happened. Impression-level (calm / some / lots), log-scaled, never a precise count or a participation gauge.
 3. **Only living things move.** In-progress timed grows its last wave line; finished water is still. New drop = one expanding ring, settling to a single ring. reduced-motion fallback mandatory.
 4. **Dotted = not yet.** Lane ropes, planned Ripples, the empty "your lane" slot.
-5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. Solid #0507C9 surface = Swim/Splash cards only.
+5. **One channel, one meaning.** Position = me (first column/row, leading). Ring weight + #0507C9 = live. A solid #0507C9 **content** surface is reserved for live Swim/Splash cards, where the fill is what encodes liveness. Interactive **chrome** — the FAB, primary action buttons, the active nav item — may use solid #0507C9 as the action color: chrome styling is not encoding, so it does not compete for the channel (H8).
 6. **Vocabulary may be taught; visual encodings may not.** If an encoding needs explanation, it is rejected.
 
 **Palette (the only custom tokens):**
 - Main ramp, content vitality: **#0507C9** live/now, **#787BE2** recent, **#D3D7F6** settled/past.
 - Gray ramp, structure: **#F1F3F7** surfaces, **#D8DCE8** deeper surfaces / dividers / lane ropes, **#6B79A3** muted and secondary text.
 - Ink: **#313338** body text.
-- **Text rule:** #787BE2 doubles as the accent text color (labels, time markers, headings, at bold or generous sizes; ~3.7:1 on white passes large-text contrast). Body copy and long-form text stay #313338 / #6B79A3. #D3D7F6 is never used for text. The vitality encoding lives in waves; text in #787BE2 is styling, not encoding.
+- **Text rule (H8):** #787BE2 is a **chip foreground and a wave tone, nothing else**. Its only text use is the foreground of category chips and other small tag-like chips; otherwise it appears solely as the "recent" tone inside the wave ramp. Text hierarchy: **#313338** default, **#0507C9** emphasis, **#6B79A3** muted or secondary. #D3D7F6 is never text. Enforced by `scripts/check-tokens.sh`, which fails the lint if main-400 is used outside the chip and wave components.
 - **No other colors, with one exception: category emojis keep their native colors** (the only off-palette element).
 - Dark mode: undefined for now. When designed it must be a night pool, never inverted colors.
 

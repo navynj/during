@@ -1,4 +1,4 @@
-# During: Decision Log (v0.3)
+# During: Decision Log (v0.4)
 
 Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chronological within each. Group H records spec-review amendments; where H supersedes an earlier entry, the earlier entry stays as history with a note.
 
@@ -138,3 +138,8 @@ Format: **Decision** · Why · Rejected (and why). Grouped by theme, roughly chr
 
 **H7. Palette mid tone corrected: #898BE3 to #787BE2; the "never text" rule retracted.** The prohibition was a contrast inference stated as a decision; the color was always intended for text. Scoped rule instead: #787BE2 = accent text (labels, time markers, headings, bold or generous sizes; ~3.7:1 on white passes large-text contrast), body copy stays #313338 / #6B79A3, #D3D7F6 never text. One-channel-one-meaning is unaffected: the vitality encoding lives in waves; accent text is styling, not encoding.
 
+**H8. Palette scoped again, and law 5 split into content vs chrome.** Two corrections found while building the shell.
+
+(a) **#787BE2 is a chip foreground and a wave tone, not an accent text color.** H7 retracted the "never text" prohibition and over-corrected into a general accent-text allowance; in practice it spread onto headings, time markers and nav chrome, which is precisely the diffusion one-channel-one-meaning exists to prevent. Scoped rule: #787BE2's only text use is the foreground of category chips and other small tag-like chips; otherwise it appears solely as the "recent" tone inside the wave ramp. Text hierarchy is #313338 (default), #0507C9 (emphasis), #6B79A3 (muted); #D3D7F6 is never text. Enforced mechanically by `scripts/check-tokens.sh`, which fails the lint if main-400 appears outside `components/ui/chips/` and `components/ui/waves/`. Supersedes H7's text rule; H7's hex correction stands.
+
+(b) **Law 5 amended: solid #0507C9 is reserved as a *content* surface, not as an action color.** The original rule ("solid #0507C9 surface = Swim/Splash cards only") was written about content and then read as a blanket prohibition, which left the FAB and primary buttons with nowhere to go. Split: solid #0507C9 *content* surfaces remain reserved for live Swim/Splash cards, where the fill encodes liveness; interactive chrome (FAB, primary action buttons, active nav) may use solid #0507C9 as the action color. Chrome styling is not encoding, so it does not compete for the channel. Rejected: inventing a separate action color, which would have added a fourth ramp to a three-ramp system to solve a problem of wording.
