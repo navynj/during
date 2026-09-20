@@ -74,8 +74,18 @@ body {
 
 @keyframes commit-ring {
   0% {
-    transform: scale(0.9);
-    opacity: 0.45;
+    transform: scale(0.92);
+    opacity: 0.5;
+  }
+  /* Opacity is front-loaded against the travel: the ring is nearly spent by
+     the time it is halfway out, so the eye reads energy leaving the centre
+     rather than a circle drawn all the way to the edge. Only these two
+     stops set transform, so the expansion stays linear underneath. */
+  22% {
+    opacity: 0.2;
+  }
+  48% {
+    opacity: 0.05;
   }
   100% {
     /* Travel is set per instance from the content size, so the last ring
