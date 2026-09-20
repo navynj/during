@@ -24,12 +24,15 @@ export function DatePager({ date }: { date: IsoDate }) {
           ‹
         </PagerLink>
 
-        <h1 className="text-main-900 flex flex-col items-center leading-none">
+        <h1 className="text-main-900 flex flex-col items-center">
           <span className="sr-only">{full}</span>
-          <span aria-hidden className="text-2xl font-semibold">
+          {/* `/none` sets the line-height alongside the size: the size
+              utilities carry their own leading, which is what holds the two
+              lines apart. */}
+          <span aria-hidden className="text-2xl/none font-medium">
             {day}
           </span>
-          <span aria-hidden className="text-xs font-semibold tracking-wide">
+          <span aria-hidden className="text-xs/none font-medium tracking-wide">
             {weekday}
           </span>
         </h1>
