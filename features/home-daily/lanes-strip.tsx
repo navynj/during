@@ -1,10 +1,11 @@
 'use client';
 
-import Link from 'next/link';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import { WaveLine } from '@/components/ui/waves';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
+import { CategorySheet } from '@/features/lanes/category-sheet';
 import type { MyCategory } from '@/lib/queries/profile';
 
 /**
@@ -29,6 +30,7 @@ export function LanesStrip({
   countsByCategory: Record<string, number>;
 }) {
   const { openSheet } = useInputSheet();
+  const [creating, setCreating] = useState(false);
 
   return (
     // Pinned to the bottom of the page, directly on the tab bar: the strip is
@@ -74,29 +76,35 @@ export function LanesStrip({
           );
         })}
 
-        <NewLaneSlot />
+        <NewLaneSlot onCreate={() => setCreating(true)} />
       </ul>
+
+      {creating ? <CategorySheet category={null} onClose={() => setCreating(false)} /> : null}
     </nav>
   );
 }
 
 /**
- * The seat of a category that does not exist yet, per the mockup. It leads to
- * the Lanes tab, where a lane is made and edited: the strip is a preview, and
- * putting a second lane editor on it would be a second place that knows what
- * a category is.
+ * The seat of a category that does not exist yet, per the mockup: it makes
+ * one, here.
+ *
+ * Not a shortcut to the Lanes tab — the tab bar is already that shortcut, and
+ * a slot that only moves you somewhere else is a step rather than an action.
+ * It opens the same sheet the Lanes headers do, so there is still one place
+ * that knows what a lane is.
  */
-function NewLaneSlot() {
+function NewLaneSlot({ onCreate }: { onCreate: () => void }) {
   return (
     <li className="flex w-[4.5rem] shrink-0 flex-col items-center gap-2">
       <span className="text-xs">&nbsp;</span>
-      <Link
-        href="/lanes"
+      <button
+        type="button"
+        onClick={onCreate}
         aria-label="New lane"
         className="text-main-900 flex h-10 w-10 items-center justify-center rounded-full bg-white/60 opacity-30"
       >
         <Plus aria-hidden size={16} />
-      </Link>
+      </button>
     </li>
   );
 }

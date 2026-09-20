@@ -15,6 +15,7 @@ vi.mock('@/features/lanes/actions', () => ({
   deleteLane: () => Promise.resolve({ ok: true }),
 }));
 
+import { LanesStrip } from '@/features/home-daily/lanes-strip';
 import { LanesMatrix } from '@/features/lanes/lanes-matrix';
 import { laneRows } from '@/features/lanes/matrix';
 import { Trail } from '@/features/locker/trail';
@@ -265,5 +266,25 @@ describe('the ropes run the whole depth of the matrix', () => {
 
     const quiet = container.querySelector('[data-quiet-row]')!;
     expect(quiet.querySelectorAll('.border-l')).toHaveLength(2);
+  });
+});
+
+describe('the strip makes a lane rather than pointing at one', () => {
+  it('opens the same sheet the Lanes headers open, in place', () => {
+    const { container, getByLabelText, getByText } = render(
+      <InputSheetProvider>
+        <LanesStrip categories={[category()]} countsByCategory={{ [FOCUS]: 2 }} />
+      </InputSheetProvider>,
+    );
+
+    const slot = getByLabelText('New lane');
+    // Not a link away: the tab bar is already the way to the Lanes tab, so a
+    // slot that only moved you there would be a step, not an action.
+    expect(slot.tagName).toBe('BUTTON');
+
+    fireEvent.click(slot);
+
+    expect(container.querySelector('[role="dialog"]')!.getAttribute('aria-label')).toBe('New lane');
+    expect(getByText('Add lane')).toBeTruthy();
   });
 });
