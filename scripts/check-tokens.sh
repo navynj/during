@@ -20,6 +20,10 @@ PATTERN='main-400|#787[Bb][Ee]2'
 hits=$(grep -rnE "$PATTERN" "${SEARCH_PATHS[@]}" \
   --include='*.ts' --include='*.tsx' --include='*.css' 2>/dev/null || true)
 
+# Naming the rule is not breaking it: skip comment lines, or a file that
+# documents why main-400 is off limits cannot say so.
+hits=$(printf '%s\n' "$hits" | grep -vE '^[^:]+:[0-9]+: *(\*|//|/\*)' || true)
+
 for allowed in "${ALLOWED[@]}"; do
   hits=$(printf '%s\n' "$hits" | grep -v "^${allowed}" || true)
 done

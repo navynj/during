@@ -14,6 +14,8 @@ export type WaveBundleProps = {
   gap?: number;
   /** How an in-progress record moves. Both modes are live while we choose. */
   motion?: WaveMotion;
+  /** Passed through to every line; see WaveLine. */
+  strokeWidth?: number;
   /** Category emoji — the single allowed off-palette element (H4). */
   emoji?: string;
   className?: string;
@@ -33,6 +35,7 @@ export function WaveBundle({
   width = WAVE_WIDTH,
   gap = WAVE_GAP,
   motion = DEFAULT_WAVE_MOTION,
+  strokeWidth,
   emoji,
   className = '',
 }: WaveBundleProps) {
@@ -67,7 +70,12 @@ export function WaveBundle({
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine key={index} width={width} motion={lineMotion(index)} />
+          <WaveLine
+            key={index}
+            width={width}
+            strokeWidth={strokeWidth}
+            motion={lineMotion(index)}
+          />
         ))}
       </div>
     </div>

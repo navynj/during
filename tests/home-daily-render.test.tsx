@@ -48,7 +48,9 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
 }
 
 function row(over: Partial<RippleWithCategory> = {}) {
-  return render(<RippleRow ripple={ripple(over)} timeZone={TZ} now={NOW} motion="grow" />);
+  return render(
+    <RippleRow ripple={ripple(over)} timeZone={TZ} now={NOW} motion="grow" surface="bg-white" />,
+  );
 }
 
 describe('a Ripple on the axis', () => {
@@ -107,7 +109,7 @@ describe('a Ripple on the axis', () => {
 describe('the day around it', () => {
   it('ends the flow with the Add ripple slot', () => {
     const { container, getByText } = render(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} motion="grow" />,
+      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} motion="grow" surface="bg-white" />,
     );
 
     expect(getByText('Add ripple')).toBeTruthy();
@@ -144,6 +146,7 @@ describe('the motion override in place', () => {
         timeZone={TZ}
         now={NOW}
         motion="travel"
+        surface="bg-white"
       />,
     );
 
@@ -153,10 +156,24 @@ describe('the motion override in place', () => {
 
   it('leaves finished records still in either mode', () => {
     const { container } = render(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} motion="travel" />,
+      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} motion="travel" surface="bg-white" />,
     );
 
     expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
     expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
+  });
+});
+
+describe('the rope', () => {
+  it('is masked by the wave stack rather than showing through it', () => {
+    // The surface travels down as a prop: a hardcoded white would blot a past
+    // day, whose page has already sunk to pool-100 or pool-200.
+    const { container } = render(
+      <RippleRow ripple={ripple()} timeZone={TZ} now={NOW} motion="grow" surface="bg-pool-100" />,
+    );
+
+    const stack = container.querySelector('.bg-pool-100');
+    expect(stack).not.toBeNull();
+    expect(stack!.querySelector('[data-lines]')).not.toBeNull();
   });
 });

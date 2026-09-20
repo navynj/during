@@ -60,8 +60,9 @@ begin
     (md5(me::text || ':place-noon')::uuid, me, place,     'kitsilano beach',                        today, '12:15', (today + time '12:15') at time zone tz, false),
     (md5(me::text || ':listening')::uuid,  me, listening, 'parannoul on repeat',                    today, '14:40', (today + time '14:40') at time zone tz, false),
     (md5(me::text || ':locked')::uuid,     me, day,       'the thing I am not saying out loud yet', today, '16:00', (today + time '16:00') at time zone tz, false),
-    -- In progress: no end. Started two hours ago so its bundle has real density.
-    (md5(me::text || ':live')::uuid,       me, focus,     'session 2',                              today, ((now() at time zone tz) - interval '2 hours')::time, null, false),
+    -- In progress: no end. Late in the day, so the live record is the most
+    -- recent one on the axis rather than the first.
+    (md5(me::text || ':live')::uuid,       me, focus,     'session 2',                              today, '18:16', null, false),
     (md5(me::text || ':planned')::uuid,    me, place,     'dinner later',                           today, '21:30', (today + time '21:30') at time zone tz, true),
     (md5(me::text || ':note')::uuid,       me, day,       'slept badly, worked anyway',             today, null, null, false),
     (md5(me::text || ':y-focus')::uuid,    me, focus,     'schema, first pass',                     yesterday, '13:00', (yesterday + time '15:00') at time zone tz, false),

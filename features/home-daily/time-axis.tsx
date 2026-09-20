@@ -21,19 +21,20 @@ export function TimeAxis({
   timeZone,
   now,
   motion,
+  surface,
 }: {
   ripples: RippleWithCategory[];
   timeZone: string;
   now: Date;
   motion: WaveMotion;
+  surface: string;
 }) {
   return (
-    <section className="relative">
-      {/* The rope: one continuous line the records sit on. Behind them, and
-          inset to the wave column so the waves read as marks on it. */}
-      <span aria-hidden className="bg-pool-200 absolute top-2 bottom-2 left-[4.875rem] w-px" />
-
-      <ol className="relative flex flex-col">
+    // The rope is drawn per row, inside the wave cell, so it is centred by the
+    // same grid that places the waves and cannot drift out of alignment.
+    <section>
+      {/* Clear of the divider: the first record should not look welded to it. */}
+      <ol className="flex flex-col pt-5">
         {ripples.map((ripple) => (
           <RippleRow
             key={ripple.id}
@@ -41,6 +42,7 @@ export function TimeAxis({
             timeZone={timeZone}
             now={now}
             motion={motion}
+            surface={surface}
           />
         ))}
         <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} />
