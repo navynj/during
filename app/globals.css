@@ -78,7 +78,9 @@ body {
     opacity: 0.45;
   }
   100% {
-    transform: scale(2.4);
+    /* The outermost ring lands exactly on the box: rings rest at a quarter
+       inset, so doubling fills the bounds and nothing spills past them. */
+    transform: scale(2);
     opacity: 0;
   }
 }

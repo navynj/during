@@ -109,12 +109,12 @@ export default function WavesFixturePage() {
       >
         <div className="border-pool-200 flex flex-wrap items-center gap-16 border-t pt-8">
           <CommitRing>
-            <span className="bg-pool-100 flex h-12 w-12 items-center justify-center rounded-full text-xl">
+            <span className="bg-pool-100 text-main-900 flex h-8 w-8 items-center justify-center rounded-full text-lg">
               +
             </span>
           </CommitRing>
-          <CommitRing rings={4} size={120}>
-            <span className="bg-pool-100 text-pool-500 flex h-14 w-14 items-center justify-center rounded-full text-sm">
+          <CommitRing size={72} rings={4}>
+            <span className="bg-pool-100 text-pool-500 flex h-10 w-10 items-center justify-center rounded-full text-xs">
               YL
             </span>
           </CommitRing>

@@ -22,7 +22,7 @@ const STAGGER_MS = 220;
  * reduced motion the rings are simply drawn at rest, which is the same figure
  * the animation passes through — the design reads correctly static (law 3).
  */
-export function CommitRing({ size = 96, rings = 3, className = '', children }: CommitRingProps) {
+export function CommitRing({ size = 56, rings = 3, className = '', children }: CommitRingProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const indices = Array.from({ length: rings }, (_, i) => i);
 
