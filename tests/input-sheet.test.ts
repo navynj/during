@@ -24,6 +24,7 @@ function draft(over: Partial<Draft> = {}): Draft {
     note: '',
     time: '09:00',
     audience: 'everyone',
+    media: [],
     ...over,
   };
 }

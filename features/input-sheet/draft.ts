@@ -10,6 +10,8 @@ export type Draft = {
   /** `null` = "for the whole day": the record leaves the axis (SPEC 6). */
   time: string | null;
   audience: Audience;
+  /** Storage paths, never URLs: a URL expires and the row would rot. */
+  media: string[];
 };
 
 export type Prefill = {
@@ -30,6 +32,7 @@ export function emptyDraft(categories: MyCategory[], timeZone: string, prefill: 
     // Time defaults to now; changing it is edge UI (SPEC 6).
     time: prefill.time ?? nowTime(timeZone),
     audience: 'everyone',
+    media: [],
   };
 }
 
@@ -59,4 +62,26 @@ export function isPlanned(draft: Draft, timeZone: string): boolean {
 /** Only an explicit timer claims duration (E2), and a plan has not started. */
 export function canRunTimer(draft: Draft, timeZone: string): boolean {
   return draft.time !== null && !isPlanned(draft, timeZone);
+}
+
+/**
+ * The draft that corrects an existing Ripple. Edit is the same sheet, not a
+ * second editor — there is one place to say what a record is.
+ */
+export function draftFrom(
+  ripple: {
+    category_id: string;
+    note: string | null;
+    occurred_time: string | null;
+    media: string[];
+  },
+  locked: boolean,
+): Draft {
+  return {
+    categoryId: ripple.category_id,
+    note: ripple.note ?? '',
+    time: ripple.occurred_time ? ripple.occurred_time.slice(0, 5) : null,
+    audience: locked ? 'only-me' : 'everyone',
+    media: ripple.media,
+  };
 }

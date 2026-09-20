@@ -1,3 +1,6 @@
+'use client';
+
+import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 
 /**
@@ -6,6 +9,7 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
  * They sit above the axis because they have no position on it.
  */
 export function DailyNoteArea({ notes }: { notes: RippleWithCategory[] }) {
+  const { openRipple } = useRippleSheet();
   if (notes.length === 0) {
     return (
       // TODO(S5): final empty-state copy. The prompt is an invitation, never a
@@ -20,9 +24,15 @@ export function DailyNoteArea({ notes }: { notes: RippleWithCategory[] }) {
   return (
     <ul className="flex flex-col gap-1 pb-3">
       {notes.map((note) => (
-        <li key={note.id} className="text-ink flex items-baseline gap-2 text-sm">
-          {note.category?.icon ? <span aria-hidden>{note.category.icon}</span> : null}
-          <span>{note.note}</span>
+        <li key={note.id}>
+          <button
+            type="button"
+            onClick={() => openRipple(note.id)}
+            className="text-ink flex items-baseline gap-2 text-left text-sm"
+          >
+            {note.category?.icon ? <span aria-hidden>{note.category.icon}</span> : null}
+            <span>{note.note}</span>
+          </button>
         </li>
       ))}
     </ul>

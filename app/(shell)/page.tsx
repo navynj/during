@@ -7,6 +7,7 @@ import { ScrollAnchor } from '@/features/home-daily/scroll-anchor';
 import { ADD_RIPPLE_SLOT_ID, TimeAxis } from '@/features/home-daily/time-axis';
 import { LanesStrip } from '@/features/home-daily/lanes-strip';
 import { SheetHost } from '@/features/input-sheet/sheet-host';
+import { RippleSheetHost } from '@/features/ripple-sheet/sheet-host';
 import { getInnerRipples, getRunningSession, runningBreak } from '@/lib/queries/compose';
 import { getRipplesForDate, splitByRegion } from '@/lib/queries/ripples';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
@@ -35,6 +36,18 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
   ]);
   const { notes, timeline } = splitByRegion(ripples);
 
+  // Lock state is read once for the day rather than per sheet: RLS already
+  // limits these rows to the author, and the detail sheet needs it on open.
+  const { data: lockRows } = await supabase
+    .from('ripple_audience')
+    .select('ripple_id')
+    .eq('target_type', 'lock')
+    .in(
+      'ripple_id',
+      ripples.length ? ripples.map((r) => r.id) : ['00000000-0000-0000-0000-000000000000'],
+    );
+  const lockedIds = (lockRows ?? []).map((row) => row.ripple_id);
+
   // Inner ripples never take a row, but their spans are what draw calm water
   // in the parent's bundle (H15a2).
   const now = new Date();
@@ -59,34 +72,41 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const anchor = anchorFor(date, today);
 
   return (
-    <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
-      {/* The day takes the slack, so on a quiet day the strip still sits at the
+    <RippleSheetHost
+      ripples={ripples}
+      inner={inner}
+      lockedIds={lockedIds}
+      sheetContext={{ categories, ripples: timeline, running, timeZone: profile.timezone, date }}
+    >
+      <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
+        {/* The day takes the slack, so on a quiet day the strip still sits at the
           bottom instead of floating halfway up the screen. */}
-      <div className="flex-1">
-        <DatePager date={date} />
-        <DailyNoteArea notes={notes} />
-        <div className="bg-main-900 h-px" />
-        <TimeAxis
-          ripples={timeline}
-          timeZone={profile.timezone}
-          now={now}
-          openBreakByRipple={openBreakByRipple}
+        <div className="flex-1">
+          <DatePager date={date} />
+          <DailyNoteArea notes={notes} />
+          <div className="bg-main-900 h-px" />
+          <TimeAxis
+            ripples={timeline}
+            timeZone={profile.timezone}
+            now={now}
+            openBreakByRipple={openBreakByRipple}
+          />
+        </div>
+
+        <LanesStrip categories={categories} countsByCategory={countsByCategory} />
+
+        {/* Keyed on the date so a pager move remounts it and resets the anchor. */}
+        <ScrollAnchor key={date} anchor={anchor} targetId={ADD_RIPPLE_SLOT_ID} />
+
+        <SheetHost
+          context={{ categories, ripples: timeline, running, timeZone: profile.timezone, date }}
+          openWithParent={
+            typeof params.session === 'string' && running?.id === params.session
+              ? params.session
+              : undefined
+          }
         />
-      </div>
-
-      <LanesStrip categories={categories} countsByCategory={countsByCategory} />
-
-      {/* Keyed on the date so a pager move remounts it and resets the anchor. */}
-      <ScrollAnchor key={date} anchor={anchor} targetId={ADD_RIPPLE_SLOT_ID} />
-
-      <SheetHost
-        context={{ categories, ripples: timeline, running, timeZone: profile.timezone, date }}
-        openWithParent={
-          typeof params.session === 'string' && running?.id === params.session
-            ? params.session
-            : undefined
-        }
-      />
-    </main>
+      </main>
+    </RippleSheetHost>
   );
 }

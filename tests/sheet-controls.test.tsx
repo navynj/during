@@ -12,6 +12,7 @@ const draft: Draft = {
   note: '',
   time: '09:19',
   audience: 'everyone',
+  media: [],
 };
 
 /**

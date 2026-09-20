@@ -9,7 +9,9 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
 import { commitRipple, stopSession, type CommitResult } from './commit';
-import { canRunTimer, emptyDraft, isPlanned, type Draft, type Prefill } from './draft';
+import { canRunTimer, draftFrom, emptyDraft, isPlanned, type Draft, type Prefill } from './draft';
+import { MediaField } from './media-field';
+import { updateRipple } from '@/features/ripple-sheet/actions';
 import { MiniAxis } from './mini-axis';
 import { AudienceChip, TimeControl } from './sheet-controls';
 import { CollisionNotice } from './collision-notice';
@@ -31,21 +33,27 @@ export type SheetContext = {
 export function InputSheet({
   context,
   prefill,
+  editing,
   onClose,
   onCommitted,
 }: {
   context: SheetContext;
   prefill: Prefill;
+  /** Present in edit mode: the same sheet, correcting instead of composing. */
+  editing?: { ripple: RippleWithCategory; locked: boolean } | null;
   onClose: () => void;
   onCommitted: (rippleId: string) => void;
 }) {
   const { categories, ripples, running, timeZone, date } = context;
-  const [draft, setDraft] = useState<Draft>(() => emptyDraft(categories, timeZone, prefill));
+  const [draft, setDraft] = useState<Draft>(() =>
+    editing ? draftFrom(editing.ripple, editing.locked) : emptyDraft(categories, timeZone, prefill),
+  );
   const [result, setResult] = useState<CommitResult | null>(null);
   const [askingToSwap, setAskingToSwap] = useState(false);
   // H13: the rail is instrumentation for a time that is not now. In the
   // default state the sheet is chips, note, toggle and commit — nothing else.
   const [openedAt] = useState(() => draft.time);
+  const isEdit = Boolean(editing);
   const [nestInto, setNestInto] = useState<string | null>(prefill.parentRippleId ?? null);
   const parentRippleId = nestInto;
   const inner = parentRippleId !== null;
@@ -62,6 +70,27 @@ export function InputSheet({
     if (!draft.categoryId) return;
     setResult(null);
 
+    const startInstant =
+      draft.time === null ? null : wallClockToInstant(date, draft.time, timeZone).toISOString();
+
+    if (editing) {
+      startTransition(async () => {
+        const outcome = await updateRipple({
+          id: editing.ripple.id,
+          categoryId: draft.categoryId!,
+          note: draft.note,
+          occurredOn: editing.ripple.occurred_on,
+          occurredTime: draft.time,
+          locked: draft.audience === 'only-me',
+          media: draft.media,
+          startInstant,
+        });
+        if (outcome.ok) onCommitted(outcome.rippleId);
+        else setResult(outcome);
+      });
+      return;
+    }
+
     startTransition(async () => {
       const outcome = await commitRipple({
         categoryId: draft.categoryId!,
@@ -72,8 +101,7 @@ export function InputSheet({
         planned,
         locked: draft.audience === 'only-me',
         parentRippleId: parent,
-        startInstant:
-          draft.time === null ? null : wallClockToInstant(date, draft.time, timeZone).toISOString(),
+        startInstant,
       });
 
       if (outcome.ok) {
@@ -95,7 +123,7 @@ export function InputSheet({
 
       <section
         role="dialog"
-        aria-label={inner ? 'Add into this session' : 'Add a ripple'}
+        aria-label={isEdit ? 'Edit this ripple' : inner ? 'Add into this session' : 'Add a ripple'}
         className="relative flex max-h-[82vh] flex-col overflow-hidden rounded-t-3xl bg-white"
       >
         {/* Containment, said in the grammar rather than in words: inside the
@@ -156,6 +184,11 @@ export function InputSheet({
                 className="text-ink placeholder:text-pool-500 min-h-20 w-full resize-none text-base outline-none"
               />
 
+              <MediaField
+                paths={draft.media}
+                onChange={(media) => setDraft((d) => ({ ...d, media }))}
+              />
+
               <TimeControl
                 draft={draft}
                 planned={planned}
@@ -208,14 +241,14 @@ export function InputSheet({
               // Timer read as the weaker of the two.
               className="bg-main-900 flex-1 rounded-full py-3 text-base font-medium text-white disabled:opacity-50"
             >
-              {inner ? 'Drop into session' : planned ? 'Save as plan' : 'Drop'}
+              {isEdit ? 'Update' : inner ? 'Drop into session' : planned ? 'Save as plan' : 'Drop'}
             </button>
 
             {/* Drop-only inside a session: timed children exist today only as
               Breaks, and generalising them is an open item (SPEC 10). */}
             <button
               type="button"
-              hidden={inner}
+              hidden={inner || isEdit}
               disabled={pending || !timerAvailable}
               // One running timer at a time (H10). A second is a choice to
               // offer, not an error to report after the fact.

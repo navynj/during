@@ -1,5 +1,8 @@
+'use client';
+
 import { DurationChip } from '@/components/ui/chips/duration-chip';
 import { WaveBundle, WaveLine } from '@/components/ui/waves';
+import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { elapsedMinutes, rippleDurationMinutes, rippleKind, rippleState } from '@/lib/ripple-kind';
 
@@ -35,6 +38,7 @@ export function RippleRow({
   const state = rippleState(ripple);
   const emoji = ripple.category?.icon ?? undefined;
   const fade = state === 'planned' ? PLANNED_OPACITY : undefined;
+  const { openRipple } = useRippleSheet();
 
   // A running timer has no end yet, so its line count comes from how long it
   // has been going. Without this a live record would draw one line until the
@@ -49,7 +53,9 @@ export function RippleRow({
   // not by a second number that breaks the ordering.
 
   return (
-    <li className={ROW_GRID}>
+    // The whole row opens the record: a settled Ripple is read before it is
+    // changed, and Edit and Delete live in that sheet (SPEC 10).
+    <li className={ROW_GRID} onClick={() => openRipple(ripple.id)}>
       <time
         className="text-main-900 pt-2 text-xs font-light tabular-nums"
         style={{ opacity: fade }}
