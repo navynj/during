@@ -1,6 +1,17 @@
 import { SignInButton } from '@/features/auth/sign-in-button';
+import { authCallbackUrl } from '@/lib/site';
 
-export default function SignInPage() {
+const ERRORS: Record<string, string> = {
+  redirect_not_allowlisted: `Sign-in came back to the wrong address. Supabase did not accept ${authCallbackUrl()} as a return URL, so it fell back to site_url. Add that exact URL to additional_redirect_urls in supabase/config.toml and restart with pnpm db:start.`,
+  exchange_failed: 'Google signed you in, but the session exchange failed. Try again.',
+  missing_code: 'Sign-in returned without an authorization code. Try again.',
+};
+
+export default async function SignInPage({ searchParams }: PageProps<'/sign-in'>) {
+  const params = await searchParams;
+  const key = typeof params.error === 'string' ? params.error : null;
+  const message = key ? (ERRORS[key] ?? 'Sign-in failed. Try again.') : null;
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 text-center">
       <div className="space-y-3">
@@ -9,6 +20,16 @@ export default function SignInPage() {
           A one-line diary that assembles itself, for a few close friends.
         </p>
       </div>
+
+      {message ? (
+        <p
+          role="alert"
+          className="bg-pool-100 text-ink max-w-sm rounded-lg px-4 py-3 text-left text-sm"
+        >
+          {message}
+        </p>
+      ) : null}
+
       <SignInButton />
     </main>
   );

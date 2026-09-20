@@ -32,12 +32,21 @@ Started the other way, the Google client ID is passed to Google as the literal s
 pnpm dev                # http://localhost:3000
 ```
 
+Use **http://127.0.0.1:3000** in the browser, not `localhost:3000`. They are two
+different origins to Supabase's redirect allowlist, and the app builds every OAuth
+return URL from `NEXT_PUBLIC_SITE_URL`.
+
 Sign-in needs Google OAuth credentials. Create an OAuth client in the
 [Google Cloud console](https://console.cloud.google.com/apis/credentials) with
 `http://127.0.0.1:54321/auth/v1/callback` as an authorized redirect URI, and put the
 client ID and secret in `.env.local` as `SUPABASE_AUTH_GOOGLE_CLIENT_ID` and
 `SUPABASE_AUTH_GOOGLE_SECRET`. Restart the stack (`supabase stop && pnpm db:start`)
 after adding them.
+
+If sign-in returns you to the sign-in page with no session, the return URL is not on
+the allowlist: `additional_redirect_urls` in `supabase/config.toml` is matched as an
+exact string, and a miss falls back to `site_url` instead of erroring. `pnpm test`
+covers this.
 
 ## Everyday commands
 

@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import type { Database } from '@/lib/database.types';
 
 /** Routes reachable without a session. Everything else redirects to sign-in. */
-const PUBLIC_PATHS = ['/sign-in', '/auth'];
+const PUBLIC_PATHS = ['/sign-in', '/auth/callback', '/auth/sign-out'];
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
@@ -36,20 +36,40 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // An OAuth code anywhere but the callback means Supabase did not accept the
+  // redirect_to we sent and fell back to site_url. That failure is otherwise
+  // silent — the guard below would bounce it to sign-in and it would read as
+  // "nothing happened" — so name it instead.
+  if (searchParams.has('code') && pathname !== '/auth/callback') {
+    return NextResponse.redirect(errorUrl(request, 'redirect_not_allowlisted'));
+  }
+
   const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
   if (!user && !isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/sign-in';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(cleanUrl(request, '/sign-in'));
   }
 
   if (user && pathname === '/sign-in') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(cleanUrl(request, '/'));
   }
 
   return response;
+}
+
+/** Guard redirects drop the incoming query; carrying it forward only ever
+ *  produced misleading URLs like /sign-in?code=… */
+function cleanUrl(request: NextRequest, pathname: string): URL {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  url.search = '';
+  return url;
+}
+
+function errorUrl(request: NextRequest, reason: string): URL {
+  const url = cleanUrl(request, '/sign-in');
+  url.searchParams.set('error', reason);
+  return url;
 }

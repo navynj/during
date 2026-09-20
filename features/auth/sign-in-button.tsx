@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { authCallbackUrl, TIMEZONE_COOKIE } from '@/lib/site';
 import { createClient } from '@/lib/supabase/client';
 import { detectTimezone } from '@/lib/time';
 
@@ -10,16 +11,15 @@ export function SignInButton() {
 
   async function signIn(): Promise<void> {
     setPending(true);
+
+    // Only the browser knows the author's zone, and the callback runs on the
+    // server. Short-lived, lax so it survives the redirect back from Google.
+    document.cookie = `${TIMEZONE_COOKIE}=${encodeURIComponent(detectTimezone())}; path=/; max-age=600; samesite=lax`;
+
     const supabase = createClient();
-
-    // The browser knows the author's zone; the callback runs on the server and
-    // does not, so it rides along and lands on the profile at bootstrap.
-    const callback = new URL('/auth/callback', window.location.origin);
-    callback.searchParams.set('tz', detectTimezone());
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: callback.toString() },
+      options: { redirectTo: authCallbackUrl() },
     });
 
     if (error) setPending(false);

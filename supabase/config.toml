@@ -159,6 +159,10 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+# Must contain the exact URL the app sends as redirect_to, query string and
+# all: entries here are matched as exact strings, and GoTrue answers a miss
+# by silently falling back to site_url. Keep this in step with
+# NEXT_PUBLIC_SITE_URL — lib/site.ts builds the URL from that one value.
 additional_redirect_urls = ["http://127.0.0.1:3000/auth/callback", "http://localhost:3000/auth/callback"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
