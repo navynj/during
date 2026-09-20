@@ -6,8 +6,12 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/lanes',
   useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {} }),
 }));
+const saved: unknown[] = [];
 vi.mock('@/features/lanes/actions', () => ({
-  saveLane: () => Promise.resolve({ ok: true }),
+  saveLane: (lane: unknown) => {
+    saved.push(lane);
+    return Promise.resolve({ ok: true });
+  },
   deleteLane: () => Promise.resolve({ ok: true }),
 }));
 
@@ -130,6 +134,34 @@ describe('the matrix keeps its labels in view', () => {
 
     expect(getByLabelText('Edit this lane')).toBeTruthy();
     expect((getByLabelText('Lane name') as HTMLInputElement).value).toBe('Focus');
+  });
+});
+
+describe('a lane that does not exist yet', () => {
+  it('suggests its glyph rather than filling one in', () => {
+    const { getByLabelText } = matrix(new Map([['2027-07-08', { [FOCUS]: 1 }]]));
+    fireEvent.click(getByLabelText('New lane'));
+
+    const icon = getByLabelText('Icon') as HTMLInputElement;
+    expect(icon.value).toBe('');
+    expect(icon.placeholder).toBe('🌊');
+  });
+
+  it('takes the suggestion when the author never picks one', () => {
+    saved.length = 0;
+    const { getByLabelText, getByText } = matrix(new Map([['2027-07-08', { [FOCUS]: 1 }]]));
+    fireEvent.click(getByLabelText('New lane'));
+    fireEvent.change(getByLabelText('Lane name'), { target: { value: 'Reading' } });
+    fireEvent.click(getByText('Add lane'));
+
+    expect(saved[0]).toMatchObject({ id: null, name: 'Reading', icon: '🌊' });
+  });
+
+  it("keeps an existing lane's own glyph as a value, not a suggestion", () => {
+    const { getByText, getByLabelText } = matrix(new Map([['2027-07-08', { [FOCUS]: 1 }]]));
+    fireEvent.click(getByText('Focus'));
+
+    expect((getByLabelText('Icon') as HTMLInputElement).value).toBe('🔍');
   });
 });
 

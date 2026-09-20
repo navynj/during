@@ -8,6 +8,13 @@ import type { MyCategory } from '@/lib/queries/profile';
 import { deleteLane, saveLane } from './actions';
 
 /**
+ * What a lane gets when its author never picks a glyph. Shown as a
+ * placeholder rather than typed in: a prefilled field is a choice the author
+ * has to undo, and an emoji they did not pick reads as one they did.
+ */
+const DEFAULT_ICON = '🌊';
+
+/**
  * A lane's own controls, opened from its column header: name, icon, and
  * delete while it is still empty.
  *
@@ -25,7 +32,7 @@ export function CategorySheet({
 }) {
   const router = useRouter();
   const [name, setName] = useState(category?.name ?? '');
-  const [icon, setIcon] = useState(category?.icon ?? '🌊');
+  const [icon, setIcon] = useState(category?.icon ?? '');
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -54,8 +61,9 @@ export function CategorySheet({
             value={icon}
             onChange={(event) => setIcon(event.target.value)}
             aria-label="Icon"
+            placeholder={DEFAULT_ICON}
             maxLength={8}
-            className="bg-pool-100 h-12 w-12 shrink-0 rounded-full text-center text-xl outline-none"
+            className="bg-pool-100 h-12 w-12 shrink-0 rounded-full text-center text-xl outline-none placeholder:opacity-30"
           />
           <input
             value={name}
@@ -98,7 +106,11 @@ export function CategorySheet({
             disabled={pending || name.trim().length === 0}
             onClick={() =>
               startTransition(async () => {
-                const result = await saveLane({ id: category?.id ?? null, name, icon });
+                const result = await saveLane({
+                  id: category?.id ?? null,
+                  name,
+                  icon: icon.trim() || DEFAULT_ICON,
+                });
                 if (result.ok) done();
                 else setMessage(result.message);
               })
