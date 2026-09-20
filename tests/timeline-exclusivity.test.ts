@@ -220,3 +220,61 @@ describe('inner ripples on the axis', () => {
     expect(ids).not.toContain(inner.data![0].id);
   });
 });
+
+describe('what the sheet has to say when a write is refused', () => {
+  it('names the record in the way', async () => {
+    const { findCollision } = await import('@/lib/queries/compose');
+    await insert({ occurred_time: '09:00', ended_at: utc('10:30'), id: undefined });
+
+    const clash = await findCollision(
+      asAdmin() as unknown as Parameters<typeof findCollision>[0],
+      author,
+      new Date(utc('09:40')),
+    );
+
+    expect(clash?.note).toBe('fixture');
+    // A span can take the new record in; that is the offer the sheet makes.
+    expect(clash!.ended_at).not.toBe(clash!.started_at);
+  });
+
+  it('finds the running session, so "add to this session" has a parent', async () => {
+    const { getRunningSession } = await import('@/lib/queries/compose');
+    const running = await insert({ occurred_time: '09:00', ended_at: null });
+    expect(running.error).toBeNull();
+
+    const found = await getRunningSession(
+      asAdmin() as unknown as Parameters<typeof getRunningSession>[0],
+      author,
+    );
+    expect(found?.id).toBe(running.data![0].id);
+  });
+
+  it('reports no running session once it is stopped', async () => {
+    const { getRunningSession } = await import('@/lib/queries/compose');
+    const running = await insert({ occurred_time: '09:00', ended_at: null });
+
+    await asAdmin()
+      .from('ripples')
+      .update({ ended_at: utc('10:00') })
+      .eq('id', running.data![0].id);
+
+    const found = await getRunningSession(
+      asAdmin() as unknown as Parameters<typeof getRunningSession>[0],
+      author,
+    );
+    expect(found).toBeNull();
+  });
+
+  it('does not offer to nest into a drop, which has no inside', async () => {
+    const { findCollision } = await import('@/lib/queries/compose');
+    await insert({ occurred_time: '09:00', ended_at: utc('09:00') });
+
+    const clash = await findCollision(
+      asAdmin() as unknown as Parameters<typeof findCollision>[0],
+      author,
+      new Date(utc('09:00')),
+    );
+
+    expect(clash?.ended_at).toBe(clash?.started_at);
+  });
+});

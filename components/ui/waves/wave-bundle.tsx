@@ -24,6 +24,12 @@ export type WaveBundleProps = {
   gap?: number;
   /** Category emoji — the single allowed off-palette element (H4). */
   emoji?: string;
+  /**
+   * `compact` is the input sheet's rail (H12): the same bundle at a tighter
+   * pitch with a smaller badge, so the rail is a preset on this component
+   * rather than a second rendering of the axis.
+   */
+  density?: 'default' | 'compact';
   className?: string;
 };
 
@@ -39,12 +45,15 @@ export function WaveBundle({
   durationMinutes,
   state = 'done',
   width = WAVE_WIDTH,
-  gap = WAVE_GAP,
+  gap,
+  density = 'default',
   emoji,
   className = '',
 }: WaveBundleProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const lines = bundleLineCount(durationMinutes);
+  const compact = density === 'compact';
+  const pitch = gap ?? (compact ? 1 : WAVE_GAP);
 
   // An in-progress timed is the only thing here that is still happening, so
   // it is the only thing allowed to move (law 3). The whole bundle travels,
@@ -60,8 +69,8 @@ export function WaveBundle({
       className={`flex flex-col items-center ${className}`}
       style={{ opacity: stateOpacity(state) }}
     >
-      {emoji ? <BundleHead emoji={emoji} /> : null}
-      <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
+      {emoji ? <BundleHead emoji={emoji} compact={compact} /> : null}
+      <div className="flex flex-col items-center" style={{ gap: pitch, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
           <WaveLine key={index} width={width} travelling={isTravelling} />
         ))}
@@ -81,11 +90,13 @@ export function WaveBundle({
   );
 }
 
-function BundleHead({ emoji }: { emoji: string }) {
+function BundleHead({ emoji, compact }: { emoji: string; compact: boolean }) {
   return (
     <span
       aria-hidden
-      className="bg-pool-100 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-sm"
+      className={`bg-pool-100 mb-1 flex items-center justify-center rounded-full ${
+        compact ? 'h-5 w-5 text-[10px]' : 'h-7 w-7 text-sm'
+      }`}
     >
       {emoji}
     </span>

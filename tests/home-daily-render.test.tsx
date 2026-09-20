@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// The Add ripple slot reaches for the sheet, which reaches for the router.
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({ push: () => {}, refresh: () => {} }),
+}));
 
 import { RippleRow } from '@/features/home-daily/ripple-row';
+import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { TimeAxis, ADD_RIPPLE_SLOT_ID } from '@/features/home-daily/time-axis';
 import { DailyNoteArea } from '@/features/home-daily/daily-note-area';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
@@ -47,6 +54,10 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
     category: { name: 'Focus', icon: '🔍' },
     ...over,
   };
+}
+
+function renderAxis(ui: React.ReactElement) {
+  return render(<InputSheetProvider>{ui}</InputSheetProvider>);
 }
 
 function row(over: Partial<RippleWithCategory> = {}) {
@@ -108,7 +119,7 @@ describe('a Ripple on the axis', () => {
 
 describe('the day around it', () => {
   it('ends the flow with the Add ripple slot', () => {
-    const { container, getByText } = render(
+    const { container, getByText } = renderAxis(
       <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} surface="bg-white" />,
     );
 
@@ -139,7 +150,7 @@ describe('the day around it', () => {
 
 describe('motion on the axis (H10)', () => {
   it('travels every line of an in-progress record', () => {
-    const { container } = render(
+    const { container } = renderAxis(
       <TimeAxis
         ripples={[ripple({ ended_at: null })]}
         timeZone={TZ}
@@ -154,7 +165,7 @@ describe('motion on the axis (H10)', () => {
   });
 
   it('leaves finished records still', () => {
-    const { container } = render(
+    const { container } = renderAxis(
       <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} surface="bg-white" />,
     );
 
@@ -191,7 +202,7 @@ describe('the time gutter', () => {
       ripple({ id: 'c', occurred_time: '09:00:00', ended_at: null }),
       ripple({ id: 'd', occurred_time: '23:59:00', ended_at: null }),
     ];
-    const { container } = render(
+    const { container } = renderAxis(
       <TimeAxis ripples={day} timeZone={TZ} now={NOW} surface="bg-white" />,
     );
 

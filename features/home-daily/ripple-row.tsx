@@ -1,5 +1,6 @@
-import { DurationChip, LiveDurationChip } from '@/components/ui/chips/duration-chip';
+import { DurationChip } from '@/components/ui/chips/duration-chip';
 import { WaveBundle, WaveLine } from '@/components/ui/waves';
+import { StopSessionChip } from './stop-session-chip';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
@@ -97,7 +98,8 @@ export function RippleRow({
         <p className="text-ink text-sm">{ripple.note}</p>
         {kind === 'timed' ? (
           ripple.ended_at === null ? (
-            <LiveDurationChip
+            <StopSessionChip
+              rippleId={ripple.id}
               since={startInstant(ripple, timeZone)!.toISOString()}
               initialMinutes={duration}
             />

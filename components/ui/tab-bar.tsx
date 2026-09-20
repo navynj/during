@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Plus, ShelvingUnit, type LucideIcon } from 'lucide-react';
 
+import { useInputSheet } from '@/features/input-sheet/sheet-provider';
+
 /**
  * D3: tab slots are full by design and the bar grows only as screens ship.
  * Lanes and Pools are deliberately absent until v1b and v1.5 — a dead tab is
@@ -46,12 +48,14 @@ export function TabBar() {
 }
 
 function AddRippleButton() {
-  // The FAB is one of the input sheet's three entry points (E6, blank prefill).
-  // The sheet itself lands in S3; until then the button is present but inert.
+  // The FAB is one of the input sheet's three entry points (E6): blank prefill.
+  const { openSheet } = useInputSheet();
+
   return (
     <button
       type="button"
       aria-label="Add ripple"
+      onClick={() => openSheet()}
       className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white"
     >
       <Plus aria-hidden size={24} />
