@@ -10,6 +10,7 @@ import {
   startInstant,
 } from '@/lib/ripple-kind';
 
+import { ROW_SURFACE } from './depth';
 import { ROPE, ROW_GRID } from './row-grid';
 
 const PLANNED_OPACITY = 0.35;
@@ -32,13 +33,10 @@ export function RippleRow({
   ripple,
   timeZone,
   now,
-  surface,
 }: {
   ripple: RippleWithCategory;
   timeZone: string;
   now: Date;
-  /** The page's current depth colour, so the wave stack can mask the rope. */
-  surface: string;
 }) {
   const kind = rippleKind(ripple, timeZone);
   const state = rippleState(ripple);
@@ -70,11 +68,9 @@ export function RippleRow({
           into one continuous line without anyone computing an offset. */}
       <div className="relative flex flex-col items-center pb-4">
         <span aria-hidden className={`${ROPE} inset-y-0`} />
-        {/* The stack carries the page's own surface so the rope passes
-            behind it rather than showing through the gaps between lines. It
-            takes the colour as a prop because the surface sinks with the
-            date, and a hardcoded white would blot a past day. */}
-        <span className={`relative ${surface}`}>
+        {/* The stack carries the page's ground so the rope passes behind it
+            rather than showing through the gaps between lines. */}
+        <span className={`relative ${ROW_SURFACE}`}>
           {kind === 'timed' ? (
             // The bundle fades itself, badge included, so the fade is not
             // applied here as well — twice would land it at 0.12.

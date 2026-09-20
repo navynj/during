@@ -19,12 +19,10 @@ export function TimeAxis({
   ripples,
   timeZone,
   now,
-  surface,
 }: {
   ripples: RippleWithCategory[];
   timeZone: string;
   now: Date;
-  surface: string;
 }) {
   return (
     // The rope is drawn per row, inside the wave cell, so it is centred by the
@@ -33,15 +31,9 @@ export function TimeAxis({
       {/* Clear of the divider: the first record should not look welded to it. */}
       <ol className="flex flex-col pt-5">
         {ripples.map((ripple) => (
-          <RippleRow
-            key={ripple.id}
-            ripple={ripple}
-            timeZone={timeZone}
-            now={now}
-            surface={surface}
-          />
+          <RippleRow key={ripple.id} ripple={ripple} timeZone={timeZone} now={now} />
         ))}
-        <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} surface={surface} />
+        <AddRippleSlot id={ADD_RIPPLE_SLOT_ID} />
       </ol>
     </section>
   );

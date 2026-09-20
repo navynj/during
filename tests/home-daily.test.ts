@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { anchorFor, depthFor, surfaceClass } from '@/features/home-daily/depth';
+import { anchorFor, ROW_SURFACE } from '@/features/home-daily/depth';
 import { splitByRegion, type RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
@@ -130,23 +130,17 @@ describe('the two regions of a day', () => {
   });
 });
 
-describe('sinking and anchors', () => {
-  it('leaves today and the future at the surface', () => {
-    expect(depthFor('2026-09-20', '2026-09-20')).toBe(0);
-    expect(depthFor('2026-09-25', '2026-09-20')).toBe(0);
-    expect(surfaceClass(depthFor('2026-09-20', '2026-09-20'))).toBe('bg-white');
-  });
-
-  it('steps the surface down as the pager moves back', () => {
-    expect(depthFor('2026-09-19', '2026-09-20')).toBe(1);
-    expect(depthFor('2026-09-15', '2026-09-20')).toBe(1);
-    expect(depthFor('2026-09-10', '2026-09-20')).toBe(2);
-    expect(surfaceClass(2)).toBe('bg-pool-200');
-  });
-
+describe('anchors', () => {
   it('opens today at the current time and any other day at the top', () => {
     expect(anchorFor('2026-09-20', '2026-09-20')).toBe('now');
     expect(anchorFor('2026-09-19', '2026-09-20')).toBe('top');
     expect(anchorFor('2026-09-21', '2026-09-20')).toBe('top');
+  });
+
+  it('gives every day the same ground', () => {
+    // Law 1's sinking is about sections within one scroll. Home Daily pages a
+    // day at a time, so there is nothing to sink: a tinted past page read as
+    // disabled rather than deep, next to waves that stay full strength (H9a).
+    expect(ROW_SURFACE).toBe('bg-white');
   });
 });

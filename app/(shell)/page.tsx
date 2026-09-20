@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { DatePager } from '@/features/home-daily/date-pager';
 import { DailyNoteArea } from '@/features/home-daily/daily-note-area';
-import { anchorFor, depthFor, surfaceClass } from '@/features/home-daily/depth';
+import { anchorFor } from '@/features/home-daily/depth';
 import { ScrollAnchor } from '@/features/home-daily/scroll-anchor';
 import { ADD_RIPPLE_SLOT_ID, TimeAxis } from '@/features/home-daily/time-axis';
 import { LanesStrip } from '@/features/home-daily/lanes-strip';
@@ -40,16 +40,14 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
     return counts;
   }, {});
 
-  const depth = depthFor(date, today);
-  const surface = surfaceClass(depth);
   const anchor = anchorFor(date, today);
 
   return (
-    <main className={`flex flex-1 flex-col ${surface} -mx-6 px-6 transition-colors`}>
+    <main className="flex flex-1 flex-col">
       <DatePager date={date} />
       <DailyNoteArea notes={notes} />
       <div className="bg-main-900 h-px" />
-      <TimeAxis ripples={timeline} timeZone={profile.timezone} now={new Date()} surface={surface} />
+      <TimeAxis ripples={timeline} timeZone={profile.timezone} now={new Date()} />
 
       <LanesStrip categories={categories} countsByCategory={countsByCategory} />
 

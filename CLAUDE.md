@@ -65,7 +65,7 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
 - Category emojis keep their native colors: the single allowed off-palette element.
 - **Motion: only living things move.** An in-progress timed grows its last wave line; a new drop plays one expanding ring that settles to a single ring. Nothing else animates. `prefers-reduced-motion` fallback is mandatory, and every design must read correctly when static.
 - Wave grammar: timed = multi-line bundle whose line count is log-scaled on duration (cap 10) at a constant gap, so height is a consequence of density, not a measure of span; drop = single wave line. Wave counts are impressions (calm / some / lots), never precise gauges. The axis is ordered, not time-proportional: vertical distance measures nothing.
-- Past sinks (backgrounds step white, then `#F1F3F7`, then `#D8DCE8`); future fades (reduced opacity + dotted). Tone and opacity never encode ownership.
+- Past sinks **within a continuous scroll** (backgrounds step white, then `#F1F3F7`, then `#D8DCE8`); a paged day keeps its white ground (H14). Future fades (reduced opacity). Tone and opacity never encode ownership.
 
 ## Code conventions
 

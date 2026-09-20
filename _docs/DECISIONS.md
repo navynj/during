@@ -196,3 +196,11 @@ This follows the same rule as the time control itself: **defaults work, edges ar
 **Time is one control with two exclusive segments** — a time, or All day — using the selection grammar the category chips use (solid #0507C9, white text), so "chosen" looks the same everywhere in the sheet. Replaces the prose links "For the whole day" / "Give it a time", which read as two separate commands rather than two states of one thing.
 
 **The audience chip carries no avatar in v1a.** Two text states, Everyone and Only me. The avatar was off-palette and collided with the label, and it answered "who" when the chip's job is "how far" — the audience is a property of the record, not a picture of its readers.
+
+**H14. Law 1's sinking applies to sections within a scroll, not to a paged day.** Home Daily keeps a white ground at every date.
+
+S2 read law 1 as "the further back the date, the deeper the page", and tinted the whole surface as the pager moved. In use it read wrong twice over. A fully tinted page looks *disabled*, not deep — the same grey the app uses for muted text and inert surfaces, now under everything. And the waves on it stay full-strength #0507C9 by H9a, so a past day became strong marks stranded on a dead ground, which is the opposite of settled.
+
+The law was written about a continuous scroll: day sections stacked in one surface, going deeper as you move back through them. That is a real depth cue because the steps are *adjacent* and the eye reads them as one gradient. A pager shows one day at a time, so there are no adjacent steps to compare — only a page that is inexplicably grey today and white yesterday.
+
+Sinking is therefore reserved for surfaces that actually stack sections: the Locker Trail's continuous scroll is where it belongs. Rejected: a fainter tint. The problem is not the strength of the step but that a single page has nothing to step against.

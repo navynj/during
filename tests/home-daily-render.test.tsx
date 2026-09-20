@@ -61,7 +61,7 @@ function renderAxis(ui: React.ReactElement) {
 }
 
 function row(over: Partial<RippleWithCategory> = {}) {
-  return render(<RippleRow ripple={ripple(over)} timeZone={TZ} now={NOW} surface="bg-white" />);
+  return render(<RippleRow ripple={ripple(over)} timeZone={TZ} now={NOW} />);
 }
 
 describe('a Ripple on the axis', () => {
@@ -120,7 +120,7 @@ describe('a Ripple on the axis', () => {
 describe('the day around it', () => {
   it('ends the flow with the Add ripple slot', () => {
     const { container, getByText } = renderAxis(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} surface="bg-white" />,
+      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} />,
     );
 
     expect(getByText('Add ripple')).toBeTruthy();
@@ -151,12 +151,7 @@ describe('the day around it', () => {
 describe('motion on the axis (H10)', () => {
   it('travels every line of an in-progress record', () => {
     const { container } = renderAxis(
-      <TimeAxis
-        ripples={[ripple({ ended_at: null })]}
-        timeZone={TZ}
-        now={NOW}
-        surface="bg-white"
-      />,
+      <TimeAxis ripples={[ripple({ ended_at: null })]} timeZone={TZ} now={NOW} />,
     );
 
     const paths = container.querySelectorAll('path');
@@ -165,9 +160,7 @@ describe('motion on the axis (H10)', () => {
   });
 
   it('leaves finished records still', () => {
-    const { container } = renderAxis(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} surface="bg-white" />,
-    );
+    const { container } = renderAxis(<TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} />);
 
     expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
   });
@@ -175,13 +168,9 @@ describe('motion on the axis (H10)', () => {
 
 describe('the rope', () => {
   it('is masked by the wave stack rather than showing through it', () => {
-    // The surface travels down as a prop: a hardcoded white would blot a past
-    // day, whose page has already sunk to pool-100 or pool-200.
-    const { container } = render(
-      <RippleRow ripple={ripple()} timeZone={TZ} now={NOW} surface="bg-pool-100" />,
-    );
+    const { container } = render(<RippleRow ripple={ripple()} timeZone={TZ} now={NOW} />);
 
-    const stack = container.querySelector('.bg-pool-100');
+    const stack = container.querySelector('.bg-white');
     expect(stack).not.toBeNull();
     expect(stack!.querySelector('[data-lines]')).not.toBeNull();
   });
@@ -202,9 +191,7 @@ describe('the time gutter', () => {
       ripple({ id: 'c', occurred_time: '09:00:00', ended_at: null }),
       ripple({ id: 'd', occurred_time: '23:59:00', ended_at: null }),
     ];
-    const { container } = renderAxis(
-      <TimeAxis ripples={day} timeZone={TZ} now={NOW} surface="bg-white" />,
-    );
+    const { container } = renderAxis(<TimeAxis ripples={day} timeZone={TZ} now={NOW} />);
 
     const shown = [...container.querySelectorAll('time')].map((el) => el.textContent!);
     expect(shown).toEqual([...shown].sort());
@@ -240,13 +227,9 @@ describe('the duration tag', () => {
 
 describe('the rope', () => {
   it('is masked by the wave stack rather than showing through it', () => {
-    // The surface travels down as a prop: a hardcoded white would blot a past
-    // day, whose page has already sunk to pool-100 or pool-200.
-    const { container } = render(
-      <RippleRow ripple={ripple()} timeZone={TZ} now={NOW} surface="bg-pool-100" />,
-    );
+    const { container } = render(<RippleRow ripple={ripple()} timeZone={TZ} now={NOW} />);
 
-    const stack = container.querySelector('.bg-pool-100');
+    const stack = container.querySelector('.bg-white');
     expect(stack).not.toBeNull();
     expect(stack!.querySelector('[data-lines]')).not.toBeNull();
   });

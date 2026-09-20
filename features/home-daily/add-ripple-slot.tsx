@@ -2,6 +2,7 @@
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 
+import { ROW_SURFACE } from './depth';
 import { ROPE, ROW_GRID } from './row-grid';
 
 /**
@@ -20,7 +21,7 @@ const GHOST_OPACITY = 0.35;
 /** The row's top padding: the rope arrives at the circle and stops there. */
 const ROPE_HEIGHT = '0.5rem';
 
-export function AddRippleSlot({ id, surface }: { id?: string; surface: string }) {
+export function AddRippleSlot({ id }: { id?: string }) {
   const { openSheet } = useInputSheet();
 
   return (
@@ -29,14 +30,12 @@ export function AddRippleSlot({ id, surface }: { id?: string; surface: string })
 
       <div className="relative flex justify-center pt-2 pb-2">
         <span aria-hidden className={`${ROPE} top-0`} style={{ height: ROPE_HEIGHT }} />
-        {/* Filled with the page's surface so the rope cannot show through the
-            circle. The colour is the page's, not white: on a past day the
-            surface has already sunk and white would leave a bright disc. */}
+        {/* Filled with the page's ground so the rope cannot show through. */}
         <button
           type="button"
           onClick={() => openSheet()}
           aria-label="Add ripple"
-          className={`text-main-900 relative flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-current ${surface}`}
+          className={`text-main-900 relative flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-current ${ROW_SURFACE}`}
           style={{ opacity: GHOST_OPACITY }}
         >
           <span className="text-lg leading-none">+</span>
