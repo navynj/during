@@ -15,7 +15,7 @@ export function DatePager({ date }: { date: IsoDate }) {
 
   return (
     <header className="flex items-center justify-between gap-4 py-6">
-      <p className="text-main-900 text-lg font-bold tracking-wide">
+      <p className="text-main-900 text-lg font-medium tracking-wide">
         {year} {month}
       </p>
 
@@ -26,10 +26,10 @@ export function DatePager({ date }: { date: IsoDate }) {
 
         <h1 className="text-main-900 flex flex-col items-center leading-none">
           <span className="sr-only">{full}</span>
-          <span aria-hidden className="text-2xl font-bold">
+          <span aria-hidden className="text-2xl font-semibold">
             {day}
           </span>
-          <span aria-hidden className="text-xs font-bold tracking-wide">
+          <span aria-hidden className="text-xs font-semibold tracking-wide">
             {weekday}
           </span>
         </h1>

@@ -4,8 +4,10 @@ import { Poppins } from 'next/font/google';
 import { Providers } from '@/app/providers';
 import './globals.css';
 
-// Poppins is not a variable font, so the weights the UI actually uses are
-// listed explicitly; anything not here would silently synthesise.
+// Poppins is not a variable font, so every weight is listed explicitly;
+// anything not here would be synthesised by the browser rather than fail
+// visibly. 700 stays declared for the rare real bold — an unused @font-face
+// is never downloaded, so keeping it available costs nothing.
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],

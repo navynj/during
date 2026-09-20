@@ -24,13 +24,26 @@
   /* Ink — body text */
   --color-ink: #313338;
 
-  /* Typeface. The type SCALE stays Tailwind's default; only the family is
+  /* Typeface. The type SIZE scale stays Tailwind's default; only the family is
    * ours, so `font-sans` and body agree instead of drifting apart. */
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
+  /* Tracking, tightened 5%. Poppins sets wide by default and reads loose at
+   * UI sizes. The whole scale shifts by -0.05em rather than only the base, so
+   * the steps keep their relative distance: tracking-wide stays one step
+   * looser than normal instead of jumping 7.5% past a tightened body. */
+  --tracking-tighter: -0.1em; /* Tailwind default -0.05em */
+  --tracking-tight: -0.075em; /* -0.025em */
+  --tracking-normal: -0.05em; /* 0 */
+  --tracking-wide: -0.025em; /* 0.025em */
+  --tracking-wider: 0em; /* 0.05em */
+  --tracking-widest: 0.05em; /* 0.1em */
 }
 
 body {
   background: #ffffff;
   color: var(--color-ink);
   font-family: var(--font-sans);
+  /* Browsers default to `normal` (0), so the tightened base has to be stated. */
+  letter-spacing: var(--tracking-normal);
 }

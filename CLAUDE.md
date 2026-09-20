@@ -46,10 +46,12 @@ Explicitly NOT in v1a (do not scaffold, stub, or placeholder): Pools and everyth
 ## Design tokens and visual rules
 
 - The ONLY custom design tokens are three color ramps plus the typeface. Everything else (spacing, radius, type scale) uses the Tailwind default scale.
-- Typeface: **Poppins** (weights 400/500/600/700), self-hosted via `next/font/google` and exposed as Tailwind's `--font-sans`, so `font-sans` and `body` cannot drift apart. The type _scale_ is untouched.
   - Main ramp (content vitality): `#0507C9` live/now, `#787BE2` recent, `#D3D7F6` settled/past
   - Gray ramp (structure): `#F1F3F7` surfaces, `#D8DCE8` deeper surfaces / dividers / lane ropes, `#6B79A3` muted text
   - Ink: `#313338` body text
+- Typeface: **Poppins** (weights 400/500/600/700), self-hosted via `next/font/google` and exposed as Tailwind's `--font-sans`, so `font-sans` and `body` cannot drift apart. The type size _scale_ is untouched.
+- Tracking is tightened 5%: the whole `--tracking-*` scale shifts by `-0.05em` (so `tracking-normal` is `-0.05em`), and `body` states it because browsers default to `0`. Shifting the scale rather than only the base keeps the steps' relative distance.
+- **Weight: `font-semibold` is the emphasis weight.** Reach for it wherever you would reflexively write `font-bold`; 600 carries emphasis in Poppins without the heaviness. `font-bold` (700) stays loaded for the rare case that genuinely needs it, but is not the default. The header's year + month label is `font-medium`.
 - **`#787BE2` (`main-400`) is a chip foreground and a wave tone. Nothing else.** Its only text use is the foreground of category chips and other small tag-like chips; otherwise it exists solely inside the wave vitality ramp as the "recent" tone. It is not a general accent color, and it never colors headings, labels, time markers, or chrome.
 - Text colors, in full:
   - Default text: `#313338` (ink).
