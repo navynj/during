@@ -17,6 +17,5 @@ export {
   WAVE_GAP,
   WAVE_WAVELENGTH,
   travellingWaveWidth,
-  DEFAULT_WAVE_MOTION,
 } from './wave-math';
-export type { WaveState, WaveMotion } from './wave-math';
+export type { WaveState } from './wave-math';

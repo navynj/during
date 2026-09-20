@@ -7,22 +7,17 @@ import {
   WAVE_STROKE,
   WAVE_WAVELENGTH,
 } from './wave-math';
-import type { WaveMotion, WaveState } from './wave-math';
+import type { WaveState } from './wave-math';
 
 /** The export's width. Lanes cells and the timeline both use it. */
 export const WAVE_WIDTH = 22;
-
-const MOTION_CLASS: Record<WaveMotion, string> = {
-  grow: 'wave-grow',
-  travel: 'wave-travel',
-};
 
 export type WaveLineProps = {
   state?: WaveState;
   width?: number;
   className?: string;
-  /** Omitted = still. Set by WaveBundle on an in-progress record. */
-  motion?: WaveMotion;
+  /** Set by WaveBundle on an in-progress record; still otherwise. */
+  travelling?: boolean;
   /**
    * Overridable because the export's 2px is drawn at the chip scale, and the
    * timeline wants a finer line at the same geometry. The path is unchanged:
@@ -41,13 +36,12 @@ export function WaveLine({
   state = 'done',
   width = WAVE_WIDTH,
   className = '',
-  motion,
+  travelling = false,
   strokeWidth = WAVE_STROKE,
 }: WaveLineProps) {
   // A travelling line is drawn long and clipped by the viewBox, so the water
-  // moves through a fixed window instead of the waveform being distorted.
-  // A growing line needs no extra length: it scales what is already there.
-  const travelling = motion === 'travel';
+  // moves through a fixed window instead of the waveform being distorted
+  // (H10).
   const pathWidth = travelling ? travellingWaveWidth(width) : width;
 
   const path = (
@@ -58,7 +52,7 @@ export function WaveLine({
       strokeLinecap="round"
       strokeLinejoin="round"
       // Law 3: only living things move. Transform only — never layout.
-      className={motion ? MOTION_CLASS[motion] : undefined}
+      className={travelling ? 'wave-travel' : undefined}
     />
   );
 

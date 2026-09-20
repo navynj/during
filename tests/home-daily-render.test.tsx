@@ -48,9 +48,7 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
 }
 
 function row(over: Partial<RippleWithCategory> = {}) {
-  return render(
-    <RippleRow ripple={ripple(over)} timeZone={TZ} now={NOW} motion="grow" surface="bg-white" />,
-  );
+  return render(<RippleRow ripple={ripple(over)} timeZone={TZ} now={NOW} surface="bg-white" />);
 }
 
 describe('a Ripple on the axis', () => {
@@ -92,11 +90,11 @@ describe('a Ripple on the axis', () => {
 
   it('animates a running timer and holds a finished one still', () => {
     const live = row({ ended_at: null });
-    expect(live.container.querySelectorAll('.wave-grow').length).toBe(1);
+    expect(live.container.querySelectorAll('.wave-travel').length).toBeGreaterThan(0);
 
     cleanup();
     const done = row();
-    expect(done.container.querySelectorAll('.wave-grow')).toHaveLength(0);
+    expect(done.container.querySelectorAll('.wave-travel')).toHaveLength(0);
   });
 
   it('gives a locked Ripple no marker of its own', () => {
@@ -109,7 +107,7 @@ describe('a Ripple on the axis', () => {
 describe('the day around it', () => {
   it('ends the flow with the Add ripple slot', () => {
     const { container, getByText } = render(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} motion="grow" surface="bg-white" />,
+      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} surface="bg-white" />,
     );
 
     expect(getByText('Add ripple')).toBeTruthy();
@@ -137,30 +135,28 @@ describe('the day around it', () => {
   });
 });
 
-describe('the motion override in place', () => {
-  it('switches every in-progress bundle on the page', () => {
-    const live = ripple({ ended_at: null });
+describe('motion on the axis (H10)', () => {
+  it('travels every line of an in-progress record', () => {
     const { container } = render(
       <TimeAxis
-        ripples={[live, ripple({ id: 'r2', ended_at: null })]}
+        ripples={[ripple({ ended_at: null })]}
         timeZone={TZ}
         now={NOW}
-        motion="travel"
         surface="bg-white"
       />,
     );
 
-    expect(container.querySelectorAll('.wave-travel').length).toBeGreaterThan(0);
-    expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
+    const paths = container.querySelectorAll('path');
+    expect(paths.length).toBeGreaterThan(1);
+    expect(container.querySelectorAll('path.wave-travel')).toHaveLength(paths.length);
   });
 
-  it('leaves finished records still in either mode', () => {
+  it('leaves finished records still', () => {
     const { container } = render(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} motion="travel" surface="bg-white" />,
+      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} surface="bg-white" />,
     );
 
     expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
-    expect(container.querySelectorAll('.wave-grow')).toHaveLength(0);
   });
 });
 
@@ -169,7 +165,7 @@ describe('the rope', () => {
     // The surface travels down as a prop: a hardcoded white would blot a past
     // day, whose page has already sunk to pool-100 or pool-200.
     const { container } = render(
-      <RippleRow ripple={ripple()} timeZone={TZ} now={NOW} motion="grow" surface="bg-pool-100" />,
+      <RippleRow ripple={ripple()} timeZone={TZ} now={NOW} surface="bg-pool-100" />,
     );
 
     const stack = container.querySelector('.bg-pool-100');

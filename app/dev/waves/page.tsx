@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import {
   bundleLineCount,
   CommitRing,
-  DEFAULT_WAVE_MOTION,
   stateOpacity,
   WaveBundle,
   WaveLine,
@@ -11,11 +10,6 @@ import {
 import { DURATIONS, SEED_ROWS, STATES } from './fixtures';
 
 export const metadata = { title: 'Waves · fixture' };
-
-const MOTION_HINT: Record<string, string> = {
-  grow: 'the most recent line stretches in place; the lines above it are settled water',
-  travel: 'the whole record flows — every line moves in phase, undistorted',
-};
 
 const STATE_HINT: Record<string, string> = {
   planned: 'not yet — reduced opacity',
@@ -107,26 +101,6 @@ export default function WavesFixturePage() {
             </li>
           ))}
         </ul>
-      </Section>
-
-      <Section
-        title="Motion modes"
-        hint="Both live while the choice is open. grow is the default; travel holds the waveform rigid and slides it through a clipped window."
-      >
-        <div className="border-pool-200 flex flex-wrap items-start gap-16 border-t pt-8">
-          {(['grow', 'travel'] as const).map((mode) => (
-            <figure key={mode} className="flex w-44 flex-col items-center gap-4">
-              <WaveBundle durationMinutes={120} state="active" motion={mode} emoji="🔍" />
-              <figcaption className="text-center">
-                <span className="text-ink text-sm font-medium">
-                  {mode}
-                  {mode === DEFAULT_WAVE_MOTION ? ' · default' : ''}
-                </span>
-                <span className="text-pool-500 block text-xs">{MOTION_HINT[mode]}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
       </Section>
 
       <Section

@@ -1,4 +1,4 @@
-import { WaveBundle, WaveLine, type WaveMotion } from '@/components/ui/waves';
+import { WaveBundle, WaveLine } from '@/components/ui/waves';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
@@ -36,13 +36,11 @@ export function RippleRow({
   ripple,
   timeZone,
   now,
-  motion,
   surface,
 }: {
   ripple: RippleWithCategory;
   timeZone: string;
   now: Date;
-  motion: WaveMotion;
   /** The page's current depth colour, so the wave stack can mask the rope. */
   surface: string;
 }) {
@@ -89,7 +87,6 @@ export function RippleRow({
             <WaveBundle
               durationMinutes={duration}
               state={state}
-              motion={motion}
               strokeWidth={TIMELINE_STROKE}
               emoji={emoji}
             />

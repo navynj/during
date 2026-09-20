@@ -57,21 +57,6 @@ body {
  * class is emitted at all; this block is the belt to that braces, covering a
  * viewer who changes the setting after paint.
  */
-@keyframes wave-grow {
-  0%,
-  100% {
-    transform: scaleX(0.45);
-  }
-  50% {
-    transform: scaleX(1);
-  }
-}
-
-.wave-grow {
-  transform-origin: left center;
-  animation: wave-grow 2.6s ease-in-out infinite;
-}
-
 @keyframes wave-travel {
   from {
     transform: translateX(0);
@@ -117,7 +102,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave-grow,
   .wave-travel,
   .commit-ring {
     animation: none;

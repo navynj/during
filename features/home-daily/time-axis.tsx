@@ -1,4 +1,3 @@
-import type { WaveMotion } from '@/components/ui/waves';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 
 import { AddRippleSlot } from './add-ripple-slot';
@@ -20,13 +19,11 @@ export function TimeAxis({
   ripples,
   timeZone,
   now,
-  motion,
   surface,
 }: {
   ripples: RippleWithCategory[];
   timeZone: string;
   now: Date;
-  motion: WaveMotion;
   surface: string;
 }) {
   return (
@@ -41,7 +38,6 @@ export function TimeAxis({
             ripple={ripple}
             timeZone={timeZone}
             now={now}
-            motion={motion}
             surface={surface}
           />
         ))}

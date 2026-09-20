@@ -1,7 +1,7 @@
 'use client';
 
-import { bundleLineCount, DEFAULT_WAVE_MOTION, stateOpacity, WAVE_GAP } from './wave-math';
-import type { WaveMotion, WaveState } from './wave-math';
+import { bundleLineCount, stateOpacity, WAVE_GAP } from './wave-math';
+import type { WaveState } from './wave-math';
 import { usePrefersReducedMotion } from './use-reduced-motion';
 import { WaveLine, WAVE_WIDTH } from './wave-line';
 
@@ -12,8 +12,6 @@ export type WaveBundleProps = {
   width?: number;
   /** Constant pitch between lines; only the count varies with duration. */
   gap?: number;
-  /** How an in-progress record moves. Both modes are live while we choose. */
-  motion?: WaveMotion;
   /** Passed through to every line; see WaveLine. */
   strokeWidth?: number;
   /** Category emoji — the single allowed off-palette element (H4). */
@@ -34,7 +32,6 @@ export function WaveBundle({
   state = 'done',
   width = WAVE_WIDTH,
   gap = WAVE_GAP,
-  motion = DEFAULT_WAVE_MOTION,
   strokeWidth,
   emoji,
   className = '',
@@ -46,18 +43,7 @@ export function WaveBundle({
   // it is the only thing allowed to move (law 3). The whole bundle travels,
   // in phase: it is one body of water, and moving a single line inside a
   // still stack reads as that line being broken rather than the record living.
-  const isLiving = state === 'active' && !prefersReducedMotion;
-
-  // The two modes differ in scope, not just in shape. `grow` is the most
-  // recent line stretching at the leading edge of the record, so only the last
-  // line moves and the ones above it are already settled water. `travel` is
-  // the whole record still flowing, so every line moves in phase — one line
-  // sliding inside a still stack would read as that line being broken.
-  function lineMotion(index: number): WaveMotion | undefined {
-    if (!isLiving) return undefined;
-    if (motion === 'grow') return index === lines - 1 ? 'grow' : undefined;
-    return motion;
-  }
+  const isTravelling = state === 'active' && !prefersReducedMotion;
 
   return (
     // The fade sits on the wrapper, so the category badge goes with the waves:
@@ -70,12 +56,7 @@ export function WaveBundle({
       {emoji ? <BundleHead emoji={emoji} /> : null}
       <div className="flex flex-col items-center" style={{ gap, width }} data-lines={lines}>
         {Array.from({ length: lines }, (_, index) => (
-          <WaveLine
-            key={index}
-            width={width}
-            strokeWidth={strokeWidth}
-            motion={lineMotion(index)}
-          />
+          <WaveLine key={index} width={width} strokeWidth={strokeWidth} travelling={isTravelling} />
         ))}
       </div>
     </div>

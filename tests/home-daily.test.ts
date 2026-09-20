@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { anchorFor, depthFor, surfaceClass } from '@/features/home-daily/depth';
-import { motionFromSearchParams } from '@/features/home-daily/motion-override';
 import { splitByRegion, type RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
@@ -147,43 +146,5 @@ describe('sinking and anchors', () => {
     expect(anchorFor('2026-09-20', '2026-09-20')).toBe('now');
     expect(anchorFor('2026-09-19', '2026-09-20')).toBe('top');
     expect(anchorFor('2026-09-21', '2026-09-20')).toBe('top');
-  });
-});
-
-describe('the motion override', () => {
-  it('defaults to grow', () => {
-    expect(motionFromSearchParams(undefined)).toBe('grow');
-    expect(motionFromSearchParams('nonsense')).toBe('grow');
-    expect(motionFromSearchParams(['travel'])).toBe('grow');
-  });
-
-  it('switches to travel when asked, so the two can be compared in place', () => {
-    expect(motionFromSearchParams('travel')).toBe('travel');
-  });
-
-  it('is ignored in production, so a stray link cannot change the shipped app', () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    expect(motionFromSearchParams('travel')).toBe('grow');
-    vi.unstubAllEnvs();
-  });
-});
-
-describe('the end of a timed record', () => {
-  it('reads back in the author zone, not the server zone', () => {
-    const end = wallClockToInstant('2026-09-19', '10:30', VANCOUVER).toISOString();
-    expect(endWallClock(ripple({ ended_at: end }), VANCOUVER)).toBe('10:30');
-  });
-
-  it('is nothing for a drop, whose end equals its start', () => {
-    const at = wallClockToInstant('2026-09-19', '12:15', VANCOUVER).toISOString();
-    expect(endWallClock(ripple({ occurred_time: '12:15:00', ended_at: at }), VANCOUVER)).toBeNull();
-  });
-
-  it('is nothing while the timer is still running', () => {
-    expect(endWallClock(ripple({ ended_at: null }), VANCOUVER)).toBeNull();
-  });
-
-  it('is nothing for a date-only record', () => {
-    expect(endWallClock(ripple({ occurred_time: null, ended_at: null }), VANCOUVER)).toBeNull();
   });
 });

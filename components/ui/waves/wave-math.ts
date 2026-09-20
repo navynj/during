@@ -15,19 +15,6 @@ export const WAVE_COLOR_CLASS = 'text-main-900';
 /** Where the record sits in time. */
 export type WaveState = 'planned' | 'active' | 'done';
 
-/**
- * How an in-progress timed shows that it is still happening (law 3).
- *
- * `grow` scales the line along x from its left edge — the waveform stretches
- * and compresses in place. `travel` holds the waveform rigid and slides it
- * through a clipped window, so the water moves but is never distorted.
- * Both are kept while the choice is still open.
- */
-export type WaveMotion = 'grow' | 'travel';
-
-export const DEFAULT_WAVE_MOTION: WaveMotion = 'grow';
-
-/** SPEC 7: cap 8 to 10 lines. Ten, so 8h is distinguishable from 4h. */
 export const MAX_BUNDLE_LINES = 10;
 export const MIN_BUNDLE_LINES = 1;
 
