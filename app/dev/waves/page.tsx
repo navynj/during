@@ -113,8 +113,8 @@ export default function WavesFixturePage() {
               +
             </span>
           </CommitRing>
-          <CommitRing size={72} rings={4}>
-            <span className="bg-pool-100 text-pool-500 flex h-10 w-10 items-center justify-center rounded-full text-xs">
+          <CommitRing size={92} contentSize={48} rings={4}>
+            <span className="bg-pool-100 text-pool-500 flex h-12 w-12 items-center justify-center rounded-full text-sm">
               YL
             </span>
           </CommitRing>
