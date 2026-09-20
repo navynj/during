@@ -2,16 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Home, Plus, ShelvingUnit, type LucideIcon } from 'lucide-react';
 
 /**
  * D3: tab slots are full by design and the bar grows only as screens ship.
  * Lanes and Pools are deliberately absent until v1b and v1.5 — a dead tab is
  * forbidden, so this list is the shipped surface, not a plan.
  */
-const TABS = [
-  { href: '/', label: 'Home' },
-  { href: '/locker', label: 'Locker' },
-] as const;
+const TABS: ReadonlyArray<{ href: string; label: string; icon: LucideIcon }> = [
+  { href: '/', label: 'Home', icon: Home },
+  // lucide calls the shelves glyph ShelvingUnit.
+  { href: '/locker', label: 'Locker', icon: ShelvingUnit },
+];
 
 export function TabBar() {
   const pathname = usePathname();
@@ -21,16 +23,21 @@ export function TabBar() {
       <div className="mx-auto flex max-w-xl items-center justify-around px-6 py-3">
         {TABS.map((tab) => {
           const active = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
+          const Icon = tab.icon;
           return (
             <Link
               key={tab.href}
               href={tab.href}
               aria-current={active ? 'page' : undefined}
-              className={
-                active ? 'text-main-900 text-sm font-semibold' : 'text-pool-500 text-sm font-medium'
-              }
+              className={`flex flex-col items-center gap-1 ${
+                active ? 'text-main-900 font-semibold' : 'text-main-900/20 font-medium'
+              }`}
             >
-              {tab.label}
+              {/* Alpha on the text color rather than `opacity`, so the glyph
+                  fades with the label: lucide strokes in currentColor. */}
+              {/* The label carries the meaning; the glyph is decoration. */}
+              <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 2} />
+              <span className="text-xs/none">{tab.label}</span>
             </Link>
           );
         })}
@@ -47,9 +54,9 @@ function AddRippleButton() {
     <button
       type="button"
       aria-label="Add ripple"
-      className="bg-main-900 h-12 w-12 rounded-full text-2xl leading-none text-white"
+      className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white"
     >
-      +
+      <Plus aria-hidden size={24} />
     </button>
   );
 }
