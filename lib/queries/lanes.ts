@@ -1,3 +1,4 @@
+import { dayOf, isFutureDated } from '@/lib/flow-key';
 import type { DuringClient } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
 
@@ -21,25 +22,34 @@ export type LaneSpan = {
  * Locked Ripples are counted too, unmarked. This view is mine alone, and lock
  * state belongs to the detail sheet rather than to a marker on my own archive.
  *
- * Planned Ripples are left out: a cell says what the day held, and an
- * intention is not yet a record of one.
+ * A day is the fragment's coalesced `occurred_on` (H20c): its annotation's
+ * date, else the author-local date it was written. Future-dated fragments are
+ * left out: a cell says what the day held, and that day has not happened.
  */
-export async function getLaneCounts(supabase: DuringClient, authorId: string): Promise<LaneSpan> {
+export async function getLaneCounts(
+  supabase: DuringClient,
+  authorId: string,
+  timeZone: string,
+  today: IsoDate,
+): Promise<LaneSpan> {
   const { data, error } = await supabase
     .from('ripples')
-    .select('occurred_on, category_id')
+    .select('occurred_on, occurred_time, created_at, category_id')
     .eq('author_id', authorId)
-    .eq('planned', false)
-    .order('occurred_on', { ascending: true });
+    .eq('planned', false);
 
   if (error) throw error;
 
   const counts: LaneCounts = new Map();
+  let earliest: IsoDate | null = null;
   for (const row of data) {
-    const day = counts.get(row.occurred_on) ?? {};
+    if (isFutureDated(row, timeZone, today)) continue;
+    const date = dayOf(row, timeZone);
+    const day = counts.get(date) ?? {};
     day[row.category_id] = (day[row.category_id] ?? 0) + 1;
-    counts.set(row.occurred_on, day);
+    counts.set(date, day);
+    if (earliest === null || date < earliest) earliest = date;
   }
 
-  return { counts, earliest: data[0]?.occurred_on ?? null };
+  return { counts, earliest };
 }

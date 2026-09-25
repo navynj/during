@@ -4,14 +4,15 @@ import { getRipplesForDate } from '@/lib/queries/ripples';
 import { asAdmin } from './as-user';
 
 /**
- * H10: one author's top-level Ripples never overlap. The rule lives in an
- * exclusion constraint, so these go through the service role — the point is
- * what the database refuses, not what a policy hides.
+ * H20c: the display axis is the diary's own order, so two overlapping spans
+ * are two legitimate records and the exclusion constraint H10 wrote is gone
+ * (migration 0005). What survives, dormant, is containment: an inner ripple
+ * still has to lie inside its parent, because the modules that compose one
+ * are P3's. These go through the service role — the point is what the
+ * database accepts and refuses, not what a policy hides.
  *
- * On a throwaway author rather than a seeded one. Yoonji has a timer running,
- * and a running timer holds the axis to infinity, so every future date is
- * already spoken for. That is the rule working, but it makes a shared fixture
- * useless for testing it.
+ * On a throwaway author rather than a seeded one, so nothing here can touch a
+ * real record.
  */
 
 const DAY = '2027-03-04';
@@ -91,85 +92,58 @@ async function session(from: string, to: string) {
   return data![0].id;
 }
 
-describe('top-level exclusivity', () => {
-  it('refuses a second record inside a timed span', async () => {
-    await session('09:00', '10:30');
+describe('overlap is allowed (H20c)', () => {
+  it('commits two overlapping spans, both of them', async () => {
+    const first = await session('09:00', '10:30');
 
-    const { error } = await insert({ occurred_time: '09:40', ended_at: utc('09:40') });
-    expect(error?.message).toMatch(/exclusion|overlap|ripples_top_level_no_overlap/i);
+    const { data, error } = await insert({ occurred_time: '10:00', ended_at: utc('11:00') });
+    expect(error).toBeNull();
+
+    const { data: rows } = await asAdmin()
+      .from('ripples')
+      .select('id')
+      .in('id', [first, data![0].id]);
+    expect(rows).toHaveLength(2);
   });
 
-  it('refuses two overlapping sessions', async () => {
-    await session('09:00', '10:30');
+  it('commits a drop inside a span: a call during dinner is two things that happened', async () => {
+    await session('19:00', '21:00');
 
-    const { error } = await insert({ occurred_time: '10:00', ended_at: utc('11:00') });
-    expect(error).not.toBeNull();
-  });
-
-  it('accepts back-to-back spans, because touching is not overlapping', async () => {
-    await session('09:00', '10:00');
-
-    const { error } = await insert({ occurred_time: '10:00', ended_at: utc('11:00') });
+    const { error } = await insert({ occurred_time: '19:40', ended_at: utc('19:40') });
     expect(error).toBeNull();
   });
 
-  it('accepts the same record as an inner ripple', async () => {
-    const parent = await session('09:00', '10:30');
-
-    const { error } = await insert({
-      occurred_time: '09:40',
-      ended_at: utc('09:40'),
-      parent_ripple_id: parent,
-      category_id: LISTENING,
+  it('no longer carries the constraint at all', async () => {
+    const { data } = await asAdmin().rpc('ripple_author', {
+      rid: '00000000-0000-0000-0000-000000000000',
     });
-    expect(error).toBeNull();
+    // The function is reachable, so the schema is the live one; the
+    // constraint is checked by the migration rehearsal and by the two
+    // commits above, which it would have refused.
+    expect(data).toBeNull();
   });
 
-  it('allows plans to collide, since intentions may', async () => {
-    await session('09:00', '10:30');
+  it('accepts an unannotated fragment: no date, no time', async () => {
+    const { data, error } = await asAdmin()
+      .from('ripples')
+      .insert({ author_id: author, category_id: FOCUS, note: 'posted, not placed' })
+      .select('id, occurred_on, started_at');
+    written.push(data![0].id);
 
-    const { error } = await insert({
-      occurred_time: '09:30',
-      ended_at: utc('09:30'),
-      planned: true,
-    });
     expect(error).toBeNull();
+    expect(data![0].occurred_on).toBeNull();
+    expect(data![0].started_at).toBeNull();
   });
 
-  it('leaves date-only records out of it entirely', async () => {
-    await session('09:00', '10:30');
-
-    const { error } = await insert({ occurred_time: null });
-    expect(error).toBeNull();
+  it('refuses a time without a date', async () => {
+    const { error } = await asAdmin()
+      .from('ripples')
+      .insert({ author_id: author, category_id: FOCUS, occurred_time: '09:00' });
+    expect(error?.message).toMatch(/ripples_time_needs_date/);
   });
 });
 
-describe('at most one running timer', () => {
-  it('is a consequence of the same rule, not a separate check', async () => {
-    // A running timer holds the axis to infinity, so anything after it clashes
-    // — including a second timer.
-    const started = await insert({ occurred_time: '09:00', ended_at: null });
-    expect(started.error).toBeNull();
-
-    const { error } = await insert({ occurred_time: '11:00', ended_at: utc('11:30') });
-    expect(error).not.toBeNull();
-  });
-
-  it('still admits the same record as an inner ripple of the running session', async () => {
-    const started = await insert({ occurred_time: '09:00', ended_at: null });
-    expect(started.error).toBeNull();
-
-    const { error } = await insert({
-      occurred_time: '11:00',
-      ended_at: utc('11:00'),
-      parent_ripple_id: started.data![0].id,
-      category_id: LISTENING,
-    });
-    expect(error).toBeNull();
-  });
-});
-
-describe('containment', () => {
+describe('containment (dormant with inner ripples, H20b)', () => {
   it('refuses an inner ripple outside its parent span', async () => {
     const parent = await session('09:00', '10:30');
 
@@ -198,7 +172,7 @@ describe('containment', () => {
   });
 });
 
-describe('inner ripples on the axis', () => {
+describe('inner ripples on the axis (dormant, H20b)', () => {
   it('are not returned for the timeline: the parent owns the row', async () => {
     const parent = await session('09:00', '10:30');
     const inner = await insert({
@@ -218,63 +192,5 @@ describe('inner ripples on the axis', () => {
     const ids = data.map((r) => r.id);
     expect(ids).toContain(parent);
     expect(ids).not.toContain(inner.data![0].id);
-  });
-});
-
-describe('what the sheet has to say when a write is refused', () => {
-  it('names the record in the way', async () => {
-    const { findCollision } = await import('@/lib/queries/compose');
-    await insert({ occurred_time: '09:00', ended_at: utc('10:30'), id: undefined });
-
-    const clash = await findCollision(
-      asAdmin() as unknown as Parameters<typeof findCollision>[0],
-      author,
-      new Date(utc('09:40')),
-    );
-
-    expect(clash?.note).toBe('fixture');
-    // A span can take the new record in; that is the offer the sheet makes.
-    expect(clash!.ended_at).not.toBe(clash!.started_at);
-  });
-
-  it('finds the running session, so "add to this session" has a parent', async () => {
-    const { getRunningSession } = await import('@/lib/queries/compose');
-    const running = await insert({ occurred_time: '09:00', ended_at: null });
-    expect(running.error).toBeNull();
-
-    const found = await getRunningSession(
-      asAdmin() as unknown as Parameters<typeof getRunningSession>[0],
-      author,
-    );
-    expect(found?.id).toBe(running.data![0].id);
-  });
-
-  it('reports no running session once it is stopped', async () => {
-    const { getRunningSession } = await import('@/lib/queries/compose');
-    const running = await insert({ occurred_time: '09:00', ended_at: null });
-
-    await asAdmin()
-      .from('ripples')
-      .update({ ended_at: utc('10:00') })
-      .eq('id', running.data![0].id);
-
-    const found = await getRunningSession(
-      asAdmin() as unknown as Parameters<typeof getRunningSession>[0],
-      author,
-    );
-    expect(found).toBeNull();
-  });
-
-  it('does not offer to nest into a drop, which has no inside', async () => {
-    const { findCollision } = await import('@/lib/queries/compose');
-    await insert({ occurred_time: '09:00', ended_at: utc('09:00') });
-
-    const clash = await findCollision(
-      asAdmin() as unknown as Parameters<typeof findCollision>[0],
-      author,
-      new Date(utc('09:00')),
-    );
-
-    expect(clash?.ended_at).toBe(clash?.started_at);
   });
 });

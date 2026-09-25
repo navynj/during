@@ -18,7 +18,7 @@ export default async function LockerPage() {
   if (!profile) redirect('/sign-in');
 
   const [ripples, categories] = await Promise.all([
-    getMyTrail(supabase, profile.id),
+    getMyTrail(supabase, profile.id, profile.timezone),
     getMyCategories(supabase),
   ]);
 
@@ -33,7 +33,7 @@ export default async function LockerPage() {
       ripples.length ? ripples.map((r) => r.id) : ['00000000-0000-0000-0000-000000000000'],
     );
 
-  const days = groupByDay(ripples);
+  const days = groupByDay(ripples, profile.timezone);
   const now = new Date();
 
   return (

@@ -22,6 +22,7 @@ function session(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
     participants: [],
     created_at: '2027-07-08T16:00:00.000Z',
     parent_ripple_id: null,
+    splash_id: null,
     category: { name: 'Focus', icon: '🔍' },
     ...over,
   };

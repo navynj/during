@@ -96,7 +96,7 @@ export function InputSheet({
     // An edit resolves against the record's *own* day, not the page's: the
     // Trail opens records from months back, and reading their wall clock
     // against today would move every one of them to today.
-    const on = editing ? editing.ripple.occurred_on : date;
+    const on = editing ? (editing.ripple.occurred_on ?? date) : date;
     const startInstant =
       draft.time === null ? null : wallClockToInstant(on, draft.time, timeZone).toISOString();
     // The Timer writes the present, so a timed commit never carries one.
@@ -128,7 +128,7 @@ export function InputSheet({
           endInstant,
           categoryId: draft.categoryId!,
           note: draft.note,
-          occurredOn: editing.ripple.occurred_on,
+          occurredOn: editing.ripple.occurred_on ?? date,
           occurredTime: draft.time,
           locked: draft.audience === 'only-me',
           media: draft.media,

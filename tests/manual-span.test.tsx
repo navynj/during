@@ -192,6 +192,7 @@ describe('the present is written by the Timer', () => {
       participants: [],
       created_at: utc('09:00'),
       parent_ripple_id: null,
+      splash_id: null,
       category: { name: 'Focus', icon: '🔍' },
     };
     const view = sheet({
@@ -255,6 +256,7 @@ describe('the same field, correcting instead of composing', () => {
       participants: [],
       created_at: utc('09:00'),
       parent_ripple_id: null,
+      splash_id: null,
       category: { name: 'Focus', icon: '🔍' },
       ...over,
     };

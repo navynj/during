@@ -432,11 +432,12 @@ export type Database = {
           id: string
           media: string[]
           note: string | null
-          occurred_on: string
+          occurred_on: string | null
           occurred_time: string | null
           parent_ripple_id: string | null
           participants: string[]
           planned: boolean
+          splash_id: string | null
           started_at: string | null
         }
         Insert: {
@@ -447,11 +448,12 @@ export type Database = {
           id?: string
           media?: string[]
           note?: string | null
-          occurred_on: string
+          occurred_on?: string | null
           occurred_time?: string | null
           parent_ripple_id?: string | null
           participants?: string[]
           planned?: boolean
+          splash_id?: string | null
           started_at?: string | null
         }
         Update: {
@@ -462,11 +464,12 @@ export type Database = {
           id?: string
           media?: string[]
           note?: string | null
-          occurred_on?: string
+          occurred_on?: string | null
           occurred_time?: string | null
           parent_ripple_id?: string | null
           participants?: string[]
           planned?: boolean
+          splash_id?: string | null
           started_at?: string | null
         }
         Relationships: [
@@ -491,40 +494,59 @@ export type Database = {
             referencedRelation: "ripples"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ripples_splash_id_fkey"
+            columns: ["splash_id"]
+            isOneToOne: false
+            referencedRelation: "splashes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       splashes: {
         Row: {
           created_at: string
-          created_by: string
+          declared_end: string | null
+          declared_start: string | null
           ends_at: string | null
           id: string
-          pool_id: string
+          lane_ids: string[]
+          owner_id: string
+          pool_id: string | null
           prompt: string | null
+          title: string
           type: Database["public"]["Enums"]["splash_type"]
         }
         Insert: {
           created_at?: string
-          created_by: string
+          declared_end?: string | null
+          declared_start?: string | null
           ends_at?: string | null
           id?: string
-          pool_id: string
+          lane_ids?: string[]
+          owner_id: string
+          pool_id?: string | null
           prompt?: string | null
+          title: string
           type?: Database["public"]["Enums"]["splash_type"]
         }
         Update: {
           created_at?: string
-          created_by?: string
+          declared_end?: string | null
+          declared_start?: string | null
           ends_at?: string | null
           id?: string
-          pool_id?: string
+          lane_ids?: string[]
+          owner_id?: string
+          pool_id?: string | null
           prompt?: string | null
+          title?: string
           type?: Database["public"]["Enums"]["splash_type"]
         }
         Relationships: [
           {
-            foreignKeyName: "splashes_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "splashes_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

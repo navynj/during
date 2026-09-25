@@ -1,5 +1,7 @@
 -- Demo fixture. Two linked accounts in the two timezones During is actually
--- used in, plus a third linked account that has gone quiet.
+-- used in, plus a third linked account that has gone quiet. Yoonji's day is
+-- the Splash pivot's fixture (H20): two boards and loose fragments across
+-- two months.
 --
 -- Dates are relative to each author's own today, so the seed stays meaningful
 -- whenever it is run and Home has something to render on first sign-in.
@@ -54,137 +56,144 @@ values
   ('11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333');
 
 -- ---------------------------------------------------------------------------
--- categories — the same preset every new profile is seeded with
+-- categories — the six-lane preset every new profile is seeded with (H20i)
 -- ---------------------------------------------------------------------------
 
 insert into public.my_categories (id, user_id, name, icon, default_mode, position)
 values
-  ('a1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Focus', '🔍', 'timed', 0),
-  ('a1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Place', '📍', 'drop', 1),
-  ('a1000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'Listening', '🎧', 'drop', 2),
-  ('a1000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'Day', '🖋', 'drop', 3),
-  ('a2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'Focus', '🔍', 'timed', 0),
-  ('a2000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'Place', '📍', 'drop', 1),
-  ('a2000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'Listening', '🎧', 'drop', 2),
-  ('a2000000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', 'Day', '🖋', 'drop', 3),
-  ('a3000000-0000-0000-0000-000000000004', '33333333-3333-3333-3333-333333333333', 'Day', '🖋', 'drop', 0);
+  ('a1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Place', '📍', 'drop', 0),
+  ('a1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Mood',  '🌤️', 'drop', 1),
+  ('a1000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'Music', '🎧', 'drop', 2),
+  ('a1000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'Media', '🎬', 'drop', 3),
+  ('a1000000-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'Food',  '🍜', 'drop', 4),
+  ('a1000000-0000-0000-0000-000000000006', '11111111-1111-1111-1111-111111111111', 'Day',   '🖋', 'drop', 5),
+  ('a2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'Place', '📍', 'drop', 0),
+  ('a2000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'Music', '🎧', 'drop', 2),
+  ('a2000000-0000-0000-0000-000000000006', '22222222-2222-2222-2222-222222222222', 'Day',   '🖋', 'drop', 5),
+  ('a3000000-0000-0000-0000-000000000006', '33333333-3333-3333-3333-333333333333', 'Day',   '🖋', 'drop', 0);
+
+-- ---------------------------------------------------------------------------
+-- splashes — two boards (H20d): one with a declared lane, one without
+-- ---------------------------------------------------------------------------
+
+-- Dates are relative to today so both home modes, month sinking, lane
+-- inheritance and backfill placement are visible whenever this is run.
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.splashes (id, owner_id, title, declared_start, declared_end, lane_ids, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', v.title,
+       case when v.from_days is null then null else day.d - v.from_days end,
+       case when v.to_days is null then null else day.d - v.to_days end,
+       v.lanes, (day.d - v.made) + time '09:00'
+  from day,
+       (values
+         -- Declared range and one declared lane: every fragment thrown in is
+         -- a Place, and the sheet shows no category choice (H20e).
+         ('c1000000-0000-0000-0000-000000000001'::uuid, 'Whistler, two nights',
+          40, 37, array['a1000000-0000-0000-0000-000000000001'::uuid], 41),
+         -- Nothing declared: range and chip are derived from what lands in it.
+         ('c1000000-0000-0000-0000-000000000002', 'During redesign',
+          null::int, null::int, '{}'::uuid[], 26)
+       ) as v(id, title, from_days, to_days, lanes, made);
 
 -- ---------------------------------------------------------------------------
 -- ripples
 --
--- Every state the wave grammar has to render (S1) appears here at least once:
--- timed finished, timed in progress, drop, planned, date-only, locked.
+-- Every shape the flow has to render (H20c): unannotated fragments flowing by
+-- created_at, a date-only fragment, placed fragments, a manual span, two
+-- overlapping spans (legal now), a future-dated fragment, a backfill created
+-- this month but placed last month, splash members, loose fragments, locked.
 -- ---------------------------------------------------------------------------
 
--- Yoonji, today in Vancouver.
+-- The Whistler board: four placed fragments inside its declared range, all in
+-- its declared lane, made when they happened.
 with day as (select (now() at time zone 'America/Vancouver')::date as d)
-insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)
-select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note, day.d, v.at,
-       case
-         when v.at is null then null                                   -- date-only
-         when v.ends is null then null                                 -- in progress
-         else (day.d + v.ends) at time zone 'America/Vancouver'
-       end,
-       v.planned
+insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, splash_id, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', 'a1000000-0000-0000-0000-000000000001', v.note,
+       day.d - v.ago, v.at, (day.d - v.ago + v.at) at time zone 'America/Vancouver',
+       'c1000000-0000-0000-0000-000000000001',
+       (day.d - v.ago + v.at) at time zone 'America/Vancouver'
   from day,
        (values
-         -- timed, finished: a bundle spanning ninety minutes
-         ('b1000000-0000-0000-0000-000000000001'::uuid, 'a1000000-0000-0000-0000-000000000001'::uuid,
-          'spec rewrite', '09:00'::time, '10:30'::time, false),
-         -- drop: ended_at = start, the point-in-time encoding
-         ('b1000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000002',
-          'kitsilano beach', '12:15', '12:15', false),
+         ('b1000000-0000-0000-0000-000000000021'::uuid, 'sea to sky, fog the whole way up', 40, '11:30'::time),
+         ('b1000000-0000-0000-0000-000000000022', 'the village at night, empty', 40, '21:15'),
+         ('b1000000-0000-0000-0000-000000000023', 'peak chair', 39, '10:05'),
+         ('b1000000-0000-0000-0000-000000000024', 'last coffee before the drive', 37, '08:40')
+       ) as v(id, note, ago, at);
+
+-- The redesign board: fragments across two months, plus one BACKFILL — made
+-- today, placed last month — so its row sits in last month's section while
+-- the diary remembers it was written now.
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, splash_id, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note,
+       case when v.placed is null then null else day.d - v.placed end,
+       null, null,
+       'c1000000-0000-0000-0000-000000000002',
+       (day.d - v.made) at time zone 'America/Vancouver' + v.at
+  from day,
+       (values
+         ('b1000000-0000-0000-0000-000000000031'::uuid, 'a1000000-0000-0000-0000-000000000004'::uuid,
+          'watched the whole dogfood month back as one scroll', 25, null::int, interval '20 hours'),
+         ('b1000000-0000-0000-0000-000000000032', 'a1000000-0000-0000-0000-000000000006',
+          'the record is a fragment, not a timesheet', 12, null, interval '9 hours 30 minutes'),
+         ('b1000000-0000-0000-0000-000000000033', 'a1000000-0000-0000-0000-000000000006',
+          'two modes, one scroll', 2, null, interval '14 hours'),
+         -- Backfill: created today, annotated 35 days ago.
+         ('b1000000-0000-0000-0000-000000000034', 'a1000000-0000-0000-0000-000000000006',
+          'the sketch that started it, found in a notebook', 0, 35, interval '8 hours')
+       ) as v(id, category, note, made, placed, at);
+
+-- Loose fragments, today and yesterday. `on_day` counts days back from today
+-- (null = unannotated); `made` is when it was written.
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note,
+       case when v.on_day is null then null else day.d - v.on_day end,
+       v.at,
+       case when v.at is null then null
+            else (day.d - v.on_day + coalesce(v.ends, v.at)) at time zone 'America/Vancouver' end,
+       (day.d - v.made) at time zone 'America/Vancouver' + v.wrote
+  from day,
+       (values
+         -- Unannotated: the default. They flow in posting order.
+         ('b1000000-0000-0000-0000-000000000002'::uuid, 'a1000000-0000-0000-0000-000000000001'::uuid,
+          'kitsilano beach', null::int, null::time, null::time, 0, interval '12 hours 15 minutes'),
          ('b1000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000003',
-          'parannoul on repeat', '14:40', '14:40', false),
-         -- locked: the audience row is added below
-         ('b1000000-0000-0000-0000-000000000004', 'a1000000-0000-0000-0000-000000000004',
-          'the thing I am not saying out loud yet', '16:00', '16:00', false),
-         -- timed, in progress: its last wave line is the only thing that moves
-         ('b1000000-0000-0000-0000-000000000005', 'a1000000-0000-0000-0000-000000000001',
-          'session 0', '20:00', null, false),
-         -- planned: dotted, reduced opacity, future
-         ('b1000000-0000-0000-0000-000000000006', 'a1000000-0000-0000-0000-000000000002',
-          'dinner with mina', '21:30', '21:30', true),
-         -- date-only: belongs to the day without a position on its axis
-         ('b1000000-0000-0000-0000-000000000007', 'a1000000-0000-0000-0000-000000000004',
-          'slept badly, worked anyway', null, null, false)
-       ) as v(id, category, note, at, ends, planned);
-
--- An inner ripple (H10): a drop that happened *during* the morning focus
--- session. Concurrency is containment, not overlap — this is a full Ripple
--- with its own category, so Locker still counts it, but it does not claim a
--- row on the top-level axis.
-with day as (select (now() at time zone 'America/Vancouver')::date as d)
-insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
-select 'b1000000-0000-0000-0000-000000000008',
-       '11111111-1111-1111-1111-111111111111',
-       'a1000000-0000-0000-0000-000000000003',
-       'something instrumental, to keep going',
-       day.d, '09:40',
-       (day.d + '09:40'::time) at time zone 'America/Vancouver',
-       'b1000000-0000-0000-0000-000000000001'
-  from day;
-
--- A finished two-hour session with a twenty-minute break inside it, and a
--- break already ended inside the running one. A break is a timed inner ripple
--- carrying its parent's category (H15a2) — there is no Break category.
-with day as (select (now() at time zone 'America/Vancouver')::date as d)
-insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
-select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note, day.d, v.at,
-       (day.d + v.ends) at time zone 'America/Vancouver', v.parent
-  from day,
-       (values
-         ('b1000000-0000-0000-0000-000000000009'::uuid, 'a1000000-0000-0000-0000-000000000001'::uuid,
-          'long afternoon', '16:30'::time, '18:30'::time, null::uuid),
-         -- Middle third: the calm stretch sits inside the bundle, not at an end.
-         ('b1000000-0000-0000-0000-00000000000a', 'a1000000-0000-0000-0000-000000000001',
-          null, '17:10', '17:30', 'b1000000-0000-0000-0000-000000000009')
-       ) as v(id, category, note, at, ends, parent);
-
--- The running session carries a Break that has already ended, near its head,
--- so the now band shows calm water while the tail is still travelling.
-with day as (select (now() at time zone 'America/Vancouver')::date as d)
-insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, parent_ripple_id)
-select 'b1000000-0000-0000-0000-00000000000b',
-       '11111111-1111-1111-1111-111111111111',
-       'a1000000-0000-0000-0000-000000000001',
-       null, day.d, '20:05',
-       (day.d + '20:15'::time) at time zone 'America/Vancouver',
-       'b1000000-0000-0000-0000-000000000005'
-  from day;
-
--- Yoonji, yesterday in Vancouver.
-with day as (select (now() at time zone 'America/Vancouver')::date - 1 as d)
-insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)
-select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note, day.d, v.at,
-       case when v.ends is null then null else (day.d + v.ends) at time zone 'America/Vancouver' end,
-       false
-  from day,
-       (values
-         ('b1000000-0000-0000-0000-000000000011'::uuid, 'a1000000-0000-0000-0000-000000000001'::uuid,
-          'schema, first pass', '13:00'::time, '15:00'::time),
-         ('b1000000-0000-0000-0000-000000000012', 'a1000000-0000-0000-0000-000000000003',
-          'that one song again', '20:10', '20:10'),
-         ('b1000000-0000-0000-0000-000000000013', 'a1000000-0000-0000-0000-000000000004',
-          'quiet one', null, null)
-       ) as v(id, category, note, at, ends);
+          'parannoul on repeat', null, null, null, 0, interval '14 hours 40 minutes'),
+         -- Locked: the audience row is added below.
+         ('b1000000-0000-0000-0000-000000000004', 'a1000000-0000-0000-0000-000000000006',
+          'the thing I am not saying out loud yet', null, null, null, 0, interval '16 hours'),
+         -- Date-only: belongs to today, sorts at the day's end.
+         ('b1000000-0000-0000-0000-000000000007', 'a1000000-0000-0000-0000-000000000002',
+          'slept badly, worked anyway', 0, null, null, 0, interval '7 hours'),
+         -- A manual span, and a second span overlapping it: both legal (H20c).
+         ('b1000000-0000-0000-0000-000000000011', 'a1000000-0000-0000-0000-000000000005',
+          'dinner at the long table', 1, '19:00'::time, '21:00'::time, 1, interval '22 hours'),
+         ('b1000000-0000-0000-0000-000000000012', 'a1000000-0000-0000-0000-000000000001',
+          'call from mom, halfway through', 1, '19:40', '20:05', 1, interval '22 hours 5 minutes'),
+         ('b1000000-0000-0000-0000-000000000013', 'a1000000-0000-0000-0000-000000000003',
+          'that one song again', null, null, null, 1, interval '20 hours 10 minutes'),
+         -- Future-dated: a normal fragment with a future date chip.
+         ('b1000000-0000-0000-0000-000000000006', 'a1000000-0000-0000-0000-000000000005',
+          'dinner with mina', -3, '19:30', null, 0, interval '15 hours')
+       ) as v(id, category, note, on_day, at, ends, made, wrote);
 
 -- Mina, today in Seoul. Gives the friend rail something to sit at an hour
 -- against, across a sixteen-hour offset from Yoonji's day.
 with day as (select (now() at time zone 'Asia/Seoul')::date as d)
-insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, planned)
-select v.id, '22222222-2222-2222-2222-222222222222', v.category, v.note, day.d, v.at,
-       case when v.ends is null then null else (day.d + v.ends) at time zone 'Asia/Seoul' end,
-       false
+insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at)
+select v.id, '22222222-2222-2222-2222-222222222222', v.category, v.note,
+       case when v.today then day.d end, v.at,
+       case when v.at is null then null else (day.d + v.at) at time zone 'Asia/Seoul' end
   from day,
        (values
-         ('b2000000-0000-0000-0000-000000000001'::uuid, 'a2000000-0000-0000-0000-000000000002'::uuid,
-          'seongsu, again', '11:20'::time, '11:20'::time),
-         ('b2000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000001',
-          'thesis', '14:00', null),
-         ('b2000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000004',
-          'rained all afternoon', null, null)
-       ) as v(id, category, note, at, ends);
+         ('b2000000-0000-0000-0000-000000000001'::uuid, 'a2000000-0000-0000-0000-000000000001'::uuid,
+          'seongsu, again', true, '11:20'::time),
+         ('b2000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000003',
+          'thesis playlist, again', false, null),
+         ('b2000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000006',
+          'rained all afternoon', true, null)
+       ) as v(id, category, note, today, at);
 
 -- Jae went quiet five days ago: a Ripple that persists (C7 — presence expires,
 -- records do not) behind a profile that is past its TTL.
@@ -192,7 +201,7 @@ insert into public.ripples (id, author_id, category_id, note, occurred_on, occur
 values (
   'b3000000-0000-0000-0000-000000000001',
   '33333333-3333-3333-3333-333333333333',
-  'a3000000-0000-0000-0000-000000000004',
+  'a3000000-0000-0000-0000-000000000006',
   'see you when I see you',
   ((now() - interval '5 days') at time zone 'America/Vancouver')::date,
   '18:00',
