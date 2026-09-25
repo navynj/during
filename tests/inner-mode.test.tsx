@@ -45,6 +45,7 @@ const session: RippleWithCategory = {
   participants: [],
   created_at: '2026-09-19T16:00:00.000Z',
   parent_ripple_id: null,
+  splash_id: null,
   started_at: wallClockToInstant('2026-09-19', '09:00', TZ).toISOString(),
   category: { name: 'Focus', icon: '🔍' },
 };

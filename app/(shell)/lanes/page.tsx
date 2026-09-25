@@ -17,12 +17,13 @@ export default async function LanesPage() {
   const profile = await getMyProfile(supabase);
   if (!profile) redirect('/sign-in');
 
+  const today = todayIn(profile.timezone);
   const [categories, span] = await Promise.all([
     getMyCategories(supabase),
-    getLaneCounts(supabase, profile.id),
+    getLaneCounts(supabase, profile.id, profile.timezone, today),
   ]);
 
-  const rows = laneRows(todayIn(profile.timezone), span.earliest, span.counts);
+  const rows = laneRows(today, span.earliest, span.counts);
 
   return (
     // A fixed height rather than a minimum: the matrix inside scrolls in both

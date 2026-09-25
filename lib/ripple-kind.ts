@@ -66,12 +66,13 @@ export function wallClockToInstant(date: IsoDate, time: string, timeZone: string
 
 /** The instant a Ripple began, or null for a date-only record. */
 export function startInstant(ripple: Ripple, timeZone: string): Date | null {
-  if (!ripple.occurred_time) return null;
+  if (!ripple.occurred_time || !ripple.occurred_on) return null;
   return wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
 }
 
 export function rippleKind(ripple: Ripple, timeZone: string): RippleKind {
-  if (!ripple.occurred_time) return 'date-only';
+  // An unannotated fragment (H20c) is a point too: it makes no span claim.
+  if (!ripple.occurred_time || !ripple.occurred_on) return ripple.ended_at ? 'drop' : 'date-only';
   if (!ripple.ended_at) return 'timed';
 
   const start = wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
@@ -80,7 +81,7 @@ export function rippleKind(ripple: Ripple, timeZone: string): RippleKind {
 
 /** Zero for a drop; the span for a timed. */
 export function rippleDurationMinutes(ripple: Ripple, timeZone: string): number {
-  if (!ripple.occurred_time || !ripple.ended_at) return 0;
+  if (!ripple.occurred_time || !ripple.occurred_on || !ripple.ended_at) return 0;
 
   const start = wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
   return Math.max(0, Math.round((Date.parse(ripple.ended_at) - start.getTime()) / 60_000));
@@ -91,7 +92,7 @@ export function rippleDurationMinutes(ripple: Ripple, timeZone: string): number 
  * this a live record would draw one line until the moment it is stopped.
  */
 export function elapsedMinutes(ripple: Ripple, timeZone: string, now: Date): number {
-  if (!ripple.occurred_time) return 0;
+  if (!ripple.occurred_time || !ripple.occurred_on) return 0;
 
   const start = wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
   return Math.max(0, Math.round((now.getTime() - start.getTime()) / 60_000));
@@ -105,7 +106,7 @@ export function elapsedMinutes(ripple: Ripple, timeZone: string, now: Date): num
  * end equals its start, and for a timer still running.
  */
 export function endWallClock(ripple: Ripple, timeZone: string): string | null {
-  if (!ripple.occurred_time || !ripple.ended_at) return null;
+  if (!ripple.occurred_time || !ripple.occurred_on || !ripple.ended_at) return null;
 
   const start = wallClockToInstant(ripple.occurred_on, ripple.occurred_time, timeZone);
   const end = new Date(ripple.ended_at);

@@ -1,3 +1,4 @@
+import { dayOf, flowInstant, sortNewestFirst } from '@/lib/flow-key';
 import type { DuringClient } from '@/lib/queries/profile';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import type { IsoDate } from '@/lib/time';
@@ -26,37 +27,44 @@ export type TrailDay = { date: IsoDate; ripples: RippleWithCategory[] };
 export async function getMyTrail(
   supabase: DuringClient,
   authorId: string,
+  timeZone: string,
 ): Promise<RippleWithCategory[]> {
   const { data, error } = await supabase
     .from('ripples')
     .select(WITH_CATEGORY)
     .eq('author_id', authorId)
     .is('parent_ripple_id', null)
-    .order('occurred_on', { ascending: false })
-    .order('occurred_time', { ascending: true, nullsFirst: true })
-    .order('created_at', { ascending: true })
     .returns<RippleWithCategory[]>();
 
   if (error) throw error;
-  return data;
+  // Ordered here, not in SQL: the key is a coalesce the database does not
+  // store (H20c), and the archive is one person's few months.
+  return sortNewestFirst(data, timeZone);
 }
 
 /**
- * Days, newest first, each holding its Ripples in the order Home shows them.
+ * Days, newest first, each day still reading early to late.
  *
- * The scroll descends through days and each day still reads top-to-early, so a
- * day in the Trail looks like the same day on Home rather than a reversed one.
- * `occurred_on` is already an author-local calendar date, so the boundaries
- * are the author's without any instant being re-read here.
+ * The scroll descends through days and each day reads top-to-early, so a day
+ * in the Trail is the day as it was lived rather than a reversed one. A day is
+ * the coalesced `occurred_on` (H20c): the annotation's date, else the
+ * author-local date the fragment was written — so an unannotated fragment
+ * lands on the day it was posted, and a late-night one stays on the day its
+ * author was living.
  */
-export function groupByDay(ripples: RippleWithCategory[]): TrailDay[] {
-  const days: TrailDay[] = [];
-
+export function groupByDay(ripples: RippleWithCategory[], timeZone: string): TrailDay[] {
+  const byDay = new Map<IsoDate, RippleWithCategory[]>();
   for (const ripple of ripples) {
-    const last = days[days.length - 1];
-    if (last && last.date === ripple.occurred_on) last.ripples.push(ripple);
-    else days.push({ date: ripple.occurred_on, ripples: [ripple] });
+    const date = dayOf(ripple, timeZone);
+    const day = byDay.get(date);
+    if (day) day.push(ripple);
+    else byDay.set(date, [ripple]);
   }
 
-  return days;
+  return [...byDay.entries()]
+    .sort(([a], [b]) => (a < b ? 1 : a > b ? -1 : 0))
+    .map(([date, rows]) => ({
+      date,
+      ripples: [...rows].sort((a, b) => flowInstant(a, timeZone) - flowInstant(b, timeZone)),
+    }));
 }

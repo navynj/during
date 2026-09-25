@@ -77,6 +77,7 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
     participants: [],
     created_at: '2027-07-08T16:00:00.000Z',
     parent_ripple_id: null,
+    splash_id: null,
     category: { name: 'Focus', icon: '🔍' },
     ...over,
   };
@@ -178,7 +179,7 @@ describe('locked records are not marked as locked', () => {
   it('leaves a Trail row reading exactly like an unlocked one', () => {
     const { container, getByText } = render(
       <InputSheetProvider>
-        <Trail days={groupByDay([ripple()])} timeZone={TZ} now={NOW} />
+        <Trail days={groupByDay([ripple()], TZ)} timeZone={TZ} now={NOW} />
       </InputSheetProvider>,
     );
 
@@ -192,10 +193,13 @@ describe('the Trail is a backward scroll, not a feed', () => {
     const { container } = render(
       <InputSheetProvider>
         <Trail
-          days={groupByDay([
-            ripple({ id: 'now', occurred_on: '2027-07-08' }),
-            ripple({ id: 'then', occurred_on: '2027-05-02' }),
-          ])}
+          days={groupByDay(
+            [
+              ripple({ id: 'now', occurred_on: '2027-07-08' }),
+              ripple({ id: 'then', occurred_on: '2027-05-02' }),
+            ],
+            TZ,
+          )}
           timeZone={TZ}
           now={NOW}
         />
@@ -210,7 +214,7 @@ describe('the Trail is a backward scroll, not a feed', () => {
   it('sends a day header back to that day on Home', () => {
     const { container } = render(
       <InputSheetProvider>
-        <Trail days={groupByDay([ripple()])} timeZone={TZ} now={NOW} />
+        <Trail days={groupByDay([ripple()], TZ)} timeZone={TZ} now={NOW} />
       </InputSheetProvider>,
     );
 
@@ -310,7 +314,7 @@ describe('a day in the Trail has the same two regions Home has', () => {
     // what took the Locker down.
     const { getByText } = render(
       <InputSheetProvider>
-        <Trail days={groupByDay([note])} timeZone={TZ} now={NOW} />
+        <Trail days={groupByDay([note], TZ)} timeZone={TZ} now={NOW} />
       </InputSheetProvider>,
     );
 
@@ -320,7 +324,7 @@ describe('a day in the Trail has the same two regions Home has', () => {
   it('keeps the timed records on the axis below them', () => {
     const { container } = render(
       <InputSheetProvider>
-        <Trail days={groupByDay([note, ripple({ id: 'timed' })])} timeZone={TZ} now={NOW} />
+        <Trail days={groupByDay([note, ripple({ id: 'timed' })], TZ)} timeZone={TZ} now={NOW} />
       </InputSheetProvider>,
     );
 
@@ -331,7 +335,7 @@ describe('a day in the Trail has the same two regions Home has', () => {
   it('does not invite a new note here: the Trail reads, Home records', () => {
     const { queryByText } = render(
       <InputSheetProvider>
-        <Trail days={groupByDay([note])} timeZone={TZ} now={NOW} />
+        <Trail days={groupByDay([note], TZ)} timeZone={TZ} now={NOW} />
       </InputSheetProvider>,
     );
 

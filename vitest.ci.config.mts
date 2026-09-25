@@ -32,6 +32,7 @@ const NEEDS_LOCAL_STACK = [
   'tests/break.test.ts',
   'tests/bootstrap-profile.test.ts',
   'tests/auth-redirect.test.ts',
+  'tests/splash-crud.test.ts',
 ];
 
 export default defineConfig({

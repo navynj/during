@@ -140,17 +140,21 @@ describe("the Trail groups by the author's own days", () => {
       participants: [],
       created_at: '2027-07-08T16:00:00.000Z',
       parent_ripple_id: null,
+      splash_id: null,
       category: { name: 'Focus', icon: '🔍' },
       ...over,
     };
   }
 
   it('sections newest day first, each day still reading early to late', () => {
-    const days = groupByDay([
-      ripple({ id: 'a', occurred_on: '2027-07-08', occurred_time: '09:00:00' }),
-      ripple({ id: 'b', occurred_on: '2027-07-08', occurred_time: '18:00:00' }),
-      ripple({ id: 'c', occurred_on: '2027-07-06', occurred_time: '11:00:00' }),
-    ]);
+    const days = groupByDay(
+      [
+        ripple({ id: 'a', occurred_on: '2027-07-08', occurred_time: '09:00:00' }),
+        ripple({ id: 'b', occurred_on: '2027-07-08', occurred_time: '18:00:00' }),
+        ripple({ id: 'c', occurred_on: '2027-07-06', occurred_time: '11:00:00' }),
+      ],
+      'Asia/Seoul',
+    );
 
     expect(days.map((day) => day.date)).toEqual(['2027-07-08', '2027-07-06']);
     expect(days[0].ripples.map((r) => r.id)).toEqual(['a', 'b']);
@@ -159,12 +163,46 @@ describe("the Trail groups by the author's own days", () => {
   it('keeps a late-night record on the day its author was living', () => {
     // 23:30 in Seoul is the previous afternoon in UTC. `occurred_on` is the
     // author's own calendar date, so the grouping never re-reads the instant.
-    const days = groupByDay([
-      ripple({ id: 'late', occurred_on: '2027-07-08', occurred_time: '23:30:00' }),
-      ripple({ id: 'early', occurred_on: '2027-07-08', occurred_time: '00:10:00' }),
-    ]);
+    const days = groupByDay(
+      [
+        ripple({ id: 'late', occurred_on: '2027-07-08', occurred_time: '23:30:00' }),
+        ripple({ id: 'early', occurred_on: '2027-07-08', occurred_time: '00:10:00' }),
+      ],
+      'Asia/Seoul',
+    );
 
     expect(days).toHaveLength(1);
     expect(days[0].date).toBe('2027-07-08');
+  });
+
+  it('lands an unannotated fragment on the author-local day it was written (H20c)', () => {
+    // 15:30Z on the 8th is 00:30 on the 9th in Seoul: the coalesced day is
+    // the day the author was living, not the server's.
+    const days = groupByDay(
+      [
+        ripple({
+          id: 'posted',
+          occurred_on: null,
+          occurred_time: null,
+          created_at: '2027-07-08T15:30:00.000Z',
+        }),
+      ],
+      'Asia/Seoul',
+    );
+
+    expect(days[0].date).toBe('2027-07-09');
+  });
+
+  it('moves a fragment to its annotation and back when the annotation is removed', () => {
+    const annotated = ripple({
+      id: 'x',
+      occurred_on: '2027-06-02',
+      occurred_time: null,
+      created_at: '2027-07-08T16:00:00.000Z',
+    });
+    expect(groupByDay([annotated], 'Asia/Seoul')[0].date).toBe('2027-06-02');
+
+    const plain = { ...annotated, occurred_on: null };
+    expect(groupByDay([plain], 'Asia/Seoul')[0].date).toBe('2027-07-09');
   });
 });
