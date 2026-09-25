@@ -6,9 +6,9 @@ During (during.today): a one-line diary that assembles itself. While you write i
 
 ## Source of truth
 
-- `_docs/SPEC.md`: the product spec (v0.21). Authoritative for behavior, vocabulary, IA, visual system, schema, and scope. Read the relevant section before building any screen.
+- `_docs/SPEC.md`: the product spec (v0.22). Authoritative for behavior, vocabulary, IA, visual system, schema, and scope. Read the relevant section before building any screen.
 - `_docs/DECISIONS.md`: the decision log with rationale and rejected alternatives. Do not re-litigate settled decisions. If implementation genuinely forces a revisit, stop and flag it; never silently deviate.
-- `_docs/mockups/`: current Figma exports. Visual reference for layout and the wave grammar. Some predate SPEC v0.2; where a mockup and SPEC conflict, SPEC wins. Flag the conflict instead of guessing.
+- `_docs/mockups/`: current Figma exports. Visual reference for layout and the wave grammar. **The five Splash-pivot frames are the layout authority for Home and the sheets** (H20): `home-ripple-mode.png`, `home-splash-mode.png`, `sheet-ripple.png`, `sheet-splash.png`, `splash-thread.png`; where the brief and one of these disagree, the mockup wins. The older exports predate SPEC v0.2; where one of those and SPEC conflict, SPEC wins. Flag the conflict instead of guessing.
 
 **If the mockup contains a drawn shape, ask for the Figma-exported SVG before generating one.** Guessing at drawn geometry is the most expensive mistake so far: a generated wave was rebuilt from the export, and the exported numbers turned out to be load-bearing (control offsets that make the amplitude land exactly inside the stroke box). Reading a shape off a PNG gets the impression right and the construction wrong.
 
@@ -24,14 +24,19 @@ Scope is cut into phases, solo-first (H11). **P1 makes the app complete for one 
 
 1. Auth (social login) and profile bootstrap (category seed from preset) — done
 2. Wave system, Home Daily read view — done
-3. Input sheet: category chips, single note field, segmented time toggle, audience chip, Drop / Timer dual commit, ghost landing on the sheet's rail — done
-4. Ripple mini half-sheet: tap a wave, see note, time, media, lock state. **No view count in P1** — counting needs an audience
-5. Delete (hard delete, including media); photo attach
-6. Designed empty-state copy: empty day, empty Trail, empty Lanes
-7. Lanes read-only matrix; Locker Trail (full personal scroll including locked ripples)
-8. Deploy: cloud Supabase + Vercel, because daily use on a phone requires it
+3. Input sheet — done, then **replaced by the Splash pivot (H20)**: a ripple sheet (chips, note, `+ Add Time`, `+ Add Image`, `+ Add to Splash`, one Drop) and a splash sheet (Add Lanes, title, `+ Add Date`, one Drop). No Timer, no audience chip, no in-sheet mode toggle: the entry path decides which sheet opens
+4. Ripple mini half-sheet: tap a wave, see note, annotation, media, splash, lock toggle. **No view count in P1** — counting needs an audience — done
+5. Delete (hard delete, including media); photo attach — done
+6. Designed empty-state copy — done
+7. Lanes read-only matrix; Locker Trail (full personal scroll including locked ripples) — done
+8. Deploy: cloud Supabase + Vercel, because daily use on a phone requires it — done
+9. **The Splash pivot (H20)**: Home as one ordinal flow keyed on `COALESCE(occurred, created_at)` with ripple/splash view modes; Splash as a personal topic board (solo), the splash screen, lane inheritance, detach-on-delete; six-lane preset; ink-fill selection
 
-Explicitly NOT in P1 (do not scaffold, stub, or placeholder): Link and invites, the friend rail, view counts, presence TTL surfacing — all P2. Pools and everything inside them, Lists UI, Home Weekly — P3 or later. Tab slots are full by design: never add a tab. A tab appears only when its screen ships.
+**Dormant, never deleted (H20b):** the Timer commit, the now band, the focus screen (`features/focus/`), Break, inner ripples (`parent_ripple_id` and its triggers stay). Their modules and tests stay in place with no entry point or navigation; P3's Swim is their consumer. Do not wire them back into a surface, and do not remove them.
+
+**The record is a story fragment, not an activity spec (H20a).** The hand throws moments at stories; the machine shelves them in time. An unannotated fragment flows in posting order; an `occurred` annotation is an instruction to place it where it happened. The exclusion constraint is gone: overlapping spans are legitimate records.
+
+Explicitly NOT in P1 (do not scaffold, stub, or placeholder): Link and invites, the friend rail, view counts, presence TTL surfacing, the audience chip, Splash shared by two — all P2. Pools and everything inside them (including the pool pill on a splash and pool-side lane mappings), Lists UI, Home Weekly — P3 or later. Tab slots are full by design: never add a tab. A tab appears only when its screen ships. Tabs today: Home / Lanes / Locker.
 
 **P1.5** is a dogfood window: daily personal use and small fixes, first candidate the Spotify now-playing suggestion. **P2** adds the Link world and is where the witnessing experiment runs. **P1/P1.5 validate input cost and recall value only — solo usage decay is not evidence of product failure**, because the witnessed hook is absent by design until P2.
 
@@ -69,7 +74,8 @@ The database holds records someone actually wrote. Everything below outranks con
 - Typeface: **Poppins** (weights 300/400/500/600/700), self-hosted via `next/font/google` and exposed as Tailwind's `--font-sans`, so `font-sans` and `body` cannot drift apart. The type size _scale_ is untouched.
 - Tracking is tightened 5%: the whole `--tracking-*` scale shifts by `-0.05em` (so `tracking-normal` is `-0.05em`), and `body` states it because browsers default to `0`. Shifting the scale rather than only the base keeps the steps' relative distance.
 - **Weight: `font-semibold` is the emphasis weight.** Reach for it wherever you would reflexively write `font-bold`; 600 carries emphasis in Poppins without the heaviness. `font-bold` (700) stays loaded for the rare case that genuinely needs it, but is not the default. The header's year + month label is `font-medium`.
-- **`#787BE2` (`main-400`) is a chip foreground and a wave tone. Nothing else.** Its only text use is the foreground of category chips and other small tag-like chips; otherwise it exists solely inside the wave vitality ramp as the "recent" tone. It is not a general accent color, and it never colors headings, labels, time markers, or chrome.
+- **Two fills, two meanings (H20f).** Solid `#0507C9` (`main-900`) fill = **action**: Drop, +Drop, the FAB, waves, live surfaces. Solid ink `#313338` fill = **selection**: the selected category chip, the active mode-toggle segment. White text on both. Blue fills on a screen point only at what commits or creates; a selected chip is `bg-ink text-white`, never `bg-main-900`. Outline chips (a splash's lane chips) are never filled.
+- **`#787BE2` (`main-400`) is a chip foreground and a wave tone. Nothing else.** Its only text use is the foreground of small tag-like chips (the duration chip); otherwise it exists solely inside the wave vitality ramp as the "recent" tone. It is not a general accent color, and it never colors headings, labels, time markers, or chrome. An unselected category chip's text is `pool-500`, not `main-400`.
 - Text colors, in full:
   - Default text: `#313338` (ink).
   - Emphasis / accent text: `#0507C9` (`main-900`).
@@ -79,12 +85,12 @@ The database holds records someone actually wrote. Everything below outranks con
 - `pnpm lint` fails on `main-400` or `#787BE2` used outside `components/ui/chips/` and `components/ui/waves/` (see `scripts/check-tokens.sh`). If a new directory legitimately renders chips or waves, add it to that allowlist rather than working around the check.
 - Category emojis keep their native colors: the single allowed off-palette element.
 - **Motion: only living things move.** An in-progress timed grows its last wave line; a new drop plays one expanding ring that settles to a single ring. Nothing else animates. `prefers-reduced-motion` fallback is mandatory, and every design must read correctly when static.
-- Wave grammar: timed = multi-line bundle whose line count is log-scaled on duration (cap 10) at a constant gap, so height is a consequence of density, not a measure of span; drop = single wave line. Wave counts are impressions (calm / some / lots), never precise gauges. The axis is ordered, not time-proportional: vertical distance measures nothing.
-- Past sinks **within a continuous scroll** (backgrounds step white, then `#F1F3F7`, then `#D8DCE8`); a paged day keeps its white ground (H14). Future fades (reduced opacity). Tone and opacity never encode ownership.
+- Wave grammar: timed = multi-line bundle whose line count is log-scaled on duration (cap 10) at a constant gap, so height is a consequence of density, not a measure of span; drop = single wave line; a splash = its fragment count on the log scale, right-anchored. Wave counts are impressions (calm / some / lots), never precise gauges. The axis is ordered, not time-proportional: vertical distance measures nothing.
+- Past sinks **within a continuous scroll** (backgrounds step white, then `#F1F3F7`, then `#D8DCE8`): Home's month sections, the Trail, Lanes. Planned-at-reduced-opacity is retired (H20c): a future-dated fragment is a normal fragment with a future date chip. Tone and opacity never encode ownership.
 
 ## Code conventions
 
-- **Domain vocabulary in code.** Identifiers use Ripple, drop, timed, Link, Pool, Lane, Splash, Swim, Locker, Submerge, List. Forbidden identifiers: post, entry, item, group, feed, stream, deck, follower. If the word is retired in SPEC section 2, it does not appear in code either.
+- **Domain vocabulary in code.** Identifiers use Ripple, drop, timed, Link, Pool, Lane, Splash, Swim, Locker, Submerge, List. Forbidden identifiers: post, entry, item, group, feed, stream, deck, follower, thread. If the word is retired in SPEC section 2, it does not appear in code either. ("Fragment" is descriptive prose for a Ripple, not an identifier.)
 - Structure: `app/` for routes and layouts, `features/<name>/` (components, hooks, queries colocated per feature: `features/input-sheet/`, `features/home-daily/`, `features/links/`, `features/locker/`), `components/ui/` for shared primitives (waves, chips, sheets), `lib/` for supabase clients and utilities, `supabase/migrations/` for schema.
 - Server components for shells and data fetch; client components for anything that moves or accepts input. Keep components small; extract when a file passes ~150 lines.
 - TypeScript: strict, no `any`, explicit return types on exported functions. Validate at boundaries (forms, route handlers) with zod. Database types generated via `supabase gen types`.
@@ -94,7 +100,7 @@ The database holds records someone actually wrote. Everything below outranks con
 
 ## Definition of done for P1
 
-I can run my own day through it, on my own phone, without help. Drop from all three entry points; a chip-only zero-character drop; run and stop a timer with ticking elapsed; file an inner ripple into a running session; plan tonight's dinner; write an all-day note; watch a deliberate overlap get caught and named. Tap a ripple to read it back, attach a photo, delete one and have the media go with it. Browse a month by category in Lanes and by day in the Trail. Every empty state shows designed copy instead of a blank.
+I can run my own day through it, on my own phone, without help. Throw a note-only, a photo-only and a plain fragment from the FAB; annotate one with last week's date and watch it move there; create a laned splash from the tab bar's left button and watch a fragment thrown into it inherit the lane with no category choice; see the board float at the top of splash mode with its declared dates, chips and waves, and its +Drop disappear once it settles; flip modes by toggle and by tapping quiet marks without losing my place; read the splash screen with photos large. Tap a ripple to read it back, attach a photo, delete one and have the media go with it. Browse a month by category in Lanes and by day in the Trail. Every empty state shows designed copy instead of a blank.
 
 No friend appears anywhere in that list. That is the point: P1 is finished when the app is worth opening daily with nobody watching (H15).
 

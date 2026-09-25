@@ -18,7 +18,8 @@ Scope is cut into **phases**, solo-first (H11). The app becomes complete for one
 | S4 | Ripple mini sheet | Half-sheet on tap: note, time, media, lock state, inner ripples with their own entry point. **No view count** — that is P2, because it needs an audience to count | Tapping a ripple opens it; an inner ripple can be filed into its parent from here | done |
 | S5 | Care | Hard delete including storage objects, photo attach + upload, final empty-state copy (empty day, empty Trail, empty Lanes) | Delete removes row and media; every empty state shows designed copy | done |
 | S6 | Recall | Lanes matrix (my categories x days, locked included unmarked; tab appears now) with a lane's own edit sheet; Locker Trail (full personal scroll including locked ripples, date-sectioned, sinking sections per law 1) | A month of my own records is browsable by category and by day | done |
-| S7 | Ship for one | Cloud Supabase promotion (slot from cleanup or second free org), Vercel deploy, OAuth redirect config, PWA-ish phone usability pass | during.today serves my own day from my phone |  |
+| S7 | Ship for one | Cloud Supabase promotion (slot from cleanup or second free org), Vercel deploy, OAuth redirect config, PWA-ish phone usability pass | during.today serves my own day from my phone | done |
+| S8 | The Splash pivot (H20) | Home as one ordinal flow with ripple/splash modes; Splash boards (solo), the splash screen, lane inheritance, detach-on-delete; the ripple sheet and the splash sheet; ink-fill selection; six-lane preset; live-tracking surfaces dormant; exclusion constraint dropped | Note-only, photo-only and plain fragments from the FAB; a last-week annotation moves one; a laned splash from the tab bar inherits its lane; the board floats at the top of splash mode and its +Drop settles away; modes flip by toggle and by quiet mark without losing my place; the splash screen reads with photos large |  |
 
 ## P1.5: dogfood window
 
@@ -32,6 +33,7 @@ Daily personal use, small fixes, no new surfaces unless use demands them.
 ## P2: Link world
 
 - Link + invite link (mutual), friends strip with live ring + elapsed
+- The audience chip returns to the ripple sheet; Splash shared by two (H20d, H20g)
 - Friend rail on the far right, sharing the time axis; Realtime updates when a friend drops
 - View-count UI: opening a Ripple records a view event; the count is visible to the author only
 - Presence TTL surfacing: 3d hardcoded, computed at read, expired members absent with no badge
@@ -44,8 +46,8 @@ Daily personal use, small fixes, no new surfaces unless use demands them.
 - Pools tab (Lobby: my pools + join with code, activity ripple badges); tab appears now
 - Swimmers (Daily time-aligned score view, Weekly person-column matrix, me-first + join order)
 - Pool Lanes matrix; Home Lanes column headers become mapping dashboards
-- Splash tab (boards + joint ripples filter); participants on ripples
-- Swim: FAB entry + lane long-press, live intruding card, focus screen = enlarged lane card + my timer, nothing more
+- Splash pool-wide (H20d): the compound pool pill, the joint ripples filter, the sharing record carrying `pool_lane_id`; participants on ripples
+- Swim: FAB entry + lane long-press, live intruding card, focus screen = enlarged lane card + my timer, nothing more. **The dormant live modules (Timer, now band, focus screen, Break, inner ripples) wake here** (H20b)
 
 ## Later, unscheduled
 
