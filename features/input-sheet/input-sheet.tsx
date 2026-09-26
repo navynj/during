@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 
+import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { updateRipple } from '@/features/ripple-sheet/actions';
 import type { SplashSummary } from '@/features/splash/summary';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -141,7 +142,7 @@ export function InputSheet({
       <section
         role="dialog"
         aria-label={isEdit ? 'Edit this ripple' : 'Drop a ripple'}
-        className="sheet-rise bg-pool-100 relative flex max-h-[88vh] flex-col overflow-hidden rounded-t-[32px]"
+        className={`sheet-rise bg-pool-100 relative mx-auto flex max-h-[88vh] w-full ${COLUMN_MAX_WIDTH} flex-col overflow-hidden rounded-t-[32px]`}
       >
         {/* One declared lane: the choice disappears, the lane is it (H20e). */}
         {rule.kind !== 'hidden' ? (

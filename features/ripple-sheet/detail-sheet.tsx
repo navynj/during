@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { Lock, Pencil, Trash2, Unlock } from 'lucide-react';
 
 import { DurationChip } from '@/components/ui/chips/duration-chip';
+import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { annotationLabel, draftFrom } from '@/features/input-sheet/draft';
 import { signRippleMedia } from '@/lib/media';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
@@ -71,7 +72,7 @@ export function DetailSheet({
       <section
         role="dialog"
         aria-label="Ripple"
-        className="sheet-rise relative flex max-h-[82vh] flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pt-5"
+        className={`sheet-rise relative mx-auto flex max-h-[82vh] w-full ${COLUMN_MAX_WIDTH} flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pt-5`}
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <header className="flex items-start justify-between gap-3">

@@ -9,6 +9,7 @@ vi.mock('next/navigation', () => ({
 
 import { buildFlow, monthSections, DEFAULT_HOME_MODE } from '@/features/home/flow';
 import { HomeFlow } from '@/features/home/home-flow';
+import { QUIET_CLUSTER } from '@/features/home/splash-flow-row';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { summarizeSplash, type Splash } from '@/features/splash/summary';
 import { EMPTY } from '@/lib/empty-states';
@@ -136,15 +137,15 @@ describe('one list, two modes (SPEC 5)', () => {
     );
   });
 
-  it('renders ripples as quiet marks in splash mode: a badge, no content, no full height', () => {
+  it('renders ripples as quiet marks in splash mode: a badge on the rope, no content, no row', () => {
     const { container, queryByText } = home(day, boards);
     const marks = container.querySelectorAll('[data-flow-row="ripple"]');
 
     expect(marks.length).toBe(3);
     for (const mark of marks) {
       expect(mark.getAttribute('data-presentation')).toBe('quiet');
-      expect(mark.className).toContain('py-1.5');
-      expect(mark.className).not.toContain('py-3');
+      expect(mark.className).toContain('float-left');
+      expect(mark.className).not.toMatch(/grid|py-3/);
     }
     expect(queryByText('parannoul on repeat')).toBeNull();
     expect(
@@ -152,7 +153,7 @@ describe('one list, two modes (SPEC 5)', () => {
     ).toBe('📍');
   });
 
-  it('renders splashes as quiet marks in ripple mode: waves only, a + while open', () => {
+  it('renders splashes as quiet marks in ripple mode: a compact cluster, a + only while open', () => {
     const { container, getAllByLabelText, queryByText } = home(day, boards);
     fireEvent.click(getAllByLabelText('Ripples')[0]);
 
@@ -161,6 +162,9 @@ describe('one list, two modes (SPEC 5)', () => {
     for (const mark of marks) {
       expect(mark.getAttribute('data-presentation')).toBe('quiet');
       expect(mark.querySelector('[data-splash-waves]')).not.toBeNull();
+      expect(mark.className).toContain('float-right');
+      expect(mark.className).toContain(QUIET_CLUSTER);
+      expect(mark.querySelector('[data-drop-pill]')).toBeNull();
     }
     // The titles live on the splash rows, and those are quiet now; a member
     // ripple's own splash tag is the one place a title still shows.
@@ -270,6 +274,97 @@ describe('the tail and the empty states (H19)', () => {
     expect(getByText(EMPTY.splashes)).toBeTruthy();
     fireEvent.click(getAllByLabelText('Ripples')[0]);
     expect(queryByText(EMPTY.splashes)).toBeNull();
+  });
+});
+
+describe('a quiet mark occupies only its own box (SPEC 5)', () => {
+  /** Every row in the flow: the list's direct children, in both modes. */
+  function rows(container: HTMLElement): HTMLElement[] {
+    return [...container.querySelectorAll<HTMLElement>('ol > [data-flow-row]')];
+  }
+  const inFlow = (row: HTMLElement): boolean => !/float-(left|right)/.test(row.className);
+
+  it('is the list item itself, floated: no full-row wrapper, no row padding', () => {
+    const { container, getAllByLabelText } = home(day, boards);
+    // Splash mode: the quiet marks are the badges.
+    for (const mark of container.querySelectorAll<HTMLElement>('[data-presentation="quiet"]')) {
+      expect(mark.tagName).toBe('LI');
+      expect(mark.parentElement!.tagName).toBe('OL');
+      expect(mark.className).toMatch(/float-left clear-left/);
+      expect(mark.className).not.toMatch(/\bpy-/);
+    }
+    fireEvent.click(getAllByLabelText('Ripples')[0]);
+    // Ripple mode: the quiet marks are the clusters.
+    for (const mark of container.querySelectorAll<HTMLElement>('[data-presentation="quiet"]')) {
+      expect(mark.tagName).toBe('LI');
+      expect(mark.parentElement!.tagName).toBe('OL');
+      expect(mark.className).toMatch(/float-right clear-right/);
+      expect(mark.className).not.toMatch(/\bpy-/);
+    }
+  });
+
+  it('leaves the in-flow stack to the full rows alone, in both modes', () => {
+    // No layout engine here, so the stack is read structurally: a floated
+    // box is out of flow and adds nothing to the column's height, and the
+    // full rows are the same boxes with or without quiet marks beside them.
+    const withMarks = home(day, boards);
+    const full = rows(withMarks.container).filter(inFlow);
+    expect(full.map((r) => r.getAttribute('data-presentation'))).toEqual(['full', 'full']);
+    expect(rows(withMarks.container).filter((r) => !inFlow(r)).length).toBe(3);
+    const fullClasses = full.map((r) => r.className);
+    cleanup();
+
+    const alone = home([], boards);
+    expect(
+      rows(alone.container)
+        .filter(inFlow)
+        .map((r) => r.className),
+    ).toEqual(fullClasses);
+    expect(rows(alone.container).filter((r) => !inFlow(r)).length).toBe(0);
+    cleanup();
+
+    const ripplesOnly = home(day);
+    fireEvent.click(ripplesOnly.getAllByLabelText('Ripples')[0]);
+    const rippleRows = rows(ripplesOnly.container);
+    expect(rippleRows.every(inFlow)).toBe(true);
+    expect(rippleRows.every((r) => r.className.includes('py-3'))).toBe(true);
+  });
+
+  it('draws the rope once per month, behind the flow, never per row', () => {
+    const { container, getAllByLabelText } = home(day, boards);
+    for (const mode of ['splash', 'ripple'] as const) {
+      if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
+      for (const section of container.querySelectorAll('[data-flow-month]')) {
+        expect(section.querySelectorAll(':scope > header > [data-rope]').length).toBe(1);
+        expect(section.querySelectorAll(':scope > ol > [data-rope]').length).toBe(1);
+        expect(section.querySelector('ol')!.className).toContain('flow-root');
+      }
+      expect(container.querySelector('[data-flow-row] [data-rope]')).toBeNull();
+    }
+  });
+});
+
+describe('a splash entry’s waves (SPEC 5)', () => {
+  it('span the entry’s own content block, stretched to it rather than sized', () => {
+    const { container } = home(day, boards);
+    const entries = container.querySelectorAll<HTMLElement>('[data-splash-entry]');
+    expect(entries.length).toBe(2);
+    for (const entry of entries) {
+      // The entry shrink-wraps inside a right-aligned row.
+      expect(entry.parentElement!.className).toContain('justify-end');
+      const rule = entry.querySelector<HTMLElement>(':scope > [data-splash-rule]')!;
+      expect(rule.className).toContain('self-stretch');
+      expect(rule.className).toContain('contain-inline-size');
+      expect(rule.className).not.toMatch(/w-\[|w-full|max-w/);
+      expect(rule.querySelector('[data-splash-waves]')).not.toBeNull();
+    }
+  });
+
+  it('keep the pinned geometry at 1.5x, right-anchored and clipped', () => {
+    const { container } = home(day, boards);
+    const svg = container.querySelector('[data-splash-rule] svg')!;
+    expect(svg.getAttribute('preserveAspectRatio')).toBe('xMaxYMid slice');
+    expect(svg.getAttribute('height')).toBe('6');
   });
 });
 
