@@ -270,9 +270,15 @@ describe('the head ghost and the empty states (H19)', () => {
     fireEvent.click(getAllByLabelText('Ripples')[0]);
     expect(getByText('+ Drop New Ripple')).toBeTruthy();
 
-    const ghost = container.querySelector('[data-flow-ghost]')!;
+    // Inside the newest month, under its header and before its rows — the
+    // head of the list, not the top of the screen — and only there.
+    const ghosts = container.querySelectorAll('[data-flow-ghost]');
+    expect(ghosts.length).toBe(1);
+    const ghost = ghosts[0];
     const first = container.querySelector('[data-flow-month]')!;
-    expect(ghost.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(ghost.parentElement).toBe(first);
+    expect(ghost.previousElementSibling!.tagName).toBe('HEADER');
+    expect(ghost.nextElementSibling!.tagName).toBe('OL');
     // Above the first ripple, so above where the rope begins: no rope stub.
     expect(ghost.querySelector('[data-rope]')).toBeNull();
   });

@@ -131,10 +131,12 @@ export function HomeFlow({
         </header>
       ) : null}
 
-      {/* Newest first, so the seat of the next thing is at the head. */}
-      <FlowGhost mode={mode} />
-
-      {empty ? <p className="text-pool-500 py-4 text-sm">{EMPTY.trail}</p> : null}
+      {empty ? (
+        <>
+          <FlowGhost mode={mode} />
+          <p className="text-pool-500 py-4 text-sm">{EMPTY.trail}</p>
+        </>
+      ) : null}
 
       {!empty && mode === 'splash' && splashes.length === 0 ? (
         <p data-empty-splashes className="text-pool-500 pt-4 text-right text-sm">
@@ -163,9 +165,13 @@ export function HomeFlow({
               <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
             </header>
 
+            {/* Newest first, so the seat of the next thing is at the head of
+                the newest month's list, under its header (SPEC 5). */}
+            {index === 0 ? <FlowGhost mode={mode} /> : null}
+
             {/* The rope is drawn once behind the whole month, and the list is
-                a flow root: quiet marks are floats that the full rows flow
-                past (SPEC 5), and the month contains them. */}
+                a flow root: every row floats on its own side (SPEC 5), and
+                the month contains them. */}
             <ol className="relative flow-root">
               {ropeFrom ? <Rope from={ropeFrom} /> : null}
               {section.rows.map((row) =>
