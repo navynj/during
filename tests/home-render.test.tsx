@@ -23,6 +23,7 @@ const NOW = new Date('2026-09-25T20:00:00.000Z');
 beforeEach(() => {
   window.sessionStorage.clear();
   window.scrollBy = () => {};
+  Element.prototype.scrollIntoView = vi.fn();
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     configurable: true,
@@ -292,6 +293,9 @@ describe('the head ghost and the empty states (H19)', () => {
     expect(ring.className).toMatch(/\bh-9\b/);
     expect(ring.className).toMatch(/\bw-9\b/);
     expect(ring.className).toContain('shrink-0');
+    // White-backed and round: the rope passes behind it, not through it.
+    expect(ring.className).toContain('bg-white');
+    expect(ring.className).toContain('rounded-full');
   });
 
   it('invites the first ripple when there is nothing at all', () => {
@@ -365,23 +369,29 @@ describe('two columns, two stacks (SPEC 5)', () => {
     }
   });
 
-  it('starts the rope at the ghost ring and runs every later month from its top', () => {
+  it('spans each month’s rope from its first seat to its last, the newest from the ring', () => {
     const { container } = home(day, boards);
     const ropes = [...container.querySelectorAll<HTMLElement>('[data-rope]')];
-    expect(ropes.map((r) => r.getAttribute('data-rope-from'))).toEqual(['first-badge', 'top']);
-    // The first stretch begins where the ring was measured, not at 0.
-    expect(ropes[0].style.top).toBe('var(--rope-top, 100%)');
-    expect(ropes[0].parentElement!.style.getPropertyValue('--rope-top')).toMatch(/px$/);
+    expect(ropes.length).toBe(2);
+    for (const rope of ropes) {
+      // Both ends are where the seats were measured, never the list's edges.
+      expect(rope.style.top).toBe('var(--rope-top, 100%)');
+      expect(rope.style.bottom).toBe('var(--rope-bottom, 0px)');
+      expect(rope.parentElement!.style.getPropertyValue('--rope-top')).toMatch(/px$/);
+      expect(rope.parentElement!.style.getPropertyValue('--rope-bottom')).toMatch(/px$/);
+    }
     expect(
       ropes[0].parentElement!.querySelector('[data-badge]')!.closest('[data-flow-ghost]'),
     ).not.toBeNull();
-    expect(ropes[1].style.top).toBe('0px');
+    expect(
+      ropes[1].parentElement!.querySelector('[data-badge]')!.closest('[data-flow-ghost]'),
+    ).toBeNull();
   });
 
-  it('starts the rope at the ring even when the newest month holds no ripple', () => {
+  it('hangs the rope on the ring even when the newest month holds no ripple', () => {
     // A board created this month with nothing thrown at it yet sits at its
-    // own creation: the newest section is the board alone, and the rope
-    // still begins at the ring heading its ripple column.
+    // own creation: the newest section is the board alone, and the ring
+    // heading its ripple column is the only seat on its rope.
     const { container } = home(
       [ripple({ id: 'r-aug', created_at: '2026-08-18T15:00:00Z' })],
       [
@@ -394,11 +404,10 @@ describe('two columns, two stacks (SPEC 5)', () => {
     );
     const months = [...container.querySelectorAll('[data-flow-month]')];
     expect(months.map((m) => m.getAttribute('data-flow-month'))).toEqual(['2026-09', '2026-08']);
-    expect(months[0].querySelector('[data-rope]')!.getAttribute('data-rope-from')).toBe(
-      'first-badge',
-    );
-    expect(months[0].querySelector('[data-flow-ghost]')).not.toBeNull();
-    expect(months[1].querySelector('[data-rope]')!.getAttribute('data-rope-from')).toBe('top');
+    const seats = months[0].querySelectorAll('ol[data-column="ripples"] [data-badge]');
+    expect(seats.length).toBe(1);
+    expect(seats[0].closest('[data-flow-ghost]')).not.toBeNull();
+    expect(months[1].querySelector('[data-rope]')).not.toBeNull();
   });
 });
 
@@ -424,6 +433,39 @@ describe('a splash entry’s waves (SPEC 5)', () => {
     const svg = container.querySelector('[data-splash-rule] svg')!;
     expect(svg.getAttribute('preserveAspectRatio')).toBe('xMaxYMid slice');
     expect(svg.getAttribute('height')).toBe('6');
+  });
+});
+
+describe('the month navigator (SPEC 5)', () => {
+  it('jumps to the adjacent month from the header, and stops at the ends', () => {
+    const { container } = home(day, boards);
+    const headers = [...container.querySelectorAll('[data-flow-month] > header')];
+    expect(headers.length).toBe(2);
+    const [sep, aug] = headers;
+
+    // September is the newest: nothing newer, August older.
+    expect(sep.querySelector<HTMLButtonElement>('[aria-label="Newer month"]')!.disabled).toBe(true);
+    const down = sep.querySelector<HTMLButtonElement>('[aria-label="Older month"]')!;
+    expect(down.disabled).toBe(false);
+    fireEvent.click(down);
+    const augSection = container.querySelector('[data-flow-month="2026-08"]')!;
+    expect(augSection.scrollIntoView).toHaveBeenCalledWith(
+      expect.objectContaining({ block: 'start' }),
+    );
+
+    // August is the oldest: September newer, nothing older.
+    expect(aug.querySelector<HTMLButtonElement>('[aria-label="Older month"]')!.disabled).toBe(true);
+    fireEvent.click(aug.querySelector('[aria-label="Newer month"]')!);
+    expect(
+      container.querySelector('[data-flow-month="2026-09"]')!.scrollIntoView,
+    ).toHaveBeenCalled();
+  });
+
+  it('fades a disabled step as one item, in the chrome colour', () => {
+    const { container } = home(day, boards);
+    const step = container.querySelector('[aria-label="Newer month"]')!;
+    expect(step.className).toContain('disabled:opacity-20');
+    expect(step.className).toContain('text-main-900');
   });
 });
 
