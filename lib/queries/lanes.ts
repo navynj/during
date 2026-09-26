@@ -1,4 +1,4 @@
-import { dayOf, isFutureDated } from '@/lib/flow-key';
+import { dayOf, isFutureDated, type FlowKeyed } from '@/lib/flow-key';
 import type { DuringClient } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
 
@@ -39,10 +39,21 @@ export async function getLaneCounts(
     .eq('planned', false);
 
   if (error) throw error;
+  return tallyLaneCounts(data, timeZone, today);
+}
 
+/** The row shape the tally reads: the key columns and the lane. */
+export type LaneRow = FlowKeyed & { category_id: string };
+
+/**
+ * The counting, kept pure. Two spans that overlap are two records and both
+ * count (H20c): a cell is how many things happened, not how the day's hours
+ * were divided.
+ */
+export function tallyLaneCounts(rows: LaneRow[], timeZone: string, today: IsoDate): LaneSpan {
   const counts: LaneCounts = new Map();
   let earliest: IsoDate | null = null;
-  for (const row of data) {
+  for (const row of rows) {
     if (isFutureDated(row, timeZone, today)) continue;
     const date = dayOf(row, timeZone);
     const day = counts.get(date) ?? {};

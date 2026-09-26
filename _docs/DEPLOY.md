@@ -38,6 +38,23 @@ Applied `0001`–`0004`, `"seeds":[]` — nothing seeded prod. Migration `0003`
 created the private `ripple-media` bucket, confirmed present and `public =
 false`.
 
+**`0005_splash_pivot` is pending (H20).** It drops the
+`ripples_top_level_no_overlap` exclusion constraint, so `pnpm db:push` will
+refuse it until the approval from the session brief is passed through, after
+today's backup:
+
+```bash
+pnpm backup
+DURING_DDL_APPROVED='drop the btree_gist exclusion constraint by migration (it now rejects legitimate overlapping records)' pnpm db:push
+```
+
+Afterwards the catalogue check below reads one constraint fewer and one
+policy more (`splashes belong to their owner`); the four triggers are
+unchanged, dormant with inner ripples. Existing rows are untouched: every
+one keeps its `occurred_on`, and only fragments written from now on can be
+unannotated. The Focus lane retires by hand in-app once it is empty; a lane
+holding records refuses deletion, so nothing here moves a record.
+
 ### Verified live
 
 ```bash
