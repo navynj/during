@@ -119,28 +119,29 @@ export function SplashScreen({
         </div>
       </header>
 
-      {/* The add slot at the head: the seat of the next fragment, where the
-          newest lands. Above the first ripple, so above where the rope begins. */}
-      <div data-add-slot className={`${ROW_GRID} items-start pt-2 pb-2`}>
-        <div className="flex justify-center">
-          <GhostRing
-            label="Drop into this splash"
-            onClick={() => openSheet({ splashId: splash.id })}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => openSheet({ splashId: splash.id })}
-          className="text-main-900 self-start pt-4 text-left text-base font-medium"
-          style={{ opacity: 0.2 }}
-        >
-          + Drop New Ripple
-        </button>
-      </div>
-
-      {/* One rope behind the whole story, from the first badge down. */}
+      {/* One rope behind the whole story, from the add slot's ring down. */}
       <div ref={story} className="relative pb-8">
         <Rope from="first-badge" />
+
+        {/* The add slot at the head: the seat of the next fragment, where the
+            newest lands, and the first seat on the rope. */}
+        <div data-add-slot className={`${ROW_GRID} items-start pt-2 pb-2`}>
+          <div className="flex justify-center">
+            <GhostRing
+              label="Drop into this splash"
+              onClick={() => openSheet({ splashId: splash.id })}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => openSheet({ splashId: splash.id })}
+            className="text-main-900 self-start pt-4 text-left text-base font-medium"
+            style={{ opacity: 0.2 }}
+          >
+            + Drop New Ripple
+          </button>
+        </div>
+
         {days.map((day) => {
           const { month, day: number, weekday } = formatPagerDate(day.date);
           return (

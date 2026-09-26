@@ -262,23 +262,36 @@ describe('a splash row (SPEC 5)', () => {
 });
 
 describe('the head ghost and the empty states (H19)', () => {
-  it('names the mode’s own ghost, at the head of the flow', () => {
-    const { container, getByText, getAllByLabelText } = home(day, boards);
+  it('seats the mode’s own ghost at the head of the newest month’s columns', () => {
+    const { container, getByText, queryByText, getAllByLabelText } = home(day, boards);
+    const month = container.querySelector('[data-flow-month]')!;
+    const ripples = month.querySelector('ol[data-column="ripples"]')!;
+    const splashes = month.querySelector('ol[data-column="splashes"]')!;
+
+    // Splash mode: the ring heads the ripple column, the invitation the
+    // splash column. The ring is the first seat on the rope.
+    const seat = ripples.querySelector('[data-flow-ghost]')!;
+    expect(seat.previousElementSibling!.matches('[data-rope]')).toBe(true);
+    expect(seat.querySelector('[data-badge]')).toBe(ripples.querySelector('[data-badge]'));
+    expect(splashes.firstElementChild!.matches('[data-flow-invite]')).toBe(true);
     expect(getByText('+ Drop New Splash')).toBeTruthy();
+    expect(queryByText('+ Drop New Ripple')).toBeNull();
+    expect(container.querySelectorAll('[data-flow-ghost]').length).toBe(1);
+
+    // Ripple mode: the invitation moves beside the ring; nothing heads the
+    // splash column.
     fireEvent.click(getAllByLabelText('Ripples')[0]);
     expect(getByText('+ Drop New Ripple')).toBeTruthy();
+    expect(queryByText('+ Drop New Splash')).toBeNull();
+    expect(splashes.querySelector('[data-flow-invite]')).toBeNull();
+  });
 
-    // Inside the newest month, under its header and before its rows — the
-    // head of the list, not the top of the screen — and only there.
-    const ghosts = container.querySelectorAll('[data-flow-ghost]');
-    expect(ghosts.length).toBe(1);
-    const ghost = ghosts[0];
-    const first = container.querySelector('[data-flow-month]')!;
-    expect(ghost.parentElement).toBe(first);
-    expect(ghost.previousElementSibling!.tagName).toBe('HEADER');
-    expect(ghost.nextElementSibling!.querySelector('ol[data-column="ripples"]')).not.toBeNull();
-    // Above the first ripple, so above where the rope begins: no rope stub.
-    expect(ghost.querySelector('[data-rope]')).toBeNull();
+  it('draws the ring round: fixed size, never shrunk to the badge column', () => {
+    const { container } = home(day, boards);
+    const ring = container.querySelector('[data-flow-ghost] [data-badge]')!;
+    expect(ring.className).toMatch(/\bh-9\b/);
+    expect(ring.className).toMatch(/\bw-9\b/);
+    expect(ring.className).toContain('shrink-0');
   });
 
   it('invites the first ripple when there is nothing at all', () => {
@@ -308,14 +321,12 @@ describe('two columns, two stacks (SPEC 5)', () => {
       if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
       for (const month of container.querySelectorAll('[data-flow-month]')) {
         const [ripples, splashes] = columns(month);
-        // The ripple list's only non-row child is the rope.
+        // The ripple list's only non-row children are the rope and the ghost.
         for (const child of ripples.children)
-          expect(
-            child.getAttribute('data-flow-row') ?? child.getAttribute('data-rope'),
-          ).not.toBeNull();
+          expect(child.matches('[data-flow-row], [data-rope], [data-flow-ghost]')).toBe(true);
         for (const row of ripples.querySelectorAll('[data-flow-row]'))
           expect(row.getAttribute('data-flow-row')).toBe('ripple');
-        for (const row of splashes.children)
+        for (const row of splashes.querySelectorAll('[data-flow-row]'))
           expect(row.getAttribute('data-flow-row')).toBe('splash');
         // The columns' widths follow the mode: room for a cluster beside
         // full ripple rows, a badge column beside full splash entries.
@@ -354,20 +365,23 @@ describe('two columns, two stacks (SPEC 5)', () => {
     }
   });
 
-  it('starts the rope under the first ripple’s badge and runs every later month from its top', () => {
+  it('starts the rope at the ghost ring and runs every later month from its top', () => {
     const { container } = home(day, boards);
     const ropes = [...container.querySelectorAll<HTMLElement>('[data-rope]')];
     expect(ropes.map((r) => r.getAttribute('data-rope-from'))).toEqual(['first-badge', 'top']);
-    // The first stretch begins where the badge was measured, not at 0.
+    // The first stretch begins where the ring was measured, not at 0.
     expect(ropes[0].style.top).toBe('var(--rope-top, 100%)');
     expect(ropes[0].parentElement!.style.getPropertyValue('--rope-top')).toMatch(/px$/);
+    expect(
+      ropes[0].parentElement!.querySelector('[data-badge]')!.closest('[data-flow-ghost]'),
+    ).not.toBeNull();
     expect(ropes[1].style.top).toBe('0px');
   });
 
-  it('draws no rope above the month that holds the first ripple', () => {
+  it('starts the rope at the ring even when the newest month holds no ripple', () => {
     // A board created this month with nothing thrown at it yet sits at its
     // own creation: the newest section is the board alone, and the rope
-    // starts below it.
+    // still begins at the ring heading its ripple column.
     const { container } = home(
       [ripple({ id: 'r-aug', created_at: '2026-08-18T15:00:00Z' })],
       [
@@ -380,10 +394,11 @@ describe('two columns, two stacks (SPEC 5)', () => {
     );
     const months = [...container.querySelectorAll('[data-flow-month]')];
     expect(months.map((m) => m.getAttribute('data-flow-month'))).toEqual(['2026-09', '2026-08']);
-    expect(months[0].querySelector('[data-rope]')).toBeNull();
-    expect(months[1].querySelector('[data-rope]')!.getAttribute('data-rope-from')).toBe(
+    expect(months[0].querySelector('[data-rope]')!.getAttribute('data-rope-from')).toBe(
       'first-badge',
     );
+    expect(months[0].querySelector('[data-flow-ghost]')).not.toBeNull();
+    expect(months[1].querySelector('[data-rope]')!.getAttribute('data-rope-from')).toBe('top');
   });
 });
 
