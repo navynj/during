@@ -545,7 +545,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "splashes_owner_id_fkey"
+            foreignKeyName: "splashes_created_by_fkey"
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
