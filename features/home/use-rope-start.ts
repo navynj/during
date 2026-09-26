@@ -5,11 +5,10 @@ import { useLayoutEffect, type RefObject } from 'react';
 import { ROPE_START_VAR } from './rope';
 
 /**
- * Measures where the rope begins (SPEC 5): the centre of the first badge
- * (`data-badge`) in the list whose rope is marked `first-badge`. Measured
- * after layout, because what sits above that badge — a splash entry, in
- * either mode — has no fixed height, and re-measured when the list's size
- * changes, because a title can wrap or a row can arrive.
+ * Measures where the rope begins (SPEC 5): the centre of the first seat
+ * (`data-badge`: the ghost ring, else the first badge) in the list whose
+ * rope is marked `first-badge`. Measured after layout rather than assumed,
+ * and re-measured when the list's size changes, because a row can arrive.
  *
  * `revision` is whatever re-renders the list's presentation: Home's mode,
  * the splash screen's order.

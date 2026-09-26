@@ -29,9 +29,10 @@ export const ROPE_START_VAR = '--rope-top';
  * The rope is the constant; rows and marks are what varies (SPEC 5). It is
  * one unbroken vertical line behind a list, never per-row segments, so the
  * line runs through a quiet stretch exactly as it runs under a full row. It
- * comes out from under the **first ripple's badge** — above that there is
- * only a label or the ghost, which the line must not cross — and every later
- * month's stretch runs from its top. Its x is the badge column's centre.
+ * comes out from the **ghost ring** at the head of the newest month, the
+ * first seat on it — above that there is only the month label, which the
+ * line must not cross — and every later month's stretch runs from its top.
+ * Its x is the badge column's centre.
  */
 export function Rope({ from }: { from: 'top' | 'first-badge' }) {
   return (

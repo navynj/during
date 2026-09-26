@@ -30,7 +30,7 @@ import { onHomeModeToggle } from './mode-bus';
 import { RippleFlowRow } from './ripple-flow-row';
 import { COLUMNS_RIPPLE_MODE, COLUMNS_SPLASH_MODE, Rope } from './rope';
 import { SplashFlowRow } from './splash-flow-row';
-import { FlowGhost } from './flow-ghost';
+import { FlowGhost, GhostSeat, SplashInvite } from './flow-ghost';
 import { useRopeStart } from './use-rope-start';
 
 /**
@@ -110,10 +110,9 @@ export function HomeFlow({
 
   const empty = sections.length === 0;
   const newest = sections[0]?.month ?? today.slice(0, 7);
-  // The rope comes out from under the first ripple's badge (SPEC 5): months
-  // above the one that holds it carry no rope, that one starts there, and
-  // every later month runs its stretch from the top.
-  const firstRippleAt = sections.findIndex((s) => s.rows.some((r) => r.kind === 'ripple'));
+  // The rope comes out from the ghost ring at the head of the newest month
+  // (SPEC 5), the first seat on it; every later month runs its stretch from
+  // the top.
   useRopeStart(list, mode);
   const splashById = new Map(splashes.map((s) => [s.id, s]));
 
@@ -146,8 +145,7 @@ export function HomeFlow({
 
       {sections.map((section, index) => {
         const surface = depthSurface(monthsBack(newest, section.month));
-        const ropeFrom =
-          index === firstRippleAt ? 'first-badge' : index > firstRippleAt ? 'top' : null;
+        const ropeFrom = index === 0 ? 'first-badge' : 'top';
         return (
           <section
             key={section.month}
@@ -165,20 +163,19 @@ export function HomeFlow({
               <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
             </header>
 
-            {/* Newest first, so the seat of the next thing is at the head of
-                the newest month's list, under its header (SPEC 5). */}
-            {index === 0 ? <FlowGhost mode={mode} /> : null}
-
             {/* Two independent stacks (SPEC 5): ripples left, splashes
                 right, each from the top of the month. The rope is drawn once
                 behind the ripple column. */}
             <div
-              className={`grid items-start gap-x-4 ${
+              className={`grid gap-x-4 ${
                 mode === 'ripple' ? COLUMNS_RIPPLE_MODE : COLUMNS_SPLASH_MODE
               }`}
             >
               <ol data-column="ripples" className="relative min-w-0">
-                {ropeFrom ? <Rope from={ropeFrom} /> : null}
+                <Rope from={ropeFrom} />
+                {/* Newest first, so the seat of the next thing heads the
+                    newest month's columns, under its header (SPEC 5). */}
+                {index === 0 ? <GhostSeat mode={mode} /> : null}
                 {section.rows.map((row) =>
                   row.kind === 'ripple' ? (
                     <RippleFlowRow
@@ -199,6 +196,7 @@ export function HomeFlow({
                 )}
               </ol>
               <ol data-column="splashes" className="min-w-0">
+                {index === 0 && mode === 'splash' ? <SplashInvite /> : null}
                 {section.rows.map((row) =>
                   row.kind === 'splash' ? (
                     <SplashFlowRow
