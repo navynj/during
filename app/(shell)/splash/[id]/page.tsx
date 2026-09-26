@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 
 import { RippleSheetHost } from '@/features/ripple-sheet/sheet-host';
-import { groupOldestFirst } from '@/features/splash/group';
 import { SplashScreen } from '@/features/splash/splash-screen';
 import { summarizeSplash } from '@/features/splash/summary';
 import { signOwnMedia } from '@/lib/media';
@@ -61,7 +60,7 @@ export default async function SplashPage({ params }: PageProps<'/splash/[id]'>) 
       <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
         <SplashScreen
           splash={splash}
-          days={groupOldestFirst(members, profile.timezone)}
+          members={members}
           photos={photos}
           timeZone={profile.timezone}
           today={today}

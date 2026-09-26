@@ -11,7 +11,6 @@ vi.mock('@/features/splash/actions', () => ({
 }));
 
 import { InputSheetProvider, useInputSheet } from '@/features/input-sheet/sheet-provider';
-import { groupOldestFirst } from '@/features/splash/group';
 import { SplashScreen } from '@/features/splash/splash-screen';
 import { summarizeSplash, type Splash } from '@/features/splash/summary';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
@@ -100,7 +99,7 @@ function screen() {
     <InputSheetProvider>
       <SplashScreen
         splash={summarizeSplash(board, members, TZ, NOW)}
-        days={groupOldestFirst(members, TZ)}
+        members={members}
         photos={{ night: ['https://signed/x.jpg'] }}
         timeZone={TZ}
         today={TODAY}
@@ -118,17 +117,45 @@ describe('the splash screen (SPEC 5)', () => {
     expect(container.querySelector('[data-count]')!.textContent).toBe('3 Ripples');
   });
 
-  it('reads the story forward: oldest first, under day labels', () => {
-    const { container } = screen();
-    const ids = [...container.querySelectorAll('[data-fragment]')].map((el) =>
+  const ids = (container: HTMLElement): (string | null)[] =>
+    [...container.querySelectorAll('[data-fragment]')].map((el) =>
       el.getAttribute('data-fragment'),
     );
-    expect(ids).toEqual(['first', 'night', 'later']);
-
-    const days = [...container.querySelectorAll('[data-splash-day]')].map((el) =>
+  const days = (container: HTMLElement): (string | null)[] =>
+    [...container.querySelectorAll('[data-splash-day]')].map((el) =>
       el.getAttribute('data-splash-day'),
     );
-    expect(days).toEqual(['2026-08-17', '2026-08-20']);
+
+  it('reads newest first by default, under day labels', () => {
+    const { container, getByLabelText } = screen();
+    expect(ids(container)).toEqual(['later', 'night', 'first']);
+    expect(days(container)).toEqual(['2026-08-20', '2026-08-17']);
+    expect(getByLabelText('Order').querySelector('[aria-pressed="true"]')!.textContent).toBe(
+      'newest',
+    );
+  });
+
+  it('reads the story forward when the order is flipped, in ink (H20f)', () => {
+    const { container, getByText } = screen();
+    fireEvent.click(getByText('oldest'));
+    expect(ids(container)).toEqual(['first', 'night', 'later']);
+    expect(days(container)).toEqual(['2026-08-17', '2026-08-20']);
+    expect(getByText('oldest').className).toContain('bg-ink');
+    expect(getByText('newest').className).not.toContain('bg-ink');
+    fireEvent.click(getByText('newest'));
+    expect(ids(container)).toEqual(['later', 'night', 'first']);
+  });
+
+  it('seats the add slot at the head, above the first ripple, and the rope under it', () => {
+    const { container } = screen();
+    const slot = container.querySelector('[data-add-slot]')!;
+    const first = container.querySelector('[data-fragment]')!;
+    expect(slot.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(slot.querySelector('[data-rope]')).toBeNull();
+    const rope = container.querySelector<HTMLElement>('[data-rope]')!;
+    expect(rope.getAttribute('data-rope-from')).toBe('first-badge');
+    expect(rope.parentElement!.style.getPropertyValue('--rope-top')).toMatch(/px$/);
+    expect(container.querySelector('[data-fragment] [data-rope]')).toBeNull();
   });
 
   it('draws photos inline and large', () => {

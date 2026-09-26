@@ -10,7 +10,7 @@ import { rippleDurationMinutes, rippleKind } from '@/lib/ripple-kind';
 import type { IsoDate } from '@/lib/time';
 
 import type { HomeMode } from './flow';
-import { BADGE_COLUMN, ROW_GRID } from './rope';
+import { BADGE_COLUMN, BESIDE_QUIET_CLUSTER, ROW_GRID } from './rope';
 
 const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:transition-none';
 
@@ -19,7 +19,8 @@ const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:tr
  * photo thumbnails, its annotation and duration where it has them. A
  * **quiet mark** in splash mode: the bare badge on the rope (SPEC 5).
  *
- * The row is the `li` in both presentations, so a switch keeps its node.
+ * The row is the `li` in both presentations, so a switch keeps its node, and
+ * in both it floats left, so it stacks in its own column from the top.
  */
 export function RippleFlowRow({
   ripple,
@@ -50,6 +51,7 @@ export function RippleFlowRow({
       type="button"
       aria-label={full ? 'Open this ripple' : 'Show ripples'}
       onClick={full ? () => openRipple(ripple.id) : onQuietTap}
+      data-badge
       className="bg-pool-100 relative flex h-8 w-8 items-center justify-center rounded-full text-base"
     >
       <span aria-hidden>{emoji}</span>
@@ -57,11 +59,8 @@ export function RippleFlowRow({
   );
 
   if (!full) {
-    // A quiet mark occupies only its own box (SPEC 5): the badge floats on
-    // the rope at compact spacing and claims no row, so the splash entries
-    // flow past it — the two columns share the vertical space instead of
-    // stacking. Cleared, so consecutive badges keep their rhythm down the
-    // rope rather than sitting side by side.
+    // A quiet mark occupies only its own box (SPEC 5): the badge on the rope
+    // at compact spacing, claiming no row.
     return (
       <li
         data-flow-id={ripple.id}
@@ -79,7 +78,7 @@ export function RippleFlowRow({
       data-flow-id={ripple.id}
       data-flow-row="ripple"
       data-presentation="full"
-      className={`${ROW_GRID} py-3 ${TRANSITION}`}
+      className={`float-left clear-left ${BESIDE_QUIET_CLUSTER} ${ROW_GRID} py-3 ${TRANSITION}`}
     >
       <div className="flex justify-center">{badge}</div>
 

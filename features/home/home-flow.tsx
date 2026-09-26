@@ -30,7 +30,7 @@ import { onHomeModeToggle } from './mode-bus';
 import { RippleFlowRow } from './ripple-flow-row';
 import { Rope } from './rope';
 import { SplashFlowRow } from './splash-flow-row';
-import { TailGhost } from './tail-ghost';
+import { FlowGhost } from './flow-ghost';
 import { useRopeStart } from './use-rope-start';
 
 /**
@@ -114,7 +114,7 @@ export function HomeFlow({
   // above the one that holds it carry no rope, that one starts there, and
   // every later month runs its stretch from the top.
   const firstRippleAt = sections.findIndex((s) => s.rows.some((r) => r.kind === 'ripple'));
-  useRopeStart(list, mode, sections);
+  useRopeStart(list, mode);
   const splashById = new Map(splashes.map((s) => [s.id, s]));
 
   return (
@@ -125,14 +125,16 @@ export function HomeFlow({
       className="flex-1"
     >
       {empty ? (
-        <>
-          <header className="flex items-center justify-between py-4">
-            <span />
-            <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
-          </header>
-          <p className="text-pool-500 py-8 text-sm">{EMPTY.trail}</p>
-        </>
+        <header className="flex items-center justify-between py-4">
+          <span />
+          <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
+        </header>
       ) : null}
+
+      {/* Newest first, so the seat of the next thing is at the head. */}
+      <FlowGhost mode={mode} />
+
+      {empty ? <p className="text-pool-500 py-4 text-sm">{EMPTY.trail}</p> : null}
 
       {!empty && mode === 'splash' && splashes.length === 0 ? (
         <p data-empty-splashes className="text-pool-500 pt-4 text-right text-sm">
@@ -196,8 +198,6 @@ export function HomeFlow({
           </section>
         );
       })}
-
-      <TailGhost mode={mode} />
     </div>
   );
 }
