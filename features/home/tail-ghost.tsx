@@ -4,10 +4,15 @@ import { WaveRule } from '@/components/ui/waves/wave-rule';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 
 import type { HomeMode } from './flow';
-import { ROPE, ROW_GRID } from './ripple-flow-row';
+import { ROW_GRID } from './rope';
 
 /** A ghost is #0507C9 at reduced opacity, not a paler token (H9a). */
 const GHOST_OPACITY = 0.2;
+/**
+ * The rope's last stub, reaching back through the tail's own top padding so
+ * the line meets the month above it without a gap, then ending in the ring.
+ */
+const ROPE_STUB = 'bg-pool-200 absolute -top-2 left-1/2 h-4 w-px -translate-x-1/2';
 
 /**
  * The tail of the flow (SPEC 5): the rope ends in a ghost ring, and beside it
@@ -23,7 +28,7 @@ export function TailGhost({ mode }: { mode: HomeMode }) {
   return (
     <div data-tail-ghost className={`${ROW_GRID} items-start pt-2 pb-6`}>
       <div className="relative flex justify-center">
-        <span aria-hidden className={`${ROPE} top-0 h-2`} />
+        <span aria-hidden className={ROPE_STUB} />
         <button
           type="button"
           aria-label="Drop a new ripple"

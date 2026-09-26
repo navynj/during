@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Plus, ShelvingUnit, Waves, type LucideIcon } from 'lucide-react';
 
+import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { WaveLine } from '@/components/ui/waves';
+import { requestHomeModeToggle } from '@/features/home/mode-bus';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 
 /**
@@ -30,7 +32,9 @@ export function TabBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* A fixed height, so anything sitting exactly on top of it can say so. */}
-      <div className="mx-auto flex h-[var(--tab-bar-h)] max-w-xl items-center justify-between px-6">
+      <div
+        className={`mx-auto flex h-[var(--tab-bar-h)] ${COLUMN_MAX_WIDTH} items-center justify-between px-6`}
+      >
         <AddSplashButton />
 
         <div className="flex items-center gap-8">
@@ -39,12 +43,24 @@ export function TabBar() {
               tab.href === '/'
                 ? pathname === '/' || pathname.startsWith('/splash')
                 : pathname.startsWith(tab.href);
+            // Re-tapping Home while on Home flips the view mode (SPEC 5): a
+            // refocus, so the page keeps its scroll instead of reloading. A
+            // splash screen is not Home; from there the tab is the way back.
+            const retap = tab.href === '/' && pathname === '/';
             const Icon = tab.icon;
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
+                onClick={
+                  retap
+                    ? (event) => {
+                        event.preventDefault();
+                        requestHomeModeToggle();
+                      }
+                    : undefined
+                }
                 className={`flex flex-col items-center gap-1 ${
                   active ? 'text-main-900 font-semibold' : 'text-main-900 font-medium opacity-20'
                 }`}

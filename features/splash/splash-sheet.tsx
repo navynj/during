@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { X } from 'lucide-react';
 
 import { CategoryChip } from '@/components/ui/chips/category-chip';
+import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { QuietAffordance } from '@/features/input-sheet/annotation-control';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
@@ -55,7 +56,7 @@ export function SplashSheet({
       <section
         role="dialog"
         aria-label="Drop a splash"
-        className="sheet-rise bg-pool-100 relative flex max-h-[88vh] flex-col overflow-hidden rounded-t-[32px]"
+        className={`sheet-rise bg-pool-100 relative mx-auto flex max-h-[88vh] w-full ${COLUMN_MAX_WIDTH} flex-col overflow-hidden rounded-t-[32px]`}
       >
         {/* Declared lanes, several allowed: they govern by inheritance (H20e). */}
         <div className="flex flex-col gap-2 px-5 pt-3 pb-3">

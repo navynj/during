@@ -1,6 +1,13 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import { usePrefersReducedMotion } from '@/components/ui/waves/use-reduced-motion';
 import type { SplashSummary } from '@/features/splash/summary';
@@ -19,7 +26,9 @@ import {
   type MonthSection,
 } from './flow';
 import { ModeToggle } from './mode-toggle';
+import { onHomeModeToggle } from './mode-bus';
 import { RippleFlowRow } from './ripple-flow-row';
+import { Rope } from './rope';
 import { SplashFlowRow } from './splash-flow-row';
 import { TailGhost } from './tail-ghost';
 
@@ -61,19 +70,30 @@ export function HomeFlow({
   // first row on screen when the toggle is used.
   const focus = useRef<{ id: string; offset: number } | null>(null);
 
-  function switchTo(next: HomeMode, focusId?: string): void {
-    if (next === mode) return;
-    const anchor = focusId ? rowById(list.current, focusId) : firstRowInView(list.current);
-    focus.current = anchor
-      ? { id: anchor.dataset.flowId!, offset: anchor.getBoundingClientRect().top }
-      : null;
-    setChosen(next);
-    try {
-      window.sessionStorage.setItem(MODE_STORAGE_KEY, next);
-    } catch {
-      // Not remembered, then.
-    }
-  }
+  const switchTo = useCallback(
+    (next: HomeMode, focusId?: string): void => {
+      if (next === mode) return;
+      const anchor = focusId ? rowById(list.current, focusId) : firstRowInView(list.current);
+      focus.current = anchor
+        ? { id: anchor.dataset.flowId!, offset: anchor.getBoundingClientRect().top }
+        : null;
+      setChosen(next);
+      try {
+        window.sessionStorage.setItem(MODE_STORAGE_KEY, next);
+      } catch {
+        // Not remembered, then.
+      }
+    },
+    [mode],
+  );
+
+  // The third path (SPEC 5): the Home tab re-tapped while already here flips
+  // the mode the way the header toggle does — anchored on the first row in
+  // view, so the reader keeps their place.
+  useEffect(
+    () => onHomeModeToggle(() => switchTo(mode === 'ripple' ? 'splash' : 'ripple')),
+    [mode, switchTo],
+  );
 
   // After the presentation changes, put the anchored row back where it was:
   // the reader's place is the row they were looking at, not a pixel offset.
@@ -123,41 +143,49 @@ export function HomeFlow({
             className="-mx-6 px-6"
             style={{ background: surface, ['--row-surface' as string]: surface }}
           >
+            {/* The header is opaque so it can stick over the rows, so it
+                carries its own stretch of the rope: the line is unbroken
+                whether or not the header is pinned. */}
             <header
               className="sticky top-0 z-[1] flex items-center justify-between py-2"
               style={{ background: surface }}
             >
+              <Rope />
               <p className="text-main-900 text-xs font-medium">{monthLabel(section.month)}</p>
               <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
             </header>
 
-            <ol>
-              {section.rows.map((row) => (
-                <li key={row.id} data-flow-id={row.id}>
-                  {row.kind === 'ripple' ? (
-                    <RippleFlowRow
-                      ripple={row.ripple}
-                      mode={mode}
-                      splashTitle={
-                        row.ripple.splash_id
-                          ? (splashById.get(row.ripple.splash_id)?.title ?? null)
-                          : null
-                      }
-                      thumbnails={thumbnails[row.ripple.id] ?? []}
-                      timeZone={timeZone}
-                      today={today}
-                      onQuietTap={() => switchTo('ripple', row.id)}
-                    />
-                  ) : (
-                    <SplashFlowRow
-                      splash={row.splash}
-                      mode={mode}
-                      categories={categories}
-                      onQuietTap={() => switchTo('splash', row.id)}
-                    />
-                  )}
-                </li>
-              ))}
+            {/* The rope is drawn once behind the whole month, and the list is
+                a flow root: quiet marks are floats that the full rows flow
+                past (SPEC 5), and the month contains them. */}
+            <ol className="relative flow-root">
+              <Rope />
+              {section.rows.map((row) =>
+                row.kind === 'ripple' ? (
+                  <RippleFlowRow
+                    key={row.id}
+                    ripple={row.ripple}
+                    mode={mode}
+                    splashTitle={
+                      row.ripple.splash_id
+                        ? (splashById.get(row.ripple.splash_id)?.title ?? null)
+                        : null
+                    }
+                    thumbnails={thumbnails[row.ripple.id] ?? []}
+                    timeZone={timeZone}
+                    today={today}
+                    onQuietTap={() => switchTo('ripple', row.id)}
+                  />
+                ) : (
+                  <SplashFlowRow
+                    key={row.id}
+                    splash={row.splash}
+                    mode={mode}
+                    categories={categories}
+                    onQuietTap={() => switchTo('splash', row.id)}
+                  />
+                ),
+              )}
             </ol>
           </section>
         );

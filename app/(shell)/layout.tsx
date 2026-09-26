@@ -1,3 +1,4 @@
+import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { TabBar } from '@/components/ui/tab-bar';
 import { SheetHost } from '@/features/input-sheet/sheet-host';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
@@ -45,7 +46,9 @@ export default async function ShellLayout({ children }: LayoutProps<'/'>) {
   return (
     <InputSheetProvider>
       <div className="flex min-h-dvh flex-col">
-        <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6">{children}</div>
+        <div className={`mx-auto flex w-full ${COLUMN_MAX_WIDTH} flex-1 flex-col px-6`}>
+          {children}
+        </div>
         <TabBar />
       </div>
       {context ? <SheetHost context={context} /> : null}
