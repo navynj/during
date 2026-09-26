@@ -91,12 +91,22 @@ describe('the lock lives here (H20g)', () => {
     locks.length = 0;
     const { getByText } = sheet();
 
-    fireEvent.click(getByText('Everyone'));
-    await waitFor(() => expect(getByText('Only me')).toBeTruthy());
+    // The label flips inside the transition, a commit before `pending`
+    // clears and the button re-enables; a click in that gap is dropped. So
+    // each step waits for the settled button, label and enabled both.
+    const settled = (label: string) =>
+      waitFor(() => {
+        const button = getByText(label).closest('button')!;
+        expect(button.disabled).toBe(false);
+        return button;
+      });
+
+    fireEvent.click(await settled('Everyone'));
+    await settled('Only me');
     expect(locks).toEqual([true]);
 
-    fireEvent.click(getByText('Only me'));
-    await waitFor(() => expect(getByText('Everyone')).toBeTruthy());
+    fireEvent.click(await settled('Only me'));
+    await settled('Everyone');
     expect(locks).toEqual([true, false]);
   });
 
