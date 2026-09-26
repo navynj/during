@@ -152,12 +152,13 @@ describe('the splash screen (SPEC 5)', () => {
     const first = container.querySelector('[data-fragment]')!;
     expect(slot.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const rope = container.querySelector<HTMLElement>('[data-rope]')!;
-    expect(rope.getAttribute('data-rope-from')).toBe('first-badge');
     expect(rope.parentElement).toBe(slot.parentElement);
     expect(rope.parentElement!.querySelector('[data-badge]')!.closest('[data-add-slot]')).toBe(
       slot,
     );
+    // From the ring to the last badge, never past either.
     expect(rope.parentElement!.style.getPropertyValue('--rope-top')).toMatch(/px$/);
+    expect(rope.parentElement!.style.getPropertyValue('--rope-bottom')).toMatch(/px$/);
     expect(container.querySelector('[data-fragment] [data-rope]')).toBeNull();
   });
 

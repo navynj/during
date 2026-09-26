@@ -26,12 +26,13 @@ import {
   type MonthSection,
 } from './flow';
 import { ModeToggle } from './mode-toggle';
+import { MonthNav } from './month-nav';
 import { onHomeModeToggle } from './mode-bus';
 import { RippleFlowRow } from './ripple-flow-row';
 import { COLUMNS_RIPPLE_MODE, COLUMNS_SPLASH_MODE, Rope } from './rope';
 import { SplashFlowRow } from './splash-flow-row';
 import { FlowGhost, GhostSeat, SplashInvite } from './flow-ghost';
-import { useRopeStart } from './use-rope-start';
+import { useRopeSpan } from './use-rope-span';
 
 /**
  * Home (SPEC 5, H20): one screen, one scroll, two view modes. One rendered
@@ -110,11 +111,19 @@ export function HomeFlow({
 
   const empty = sections.length === 0;
   const newest = sections[0]?.month ?? today.slice(0, 7);
-  // The rope comes out from the ghost ring at the head of the newest month
-  // (SPEC 5), the first seat on it; every later month runs its stretch from
-  // the top.
-  useRopeStart(list, mode);
+  // Each month's rope spans its seats (SPEC 5): the newest from the ghost
+  // ring, the others from their first badge, all to their last.
+  useRopeSpan(list, mode);
   const splashById = new Map(splashes.map((s) => [s.id, s]));
+
+  // The month navigator: the adjacent month's section scrolls under the
+  // sticky header. Smooth is chrome motion, like the sheet rising; still
+  // under reduced motion.
+  function jumpTo(month: string): void {
+    list.current
+      ?.querySelector(`[data-flow-month="${CSS.escape(month)}"]`)
+      ?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'instant' : 'smooth' });
+  }
 
   return (
     <div
@@ -145,7 +154,6 @@ export function HomeFlow({
 
       {sections.map((section, index) => {
         const surface = depthSurface(monthsBack(newest, section.month));
-        const ropeFrom = index === 0 ? 'first-badge' : 'top';
         return (
           <section
             key={section.month}
@@ -159,7 +167,12 @@ export function HomeFlow({
               className="sticky top-0 z-[1] flex items-center justify-between py-2"
               style={{ background: surface }}
             >
-              <p className="text-main-900 text-xs font-medium">{monthLabel(section.month)}</p>
+              <MonthNav
+                label={monthLabel(section.month)}
+                newer={sections[index - 1]?.month ?? null}
+                older={sections[index + 1]?.month ?? null}
+                onJump={jumpTo}
+              />
               <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
             </header>
 
@@ -172,7 +185,7 @@ export function HomeFlow({
               }`}
             >
               <ol data-column="ripples" className="relative min-w-0">
-                <Rope from={ropeFrom} />
+                <Rope />
                 {/* Newest first, so the seat of the next thing heads the
                     newest month's columns, under its header (SPEC 5). */}
                 {index === 0 ? <GhostSeat mode={mode} /> : null}

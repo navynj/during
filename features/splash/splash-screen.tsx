@@ -8,7 +8,7 @@ import { DurationChip } from '@/components/ui/chips/duration-chip';
 import { GhostRing } from '@/components/ui/ghost-ring';
 import { WaveRule } from '@/components/ui/waves/wave-rule';
 import { Rope, ROW_GRID } from '@/features/home/rope';
-import { useRopeStart } from '@/features/home/use-rope-start';
+import { useRopeSpan } from '@/features/home/use-rope-span';
 import { annotationLabel, draftFrom } from '@/features/input-sheet/draft';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
@@ -51,7 +51,7 @@ export function SplashScreen({
   const [order, setOrder] = useState<StoryOrder>('newest');
   const [pending, startTransition] = useTransition();
   const story = useRef<HTMLDivElement>(null);
-  useRopeStart(story, order);
+  useRopeSpan(story, order);
   const count = splash.count;
   const days = groupStory(members, timeZone, order);
 
@@ -121,7 +121,7 @@ export function SplashScreen({
 
       {/* One rope behind the whole story, from the add slot's ring down. */}
       <div ref={story} className="relative pb-8">
-        <Rope from="first-badge" />
+        <Rope />
 
         {/* The add slot at the head: the seat of the next fragment, where the
             newest lands, and the first seat on the rope. */}
