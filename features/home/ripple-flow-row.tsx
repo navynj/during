@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { DurationChip } from '@/components/ui/chips/duration-chip';
+import { WaveRule } from '@/components/ui/waves/wave-rule';
 import { annotationLabel, draftFrom } from '@/features/input-sheet/draft';
 import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
@@ -15,8 +16,10 @@ import { BADGE_COLUMN, ROW_GRID } from './rope';
 const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:transition-none';
 
 /**
- * A ripple in the flow. Full in ripple mode: note, splash tag when a member,
- * photo thumbnails, its annotation and duration where it has them. A
+ * A ripple in the flow. Full in ripple mode: note, its splash line when a
+ * member (the board's title in blue on a wave rule its own width — never a
+ * chip; chips are lanes), photo thumbnails, its annotation and duration
+ * where it has them. A
  * **quiet mark** in splash mode: the bare badge on the rope (SPEC 5).
  *
  * The row is the `li` in both presentations, so a switch keeps its node; it
@@ -114,10 +117,15 @@ export function RippleFlowRow({
               <Link
                 href={`/splash/${ripple.splash_id}`}
                 onClick={(event) => event.stopPropagation()}
-                data-splash-tag
-                className="border-pool-100 text-pool-500 rounded-full border px-2 py-px text-[10px]"
+                data-splash-line
+                className="flex flex-col items-start"
               >
-                {splashTitle}
+                <span className="text-main-900 text-[10px] font-medium">{splashTitle}</span>
+                {/* Sized by the title, never sizing it: contained, then
+                    stretched to the title's width. */}
+                <span data-splash-rule className="block self-stretch contain-inline-size">
+                  <WaveRule anchor="left" />
+                </span>
               </Link>
             ) : null}
           </span>
