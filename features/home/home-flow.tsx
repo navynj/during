@@ -31,6 +31,7 @@ import { RippleFlowRow } from './ripple-flow-row';
 import { Rope } from './rope';
 import { SplashFlowRow } from './splash-flow-row';
 import { TailGhost } from './tail-ghost';
+import { useRopeStart } from './use-rope-start';
 
 /**
  * Home (SPEC 5, H20): one screen, one scroll, two view modes. One rendered
@@ -109,6 +110,11 @@ export function HomeFlow({
 
   const empty = sections.length === 0;
   const newest = sections[0]?.month ?? today.slice(0, 7);
+  // The rope comes out from under the first ripple's badge (SPEC 5): months
+  // above the one that holds it carry no rope, that one starts there, and
+  // every later month runs its stretch from the top.
+  const firstRippleAt = sections.findIndex((s) => s.rows.some((r) => r.kind === 'ripple'));
+  useRopeStart(list, mode, sections);
   const splashById = new Map(splashes.map((s) => [s.id, s]));
 
   return (
@@ -134,8 +140,10 @@ export function HomeFlow({
         </p>
       ) : null}
 
-      {sections.map((section) => {
+      {sections.map((section, index) => {
         const surface = depthSurface(monthsBack(newest, section.month));
+        const ropeFrom =
+          index === firstRippleAt ? 'first-badge' : index > firstRippleAt ? 'top' : null;
         return (
           <section
             key={section.month}
@@ -143,14 +151,12 @@ export function HomeFlow({
             className="-mx-6 px-6"
             style={{ background: surface, ['--row-surface' as string]: surface }}
           >
-            {/* The header is opaque so it can stick over the rows, so it
-                carries its own stretch of the rope: the line is unbroken
-                whether or not the header is pinned. */}
+            {/* No rope through the header: the month label sits where the
+                rope runs, and the line must not cross it. */}
             <header
               className="sticky top-0 z-[1] flex items-center justify-between py-2"
               style={{ background: surface }}
             >
-              <Rope />
               <p className="text-main-900 text-xs font-medium">{monthLabel(section.month)}</p>
               <ModeToggle mode={mode} onChange={(next) => switchTo(next)} />
             </header>
@@ -159,7 +165,7 @@ export function HomeFlow({
                 a flow root: quiet marks are floats that the full rows flow
                 past (SPEC 5), and the month contains them. */}
             <ol className="relative flow-root">
-              <Rope />
+              {ropeFrom ? <Rope from={ropeFrom} /> : null}
               {section.rows.map((row) =>
                 row.kind === 'ripple' ? (
                   <RippleFlowRow

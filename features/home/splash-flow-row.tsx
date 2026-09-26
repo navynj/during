@@ -13,10 +13,10 @@ import { SplashWaves } from './splash-waves';
 const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:transition-none';
 
 /**
- * A quiet splash mark's cluster: compact, and the same on every board
+ * A quiet splash mark's cluster: compact, short, and the same on every board
  * (SPEC 5). Wider than its visible waves by the gutter it runs off into.
  */
-export const QUIET_CLUSTER = 'w-28 -mr-6';
+export const QUIET_CLUSTER = 'w-24 -mr-6';
 
 /**
  * A splash in the flow, on the right (SPEC 5, `home-splash-mode.png`): the
@@ -25,7 +25,8 @@ export const QUIET_CLUSTER = 'w-28 -mr-6';
  * only while the board is open, then its right-anchored waves.
  *
  * In ripple mode it is a **quiet mark**: the waves alone, floating beside the
- * rows, with a small `+` while the board is open.
+ * rows — nothing else, not even a `+`; a board is thrown at from its row or
+ * its screen.
  *
  * The row is the `li` in both presentations, so a switch keeps its node.
  *
@@ -52,8 +53,7 @@ export function SplashFlowRow({
   if (!full) {
     // A quiet mark occupies only its own box (SPEC 5): a compact cluster
     // floated at the right edge at its flow position, no wider than its
-    // waves, no taller than its lines, that the ripple rows flow past. The
-    // small + is the open board's — the +Drop rule (H20e), not a constant.
+    // waves, no taller than its lines, that the ripple rows flow past.
     return (
       <li
         data-flow-id={splash.id}
@@ -61,16 +61,6 @@ export function SplashFlowRow({
         data-presentation="quiet"
         className={`float-right clear-right my-1 flex flex-col items-end ${QUIET_CLUSTER} ${TRANSITION}`}
       >
-        {splash.open ? (
-          <button
-            type="button"
-            aria-label="Show splashes"
-            onClick={onQuietTap}
-            className="text-main-900 mr-6 text-base leading-none font-medium opacity-20"
-          >
-            +
-          </button>
-        ) : null}
         <button type="button" aria-label="Show splashes" onClick={onQuietTap} className="w-full">
           <SplashWaves count={splash.count} />
         </button>

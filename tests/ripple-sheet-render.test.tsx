@@ -254,9 +254,10 @@ describe('a board in the sheet (H20d, H20e)', () => {
     fireEvent.click(view.getByText('+ Add to Splash'));
     fireEvent.click(view.getByText('During redesign'));
 
-    expect(view.container.querySelector('[data-splash-chip]')!.textContent).toContain(
-      'During redesign',
-    );
+    const chip = view.container.querySelector('[data-splash-chip]')!;
+    expect(chip.textContent).toContain('During redesign');
+    // The link's rule stays, and the chip sits on it.
+    expect(chip.nextElementSibling!.matches('[data-splash-rule]')).toBe(true);
     fireEvent.change(view.getByLabelText('Note'), { target: { value: 'x' } });
     fireEvent.click(drop(view));
     await waitFor(() => expect(commits).toHaveLength(1));
