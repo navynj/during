@@ -1,153 +1,184 @@
 import type { MyCategory } from '@/lib/queries/profile';
-import { todayIn, type IsoDate } from '@/lib/time';
-import { wallClockToInstant } from '@/lib/ripple-kind';
+import type { SplashSummary } from '@/features/splash/summary';
+import { RESIDUAL_CATEGORY } from '@/features/auth/preset-categories';
+import type { IsoDate } from '@/lib/time';
 
-/** Two states in v1a, cycled by one chip rather than a separate toggle (C8). */
-export type Audience = 'everyone' | 'only-me';
+/**
+ * An `occurred` annotation (H20c): an instruction to place the fragment where
+ * it happened, for **not-now only** — occurred = now is redundant with
+ * posting, so there is no *now* option anywhere. A date alone is a date-only
+ * fragment; a time makes it a point; an end makes it a manual span.
+ */
+export type Annotation = {
+  date: IsoDate;
+  time: string | null;
+  /** Both or neither: an end is a time, and a time has a date (H18). */
+  endDate: IsoDate | null;
+  endTime: string | null;
+};
 
 export type Draft = {
+  /** Null = no lane chosen; the residual lane (Day) takes it (H20i). */
   categoryId: string | null;
   note: string;
-  /** `null` = "for the whole day": the record leaves the axis (SPEC 6). */
-  time: string | null;
-  audience: Audience;
   /** Storage paths, never URLs: a URL expires and the row would rot. */
   media: string[];
-  /**
-   * The optional end (H18). `null` is no end, which is a drop; a time makes
-   * this a timed Ripple whether it was typed or timed. Times are the unit of
-   * truth — exclusion and containment both validate on them — so duration is
-   * derived beside this and never typed into.
-   */
-  endTime: string | null;
+  /** Unset is the default: a plain posted fragment. */
+  annotation: Annotation | null;
+  /** The one board this fragment is thrown at, or none (H20d). */
+  splashId: string | null;
 };
 
 export type Prefill = {
   categoryId?: string;
-  time?: string;
+  /** Opened from a board's +Drop or its add slot: preset, still removable. */
+  splashId?: string;
   /**
-   * Set only when the sheet is opened from a running session's focus screen.
-   * Inner ripples are composed where their parent is in view (H10), so this
-   * arrives as prefill and is never a control inside the sheet.
+   * A board that was created a moment ago and has not reached the page's
+   * data yet (the splash sheet hands over to this one). Carried inline so
+   * the chip can render before the refresh lands.
    */
-  parentRippleId?: string;
-  /** Opened from the Daily Note prompt: the record belongs to the day, not an hour. */
-  allDay?: boolean;
+  splash?: SplashSummary;
 };
 
-export function emptyDraft(categories: MyCategory[], timeZone: string, prefill: Prefill): Draft {
+/**
+ * The lane rule a board imposes (H20e): inheritance, never rejection.
+ *
+ *   hidden      one declared lane: the choice disappears, the lane is it
+ *   restricted  several: the chip row offers only those
+ *   free        none: any lane, the board's own chip derived from contents
+ */
+export type LaneRule =
+  | { kind: 'hidden'; categoryId: string }
+  | { kind: 'restricted'; allowed: string[] }
+  | { kind: 'free' };
+
+export function laneRule(splash: Pick<SplashSummary, 'laneIds'> | null): LaneRule {
+  if (!splash || splash.laneIds.length === 0) return { kind: 'free' };
+  if (splash.laneIds.length === 1) return { kind: 'hidden', categoryId: splash.laneIds[0] };
+  return { kind: 'restricted', allowed: splash.laneIds };
+}
+
+/**
+ * The category a draft commits with, after the board has had its say. A
+ * hidden rule overrides; a restricted rule keeps the choice only if it is one
+ * of the allowed lanes, else takes the first; free keeps whatever was chosen.
+ */
+export function resolveCategory(
+  chosen: string | null,
+  rule: LaneRule,
+  categories: MyCategory[],
+): string | null {
+  if (rule.kind === 'hidden') return rule.categoryId;
+  if (rule.kind === 'restricted') {
+    return chosen && rule.allowed.includes(chosen) ? chosen : (rule.allowed[0] ?? null);
+  }
+  return chosen ?? residualCategory(categories)?.id ?? null;
+}
+
+/** Day, if the account still has it; else the first lane, else nothing. */
+export function residualCategory(categories: MyCategory[]): MyCategory | null {
+  return categories.find((c) => c.name === RESIDUAL_CATEGORY) ?? categories[0] ?? null;
+}
+
+export function emptyDraft(prefill: Prefill): Draft {
   return {
-    categoryId: prefill.categoryId ?? categories[0]?.id ?? null,
+    // No lane pre-chosen: a note-only commit is valid and lands in Day. A chip
+    // tap alone is still the zero-character diary.
+    categoryId: prefill.categoryId ?? null,
     note: '',
-    // Time defaults to now; changing it is edge UI (SPEC 6). The Daily Note
-    // prompt is the one entrance that starts without one, because that is
-    // what it is for.
-    time: prefill.allDay ? null : (prefill.time ?? nowTime(timeZone)),
-    audience: 'everyone',
     media: [],
-    // No end by default: most records are a point, and the span is the thing
-    // you ask for.
-    endTime: null,
+    annotation: null,
+    splashId: prefill.splashId ?? prefill.splash?.id ?? null,
   };
-}
-
-export function nowTime(timeZone: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(new Date());
-}
-
-export function todayFor(timeZone: string): IsoDate {
-  return todayIn(timeZone);
-}
-
-/**
- * A future time makes this a plan (SPEC 6). Derived rather than toggled: the
- * microcopy is "change the time and it becomes a plan", so the time control is
- * the only thing the author touches.
- */
-export function isPlanned(draft: Draft, timeZone: string): boolean {
-  if (draft.time === null) return false;
-  return draft.time > nowTime(timeZone);
-}
-
-/**
- * A plan has not started, and a record that already has an end is finished —
- * the Timer writes the present, so it has nothing to do with either.
- */
-export function canRunTimer(draft: Draft, timeZone: string): boolean {
-  return draft.time !== null && draft.endTime === null && !isPlanned(draft, timeZone);
 }
 
 /**
  * The draft that corrects an existing Ripple. Edit is the same sheet, not a
- * second editor — there is one place to say what a record is.
+ * second editor — there is one place to say what a record is (H17).
  */
 export function draftFrom(
   ripple: {
     category_id: string;
     note: string | null;
-    occurred_time: string | null;
     media: string[];
-    started_at: string | null;
+    occurred_on: string | null;
+    occurred_time: string | null;
     ended_at: string | null;
+    started_at: string | null;
+    splash_id: string | null;
   },
-  locked: boolean,
   timeZone: string,
 ): Draft {
+  let annotation: Annotation | null = null;
+  if (ripple.occurred_on) {
+    const time = ripple.occurred_time ? ripple.occurred_time.slice(0, 5) : null;
+    const spans =
+      time !== null &&
+      ripple.ended_at !== null &&
+      ripple.started_at !== null &&
+      ripple.ended_at !== ripple.started_at;
+    annotation = {
+      date: ripple.occurred_on,
+      time,
+      endDate: spans ? wallDate(ripple.ended_at!, timeZone) : null,
+      endTime: spans ? wallTime(ripple.ended_at!, timeZone) : null,
+    };
+  }
+
   return {
     categoryId: ripple.category_id,
     note: ripple.note ?? '',
-    time: ripple.occurred_time ? ripple.occurred_time.slice(0, 5) : null,
-    audience: locked ? 'only-me' : 'everyone',
     media: ripple.media,
-    endTime: isFinishedSpan(ripple) ? wallClockOf(ripple.ended_at!, timeZone) : null,
+    annotation,
+    splashId: ripple.splash_id,
   };
 }
 
-/** A record that ran for a while and has stopped: the only editable end. */
-export function isFinishedSpan(ripple: {
-  started_at: string | null;
-  ended_at: string | null;
-}): boolean {
-  return (
-    ripple.started_at !== null && ripple.ended_at !== null && ripple.ended_at !== ripple.started_at
-  );
+/**
+ * The chip a set annotation renders as, in the author's own calendar:
+ * `14:30` today, `8. 17` for a date, `8. 17 14:30` for a placed time on
+ * another day, `8. 17 ~ 8. 18` for a span across days, `14:30 ~ 16:00` for
+ * one inside today.
+ */
+export function annotationLabel(annotation: Annotation, today: IsoDate): string {
+  const day = (date: IsoDate): string =>
+    `${Number(date.slice(5, 7))}. ${Number(date.slice(8, 10))}`;
+  const start =
+    annotation.date === today
+      ? (annotation.time ?? 'Today')
+      : annotation.time
+        ? `${day(annotation.date)} ${annotation.time}`
+        : day(annotation.date);
+
+  if (!annotation.endTime || !annotation.endDate) return start;
+  if (annotation.endDate === annotation.date) return `${start} ~ ${annotation.endTime}`;
+  return `${annotation.date === today ? 'Today' : day(annotation.date)} ~ ${day(annotation.endDate)}`;
 }
 
-function wallClockOf(instant: string, timeZone: string): string {
+/** End after start, and nothing else (H20c: the present is no longer policed). */
+export function annotationVerdict(annotation: Annotation): 'ok' | 'backwards' | 'incomplete' {
+  if (!annotation.endTime && !annotation.endDate) return 'ok';
+  if (!annotation.time || !annotation.endTime || !annotation.endDate) return 'incomplete';
+  const start = `${annotation.date}T${annotation.time}`;
+  const end = `${annotation.endDate}T${annotation.endTime}`;
+  return end > start ? 'ok' : 'backwards';
+}
+
+function wallDate(instant: string, timeZone: string): IsoDate {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(instant));
+}
+
+function wallTime(instant: string, timeZone: string): string {
   return new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   }).format(new Date(instant));
-}
-
-/**
- * The instant a typed end refers to.
- *
- * An end that already exists keeps whatever *date* it had, so a session
- * running past midnight can have its end time corrected without the edit
- * quietly dragging it back a day. A new end falls on the record's own day.
- */
-export function endInstantFor(
-  endTime: string,
-  timeZone: string,
-  originalEnd: string | null,
-  fallbackDate: IsoDate,
-): string {
-  const day = originalEnd
-    ? new Intl.DateTimeFormat('en-CA', {
-        timeZone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(new Date(originalEnd))
-    : fallbackDate;
-
-  return wallClockToInstant(day, endTime, timeZone).toISOString();
 }

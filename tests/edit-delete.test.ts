@@ -3,8 +3,10 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { asAdmin, asUser } from './as-user';
 
 /**
- * Editing and deleting, at the level the rules live: the exclusion constraint,
- * the containment trigger, the cascade, and the storage policy.
+ * Editing and deleting, at the level the rules live: the containment trigger
+ * (dormant with inner ripples, H20b), the cascade, and the storage policy.
+ * The exclusion constraint is gone (H20c): where a move used to be refused
+ * for landing on another record, it now lands.
  */
 
 const DAY = '2027-07-08';
@@ -86,7 +88,7 @@ async function insert(row: {
 }
 
 describe('editing revalidates the rules it moves through', () => {
-  it('refuses a move onto another record', async () => {
+  it('allows a move onto another record: overlap is two true statements (H20c)', async () => {
     await insert({ time: '09:00', endedAt: utc('10:00') });
     const movable = await insert({ time: '11:00', endedAt: utc('11:00') });
 
@@ -95,7 +97,25 @@ describe('editing revalidates the rules it moves through', () => {
       .update({ occurred_time: '09:30' })
       .eq('id', movable.data![0].id);
 
-    expect(error?.code).toBe('23P01');
+    expect(error).toBeNull();
+  });
+
+  it('moves a fragment back to where it was posted when the annotation is removed', async () => {
+    const row = await insert({ time: '09:00', endedAt: utc('09:00') });
+
+    const { error } = await asAdmin()
+      .from('ripples')
+      .update({ occurred_on: null, occurred_time: null, ended_at: null })
+      .eq('id', row.data![0].id);
+    expect(error).toBeNull();
+
+    const { data } = await asAdmin()
+      .from('ripples')
+      .select('occurred_on, started_at')
+      .eq('id', row.data![0].id)
+      .single();
+    expect(data!.occurred_on).toBeNull();
+    expect(data!.started_at).toBeNull();
   });
 
   it('refuses a move that takes a child outside its parent', async () => {
@@ -254,7 +274,7 @@ describe('correcting a finished end (H17)', () => {
     expect(error?.message).toMatch(/falls outside the session span/i);
   });
 
-  it('refuses an extension onto the next record', async () => {
+  it('allows an extension over the next record (H20c)', async () => {
     const session = await insert({ time: '09:00', endedAt: utc('10:00') });
     await insert({ time: '10:30', endedAt: utc('10:30') });
 
@@ -263,7 +283,7 @@ describe('correcting a finished end (H17)', () => {
       .update({ ended_at: utc('11:00') })
       .eq('id', session.data![0].id);
 
-    expect(error?.code).toBe('23P01');
+    expect(error).toBeNull();
   });
 
   it('allows a shrink that still contains everything inside it', async () => {
@@ -374,25 +394,23 @@ describe('a span typed in is a span (H18)', () => {
     expect(Date.parse(data![0].ended_at!) - Date.parse(data![0].started_at!)).toBe(90 * 60 * 1000);
   });
 
-  it('takes the axis like any other span: a drop inside it is refused', async () => {
+  it('takes a drop inside it: a call during dinner is two things that happened (H20c)', async () => {
     await insert({ time: '09:00', endedAt: utc('10:30') });
 
     const { error } = await insert({ time: '09:45', endedAt: utc('09:45') });
 
-    expect(error?.code).toBe('23P01');
+    expect(error).toBeNull();
   });
 
-  it('collides with a record that starts after it does', async () => {
-    // The blocker is not under the start, which is why findCollision has to
-    // be given the end as well.
+  it('may cover a record that starts after it does (H20c)', async () => {
     await insert({ time: '10:00', endedAt: utc('10:00') });
 
     const { error } = await insert({ time: '09:00', endedAt: utc('11:00') });
 
-    expect(error?.code).toBe('23P01');
+    expect(error).toBeNull();
   });
 
-  it('is exempt while it is still a plan, like every other future record', async () => {
+  it('still commits while planned (the column is dormant, H20c)', async () => {
     await insert({ time: '09:00', endedAt: utc('11:00') });
 
     const { error } = await insert({ time: '09:30', endedAt: utc('10:00'), planned: true });

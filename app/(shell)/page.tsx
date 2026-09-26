@@ -1,23 +1,25 @@
 import { redirect } from 'next/navigation';
 
-import { DatePager } from '@/features/home-daily/date-pager';
-import { DailyNoteArea } from '@/features/home-daily/daily-note-area';
-import { anchorFor } from '@/features/home-daily/depth';
-import { ScrollAnchor } from '@/features/home-daily/scroll-anchor';
-import { ADD_RIPPLE_SLOT_ID, TimeAxis } from '@/features/home-daily/time-axis';
-import { LanesStrip } from '@/features/home-daily/lanes-strip';
-import { SheetHost } from '@/features/input-sheet/sheet-host';
+import { HomeFlow } from '@/features/home/home-flow';
+import { buildFlow, monthSections } from '@/features/home/flow';
 import { RippleSheetHost } from '@/features/ripple-sheet/sheet-host';
-import { getInnerRipples, getRunningSession, runningBreak } from '@/lib/queries/compose';
-import { getRipplesForDate, splitByRegion } from '@/lib/queries/ripples';
+import { signOwnMedia } from '@/lib/media';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
+import { getMySplashes, summarizeSplashes } from '@/lib/queries/splashes';
+import { getMyTrail } from '@/lib/queries/trail';
 import { createClient } from '@/lib/supabase/server';
-import { quietDayCopy } from '@/lib/empty-states';
-import { todayIn, type IsoDate } from '@/lib/time';
+import { todayIn } from '@/lib/time';
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+/** How many photos a row shows before the detail sheet takes over. */
+const ROW_THUMBNAILS = 3;
 
-export default async function HomePage({ searchParams }: PageProps<'/'>) {
+/**
+ * Home (SPEC 5, H20): my whole diary as one flow, newest first, with two
+ * view modes. The same query the Trail reads; the Trail cuts it by day and
+ * this cuts it by month, and neither is a feed — nothing anyone else wrote
+ * arrives here.
+ */
+export default async function HomePage() {
   const supabase = await createClient();
   const profile = await getMyProfile(supabase);
 
@@ -25,19 +27,16 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
   // not complete, so send the visitor back through it.
   if (!profile) redirect('/sign-in');
 
-  const params = await searchParams;
+  const now = new Date();
   const today = todayIn(profile.timezone);
-  const requested = typeof params.d === 'string' && ISO_DATE.test(params.d) ? params.d : null;
-  const date: IsoDate = requested ?? today;
-
-  const [ripples, categories, running] = await Promise.all([
-    getRipplesForDate(supabase, profile.id, date),
+  const [ripples, categories, boards] = await Promise.all([
+    getMyTrail(supabase, profile.id, profile.timezone),
     getMyCategories(supabase),
-    getRunningSession(supabase, profile.id),
+    getMySplashes(supabase, profile.id),
   ]);
-  const { notes, timeline } = splitByRegion(ripples);
+  const splashes = summarizeSplashes(boards, ripples, profile.timezone, now);
 
-  // Lock state is read once for the day rather than per sheet: RLS already
+  // Lock state is read once for the flow rather than per sheet: RLS already
   // limits these rows to the author, and the detail sheet needs it on open.
   const { data: lockRows } = await supabase
     .from('ripple_audience')
@@ -47,66 +46,33 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
       'ripple_id',
       ripples.length ? ripples.map((r) => r.id) : ['00000000-0000-0000-0000-000000000000'],
     );
-  const lockedIds = (lockRows ?? []).map((row) => row.ripple_id);
 
-  // Inner ripples never take a row, but their spans are what draw calm water
-  // in the parent's bundle (H15a2).
-  const now = new Date();
-  const sessions = timeline.filter((r) => r.started_at !== null);
-  const inner = await getInnerRipples(
-    supabase,
-    sessions.map((r) => r.id),
+  // Thumbnails are signed once, here, for the rows that carry photos.
+  const withPhotos = ripples.filter((r) => r.media.length > 0);
+  const signed = await signOwnMedia(withPhotos.flatMap((r) => r.media.slice(0, ROW_THUMBNAILS)));
+  const thumbnails = Object.fromEntries(
+    withPhotos.map((r) => [
+      r.id,
+      r.media.slice(0, ROW_THUMBNAILS).flatMap((path) => (signed[path] ? [signed[path]] : [])),
+    ]),
   );
-  const openBreakByRipple: Record<string, string> = {};
-  for (const session of sessions) {
-    const children = inner.filter((child) => child.parent_ripple_id === session.id);
-    if (children.length === 0) continue;
-    const open = runningBreak(children);
-    if (open) openBreakByRipple[session.id] = open.id;
-  }
 
-  const countsByCategory = ripples.reduce<Record<string, number>>((counts, ripple) => {
-    counts[ripple.category_id] = (counts[ripple.category_id] ?? 0) + 1;
-    return counts;
-  }, {});
-
-  const anchor = anchorFor(date, today);
+  const sections = monthSections(buildFlow(ripples, splashes, profile.timezone), profile.timezone);
 
   return (
     <RippleSheetHost
       ripples={ripples}
-      inner={inner}
-      lockedIds={lockedIds}
-      sheetContext={{ categories, ripples: timeline, running, timeZone: profile.timezone, date }}
+      lockedIds={(lockRows ?? []).map((row) => row.ripple_id)}
+      sheetContext={{ categories, splashes, timeZone: profile.timezone, today }}
     >
       <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
-        {/* The day takes the slack, so on a quiet day the strip still sits at the
-          bottom instead of floating halfway up the screen. */}
-        <div className="flex-1">
-          <DatePager date={date} />
-          <DailyNoteArea notes={notes} />
-          <div className="bg-main-900 h-px" />
-          <TimeAxis
-            ripples={timeline}
-            timeZone={profile.timezone}
-            now={now}
-            openBreakByRipple={openBreakByRipple}
-            quietCopy={quietDayCopy(date, today)}
-          />
-        </div>
-
-        <LanesStrip categories={categories} countsByCategory={countsByCategory} />
-
-        {/* Keyed on the date so a pager move remounts it and resets the anchor. */}
-        <ScrollAnchor key={date} anchor={anchor} targetId={ADD_RIPPLE_SLOT_ID} />
-
-        <SheetHost
-          context={{ categories, ripples: timeline, running, timeZone: profile.timezone, date }}
-          openWithParent={
-            typeof params.session === 'string' && running?.id === params.session
-              ? params.session
-              : undefined
-          }
+        <HomeFlow
+          sections={sections}
+          splashes={splashes}
+          categories={categories}
+          thumbnails={thumbnails}
+          timeZone={profile.timezone}
+          today={today}
         />
       </main>
     </RippleSheetHost>

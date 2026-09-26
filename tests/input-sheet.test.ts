@@ -1,91 +1,168 @@
 import { describe, expect, it } from 'vitest';
 
-import { canRunTimer, emptyDraft, isPlanned, type Draft } from '@/features/input-sheet/draft';
+import {
+  annotationLabel,
+  annotationVerdict,
+  draftFrom,
+  emptyDraft,
+  laneRule,
+  resolveCategory,
+  residualCategory,
+  type Annotation,
+} from '@/features/input-sheet/draft';
 import type { MyCategory } from '@/lib/queries/profile';
 
-const TZ = 'UTC';
+const TODAY = '2026-09-25';
 
 function category(over: Partial<MyCategory> = {}): MyCategory {
   return {
-    id: 'c1',
+    id: 'c-place',
     user_id: 'u1',
-    name: 'Focus',
-    icon: '🔍',
-    default_mode: 'timed',
+    name: 'Place',
+    icon: '📍',
+    default_mode: 'drop',
     position: 0,
     created_at: '2026-01-01T00:00:00Z',
     ...over,
   };
 }
 
-function draft(over: Partial<Draft> = {}): Draft {
-  return {
-    categoryId: 'c1',
-    note: '',
-    time: '09:00',
-    audience: 'everyone',
-    media: [],
-    endTime: null,
-    ...over,
-  };
-}
+const LANES = [
+  category(),
+  category({ id: 'c-mood', name: 'Mood', position: 1 }),
+  category({ id: 'c-day', name: 'Day', position: 5 }),
+];
 
 describe('the draft on first paint', () => {
-  it('is completable: a category is chosen and the time is now', () => {
-    // SPEC 6: a chip tap alone is a valid entry, so the sheet must open with
-    // enough already filled in that Drop is meaningful.
-    const d = emptyDraft([category(), category({ id: 'c2', name: 'Place' })], TZ, {});
+  it('is a plain posted fragment: no lane, no annotation, no board', () => {
+    const d = emptyDraft({});
 
-    expect(d.categoryId).toBe('c1');
-    expect(d.time).toMatch(/^\d{2}:\d{2}$/);
+    expect(d.categoryId).toBeNull();
+    expect(d.annotation).toBeNull();
+    expect(d.splashId).toBeNull();
     expect(d.note).toBe('');
   });
 
-  it('takes a prefill from whichever entry point opened it (E6)', () => {
-    const cats = [category(), category({ id: 'c2', name: 'Place' })];
-
-    expect(emptyDraft(cats, TZ, { categoryId: 'c2' }).categoryId).toBe('c2');
-    expect(emptyDraft(cats, TZ, { time: '21:30' }).time).toBe('21:30');
-  });
-
-  it('starts as everyone, with lock one tap away rather than a separate toggle', () => {
-    expect(emptyDraft([category()], TZ, {}).audience).toBe('everyone');
+  it('takes a prefill from whichever entry point opened it', () => {
+    expect(emptyDraft({ categoryId: 'c-mood' }).categoryId).toBe('c-mood');
+    expect(emptyDraft({ splashId: 's1' }).splashId).toBe('s1');
   });
 });
 
-describe('a future time makes it a plan', () => {
-  it('is derived from the clock, not a toggle', () => {
-    expect(isPlanned(draft({ time: '23:59' }), TZ)).toBe(true);
-    expect(isPlanned(draft({ time: '00:00' }), TZ)).toBe(false);
+describe('no lane means the residual lane (H20i)', () => {
+  it('falls into Day', () => {
+    expect(residualCategory(LANES)?.id).toBe('c-day');
+    expect(resolveCategory(null, { kind: 'free' }, LANES)).toBe('c-day');
   });
 
-  it('disables the timer: a plan has not started', () => {
-    expect(canRunTimer(draft({ time: '23:59' }), TZ)).toBe(false);
-    expect(canRunTimer(draft({ time: '00:00' }), TZ)).toBe(true);
-  });
-});
-
-describe('for the whole day', () => {
-  it('removes the time, which takes the record off the axis', () => {
-    const d = draft({ time: null });
-
-    expect(isPlanned(d, TZ)).toBe(false);
-    // Nothing without a time can run a timer: there is no moment to run from.
-    expect(canRunTimer(d, TZ)).toBe(false);
+  it('keeps a chosen lane when the board says nothing', () => {
+    expect(resolveCategory('c-mood', { kind: 'free' }, LANES)).toBe('c-mood');
   });
 });
 
-describe('the Daily Note entrance', () => {
-  it('opens with no time at all, which is what a Daily Note is', () => {
-    const draft = emptyDraft([category()], TZ, { allDay: true });
-
-    expect(draft.time).toBeNull();
-    // Nothing without a time can run a timer: there is no moment to run from.
-    expect(canRunTimer(draft, TZ)).toBe(false);
+describe('a board governs by inheritance, never rejection (H20e)', () => {
+  it('one declared lane hides the choice and assigns it', () => {
+    const rule = laneRule({ laneIds: ['c-place'] });
+    expect(rule.kind).toBe('hidden');
+    expect(resolveCategory('c-mood', rule, LANES)).toBe('c-place');
   });
 
-  it('still defaults to now from every other entrance', () => {
-    expect(emptyDraft([category()], TZ, {}).time).toMatch(/^\d{2}:\d{2}$/);
-    expect(emptyDraft([category()], TZ, { time: '21:30' }).time).toBe('21:30');
+  it('several declared lanes restrict the row to those', () => {
+    const rule = laneRule({ laneIds: ['c-place', 'c-mood'] });
+    expect(rule).toEqual({ kind: 'restricted', allowed: ['c-place', 'c-mood'] });
+    expect(resolveCategory('c-mood', rule, LANES)).toBe('c-mood');
+    // A lane outside the set is not refused; the first allowed one takes it.
+    expect(resolveCategory('c-day', rule, LANES)).toBe('c-place');
+  });
+
+  it('no declared lanes leaves the choice free', () => {
+    expect(laneRule({ laneIds: [] })).toEqual({ kind: 'free' });
+    expect(laneRule(null)).toEqual({ kind: 'free' });
+  });
+});
+
+describe('the annotation chip (H20c)', () => {
+  const on = (over: Partial<Annotation>): Annotation => ({
+    date: TODAY,
+    time: null,
+    endDate: null,
+    endTime: null,
+    ...over,
+  });
+
+  it('reads as a bare time today', () => {
+    expect(annotationLabel(on({ time: '14:30' }), TODAY)).toBe('14:30');
+  });
+
+  it('reads as a date on another day, with the time when there is one', () => {
+    expect(annotationLabel(on({ date: '2026-08-17' }), TODAY)).toBe('8. 17');
+    expect(annotationLabel(on({ date: '2026-08-17', time: '14:30' }), TODAY)).toBe('8. 17 14:30');
+  });
+
+  it('reads a span across days as two dates', () => {
+    expect(
+      annotationLabel(
+        on({ date: '2026-08-17', time: '20:00', endDate: '2026-08-18', endTime: '02:00' }),
+        TODAY,
+      ),
+    ).toBe('8. 17 ~ 8. 18');
+  });
+
+  it('reads a span inside today as two times', () => {
+    expect(annotationLabel(on({ time: '19:00', endDate: TODAY, endTime: '21:00' }), TODAY)).toBe(
+      '19:00 ~ 21:00',
+    );
+  });
+
+  it('validates end > start, and nothing else', () => {
+    expect(annotationVerdict(on({ time: '19:00', endDate: TODAY, endTime: '21:00' }))).toBe('ok');
+    expect(annotationVerdict(on({ time: '19:00', endDate: TODAY, endTime: '18:00' }))).toBe(
+      'backwards',
+    );
+    expect(annotationVerdict(on({ time: '19:00', endDate: TODAY, endTime: '19:00' }))).toBe(
+      'backwards',
+    );
+    // A span into tomorrow is fine; the present is no longer policed (H18 dormant).
+    expect(annotationVerdict(on({ time: '23:00', endDate: '2026-09-26', endTime: '01:00' }))).toBe(
+      'ok',
+    );
+    expect(annotationVerdict(on({}))).toBe('ok');
+  });
+});
+
+describe('the draft that edits a record', () => {
+  const base = {
+    category_id: 'c-place',
+    note: 'peak chair',
+    media: [] as string[],
+    occurred_on: null as string | null,
+    occurred_time: null as string | null,
+    ended_at: null as string | null,
+    started_at: null as string | null,
+    splash_id: 's1' as string | null,
+  };
+
+  it('reads a plain fragment as unannotated', () => {
+    expect(draftFrom(base, 'America/Vancouver').annotation).toBeNull();
+  });
+
+  it('reads a span back in the author zone', () => {
+    const d = draftFrom(
+      {
+        ...base,
+        occurred_on: '2026-09-24',
+        occurred_time: '19:00:00',
+        started_at: '2026-09-25T02:00:00.000Z',
+        ended_at: '2026-09-25T04:00:00.000Z',
+      },
+      'America/Vancouver',
+    );
+    expect(d.annotation).toEqual({
+      date: '2026-09-24',
+      time: '19:00',
+      endDate: '2026-09-24',
+      endTime: '21:00',
+    });
+    expect(d.splashId).toBe('s1');
   });
 });

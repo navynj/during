@@ -1,40 +1,38 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import type { Prefill } from './draft';
 
-type SheetState = { open: boolean; prefill: Prefill };
+/**
+ * Which sheet is open. The entry path decides (SPEC 6): the FAB, a board's
+ * +Drop and a splash screen's add slot open the ripple sheet; the tab bar's
+ * `+ with wave` and the `+ Drop New Splash` ghost open the splash sheet.
+ */
+export type OpenSheet = { kind: 'ripple'; prefill: Prefill } | { kind: 'splash' } | null;
 
-type SheetApi = SheetState & {
-  /** E6: three entry points, one sheet, differing only in prefill. */
+type SheetApi = {
+  sheet: OpenSheet;
   openSheet: (prefill?: Prefill) => void;
+  openSplashSheet: () => void;
   closeSheet: () => void;
 };
 
 const Context = createContext<SheetApi | null>(null);
 
 export function InputSheetProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SheetState>({ open: false, prefill: {} });
-  const router = useRouter();
-  const pathname = usePathname();
+  const [sheet, setSheet] = useState<OpenSheet>(null);
 
   const openSheet = useCallback(
-    (prefill: Prefill = {}) => {
-      // The sheet lives on Home, where its landing rail has a day to draw.
-      // From anywhere else the FAB goes there first rather than doing nothing.
-      if (pathname !== '/') router.push('/');
-      setState({ open: true, prefill });
-    },
-    [pathname, router],
+    (prefill: Prefill = {}) => setSheet({ kind: 'ripple', prefill }),
+    [],
   );
-
-  const closeSheet = useCallback(() => setState({ open: false, prefill: {} }), []);
+  const openSplashSheet = useCallback(() => setSheet({ kind: 'splash' }), []);
+  const closeSheet = useCallback(() => setSheet(null), []);
 
   const value = useMemo(
-    () => ({ ...state, openSheet, closeSheet }),
-    [state, openSheet, closeSheet],
+    () => ({ sheet, openSheet, openSplashSheet, closeSheet }),
+    [sheet, openSheet, openSplashSheet, closeSheet],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

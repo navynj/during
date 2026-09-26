@@ -1,3 +1,5 @@
+// DORMANT (H20b): no surface reaches this since the Splash pivot. Kept, with
+// its tests, for P3's Swim. Do not wire it back in; do not delete it.
 'use server';
 
 import { revalidatePath } from 'next/cache';

@@ -1,47 +1,47 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { Lock, Pencil, Trash2 } from 'lucide-react';
+import { Lock, Pencil, Trash2, Unlock } from 'lucide-react';
 
 import { DurationChip } from '@/components/ui/chips/duration-chip';
+import { annotationLabel, draftFrom } from '@/features/input-sheet/draft';
 import { signRippleMedia } from '@/lib/media';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { rippleDurationMinutes, rippleKind } from '@/lib/ripple-kind';
+import type { IsoDate } from '@/lib/time';
 
-import { deleteRipple } from './actions';
+import { deleteRipple, setRippleLock } from './actions';
 
 /**
- * SPEC 10's Ripple detail half-sheet: note, time, media, lock state, and for a
- * session the records inside it.
+ * The Ripple detail half-sheet (SPEC 6, H17): category · note, the
+ * annotation, media, the board it belongs to, and the **lock toggle** — the
+ * one place audience lives in P1 (H20g). Edit and Delete live here and
+ * nowhere else.
  *
- * No view count — counting needs an audience, which arrives in P2. No swipe
- * person-paging, for the same reason. Edit and Delete live here and nowhere
- * else: a record is changed where it is read, not from the surface that lists
- * it.
+ * No view count — counting needs an audience, which arrives in P2. The
+ * inner-ripple list that used to sit here is dormant with the live surfaces
+ * (H20b).
  */
 export function DetailSheet({
   ripple,
-  inner,
   locked,
+  splashTitle,
   timeZone,
+  today,
   onClose,
   onEdit,
-  onOpenInner,
-  onAddInner,
 }: {
   ripple: RippleWithCategory;
-  inner: RippleWithCategory[];
   locked: boolean;
+  splashTitle: string | null;
   timeZone: string;
+  today: IsoDate;
   onClose: () => void;
   onEdit: () => void;
-  /** Inner rows open their own sheet: a record inside is still a record. */
-  onOpenInner?: (id: string) => void;
-  /** Present for a session, finished or running. */
-  onAddInner?: () => void;
 }) {
   const kind = rippleKind(ripple, timeZone);
   const [confirming, setConfirming] = useState(false);
+  const [isLocked, setIsLocked] = useState(locked);
   const [pending, startTransition] = useTransition();
   const [media, setMedia] = useState<string[]>([]);
 
@@ -56,6 +56,8 @@ export function DetailSheet({
       live = false;
     };
   }, [ripple.id]);
+
+  const annotation = draftFrom(ripple, timeZone).annotation;
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col justify-end">
@@ -74,16 +76,11 @@ export function DetailSheet({
       >
         <header className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-pool-500 flex items-center gap-2 text-xs">
-              <Clock ripple={ripple} kind={kind} timeZone={timeZone} />
-              {locked ? (
-                <span className="text-pool-500 flex items-center gap-1">
-                  <Lock aria-hidden size={11} />
-                  Only me
-                </span>
-              ) : (
-                <span>Everyone</span>
-              )}
+            <p className="text-pool-500 flex flex-wrap items-center gap-2 text-xs">
+              <span data-annotation>
+                {annotation ? annotationLabel(annotation, today) : 'Posted'}
+              </span>
+              {splashTitle ? <span className="text-ink">· {splashTitle}</span> : null}
             </p>
             <p className="text-ink text-base">
               {ripple.category?.icon ? <span aria-hidden>{ripple.category.icon} </span> : null}
@@ -107,15 +104,6 @@ export function DetailSheet({
           </ul>
         ) : null}
 
-        {kind === 'timed' || inner.length > 0 ? (
-          <InnerList
-            inner={inner}
-            timeZone={timeZone}
-            onOpen={onOpenInner}
-            onAdd={kind === 'timed' ? onAddInner : undefined}
-          />
-        ) : null}
-
         <footer className="border-pool-200 flex items-center gap-3 border-t pt-3">
           <button
             type="button"
@@ -126,15 +114,30 @@ export function DetailSheet({
             Edit
           </button>
 
+          {/* Everyone / Only me: one spectrum, and the lock is one end of it
+              (C8). It toggles here because this is where the record is read. */}
+          <button
+            type="button"
+            aria-pressed={isLocked}
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                const next = !isLocked;
+                const result = await setRippleLock(ripple.id, next);
+                if (result.ok) setIsLocked(next);
+              })
+            }
+            className="text-pool-500 flex items-center gap-1 text-sm disabled:opacity-50"
+          >
+            {isLocked ? <Lock aria-hidden size={13} /> : <Unlock aria-hidden size={13} />}
+            {isLocked ? 'Only me' : 'Everyone'}
+          </button>
+
           <span className="flex-1" />
 
           {confirming ? (
             <span className="flex items-center gap-3 text-sm">
-              <span className="text-pool-500">
-                {inner.length > 0
-                  ? `Deletes this session and ${inner.length} record${inner.length === 1 ? '' : 's'} inside it`
-                  : 'Deletes this record'}
-              </span>
+              <span className="text-pool-500">Deletes this record</span>
               <button
                 type="button"
                 disabled={pending}
@@ -165,91 +168,5 @@ export function DetailSheet({
         </footer>
       </section>
     </div>
-  );
-}
-
-function Clock({
-  ripple,
-  kind,
-  timeZone,
-}: {
-  ripple: RippleWithCategory;
-  kind: string;
-  timeZone: string;
-}) {
-  if (!ripple.occurred_time) return <span>All day</span>;
-  const start = ripple.occurred_time.slice(0, 5);
-  if (kind !== 'timed' || !ripple.ended_at) return <span>{start}</span>;
-
-  const end = new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(new Date(ripple.ended_at));
-
-  return (
-    <span>
-      {start}–{end}
-    </span>
-  );
-}
-
-/**
- * The records inside a session, each opening its own sheet. A break's first
- * visible face: it carries its parent's category (H15a2), so what
- * distinguishes it here is its span.
- */
-function InnerList({
-  inner,
-  timeZone,
-  onOpen,
-  onAdd,
-}: {
-  inner: RippleWithCategory[];
-  timeZone: string;
-  onOpen?: (id: string) => void;
-  onAdd?: () => void;
-}) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-pool-500 text-xs font-medium">Inside this session</h2>
-
-      <ul className="divide-pool-200 divide-y">
-        {inner.map((child) => {
-          const minutes = rippleDurationMinutes(child, timeZone);
-          return (
-            <li key={child.id}>
-              <button
-                type="button"
-                onClick={() => onOpen?.(child.id)}
-                className="flex w-full items-baseline gap-2 py-2 text-left text-sm"
-              >
-                <span className="text-pool-500 w-12 shrink-0 text-xs tabular-nums">
-                  {child.occurred_time?.slice(0, 5)}
-                </span>
-                <span className="text-ink min-w-0 flex-1">
-                  {child.category?.icon ? <span aria-hidden>{child.category.icon} </span> : null}
-                  {child.note ?? (minutes > 0 ? 'Break' : 'No note')}
-                </span>
-                {minutes > 0 ? <DurationChip minutes={minutes} /> : null}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* Available on a finished session too: remembering something that
-          happened during it is the same act as recording it at the time. */}
-      {onAdd ? (
-        <button
-          type="button"
-          onClick={onAdd}
-          className="text-main-900 self-start text-sm font-medium"
-        >
-          + Add to this session
-        </button>
-      ) : null}
-    </section>
   );
 }

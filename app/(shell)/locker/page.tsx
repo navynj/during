@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { Trail } from '@/features/locker/trail';
 import { RippleSheetHost } from '@/features/ripple-sheet/sheet-host';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
+import { getMySplashes, summarizeSplashes } from '@/lib/queries/splashes';
 import { getMyTrail, groupByDay } from '@/lib/queries/trail';
 import { createClient } from '@/lib/supabase/server';
 import { todayIn } from '@/lib/time';
@@ -17,10 +18,13 @@ export default async function LockerPage() {
   const profile = await getMyProfile(supabase);
   if (!profile) redirect('/sign-in');
 
-  const [ripples, categories] = await Promise.all([
+  const now = new Date();
+  const [ripples, categories, boards] = await Promise.all([
     getMyTrail(supabase, profile.id, profile.timezone),
     getMyCategories(supabase),
+    getMySplashes(supabase, profile.id),
   ]);
+  const splashes = summarizeSplashes(boards, ripples, profile.timezone, now);
 
   // Read once for the whole scroll: RLS already limits these rows to their
   // author, and the detail sheet needs the state the moment a row is tapped.
@@ -34,19 +38,16 @@ export default async function LockerPage() {
     );
 
   const days = groupByDay(ripples, profile.timezone);
-  const now = new Date();
 
   return (
     <RippleSheetHost
       ripples={ripples}
-      inner={[]}
       lockedIds={(lockRows ?? []).map((row) => row.ripple_id)}
       sheetContext={{
         categories,
-        ripples,
-        running: null,
+        splashes,
         timeZone: profile.timezone,
-        date: todayIn(profile.timezone),
+        today: todayIn(profile.timezone),
       }}
     >
       <main className="flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">

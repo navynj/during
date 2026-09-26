@@ -1,64 +1,53 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
-import { ADD_RIPPLE_SLOT_ID } from '@/features/home-daily/time-axis';
+import { SplashSheet } from '@/features/splash/splash-sheet';
+import { summarizeSplash } from '@/features/splash/summary';
 
 import { InputSheet, type SheetContext } from './input-sheet';
 import { useInputSheet } from './sheet-provider';
 
 /**
- * Mounts the sheet where the day's data is. Committing closes it and plays the
- * ripple on the real timeline — preview in the rail, arrival on the page (H12).
+ * Mounts whichever sheet the provider says is open. Lives in the shell, so
+ * the FAB, the tab bar's splash button, a board's +Drop and the splash
+ * screen's add slot all reach the same two sheets.
+ *
+ * Committing a splash hands straight over to the ripple sheet preset to the
+ * new board: creating and first-throwing is one motion (SPEC 6), and
+ * dismissing that second sheet is fine.
  */
-export function SheetHost({
-  context,
-  openWithParent,
-}: {
-  context: SheetContext;
-  /** A session id from `?session=`, handed over by the focus screen. */
-  openWithParent?: string;
-}) {
-  const { open, prefill, closeSheet } = useInputSheet();
-  const [dismissedHandoff, setDismissedHandoff] = useState(false);
-  const [landed, setLanded] = useState<string | null>(null);
+export function SheetHost({ context }: { context: SheetContext }) {
+  const { sheet, openSheet, openSplashSheet, closeSheet } = useInputSheet();
   const router = useRouter();
 
-  // The hand-off opens the sheet by rendering it, not by writing state from an
-  // effect: the URL already says the sheet should be open, so asking React to
-  // discover that after paint would only add a frame and a cascading render.
-  const handingOff = Boolean(openWithParent) && !dismissedHandoff;
-  if (!open && !handingOff)
-    return <LandingRipple rippleId={landed} onDone={() => setLanded(null)} />;
+  if (!sheet) return null;
 
-  function dismiss(): void {
-    setDismissedHandoff(true);
-    closeSheet();
-    if (openWithParent) router.replace('/');
+  if (sheet.kind === 'splash') {
+    return (
+      <SplashSheet
+        categories={context.categories}
+        today={context.today}
+        onClose={closeSheet}
+        onCreated={(splash) => {
+          router.refresh();
+          openSheet({ splash: summarizeSplash(splash, [], context.timeZone, new Date()) });
+        }}
+      />
+    );
   }
 
   return (
     <InputSheet
       context={context}
-      prefill={open ? prefill : { parentRippleId: openWithParent }}
-      onClose={dismiss}
-      onCommitted={(rippleId) => {
-        dismiss();
-        setLanded(rippleId);
-        // The row is new, so the page has to re-read before it can be scrolled to.
+      prefill={sheet.prefill}
+      onClose={closeSheet}
+      onNewSplash={openSplashSheet}
+      onCommitted={() => {
+        closeSheet();
+        // The row is new, so the page has to re-read before it can show it.
         router.refresh();
-        requestAnimationFrame(() =>
-          document.getElementById(ADD_RIPPLE_SLOT_ID)?.scrollIntoView({ block: 'end' }),
-        );
       }}
     />
   );
-}
-
-/** Nothing else happens after a commit: one ring, no praise (E5). */
-function LandingRipple({ rippleId, onDone }: { rippleId: string | null; onDone: () => void }) {
-  if (!rippleId) return null;
-  setTimeout(onDone, 1800);
-  return null;
 }

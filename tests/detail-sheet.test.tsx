@@ -1,56 +1,54 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/media', () => ({ signRippleMedia: () => Promise.resolve([]) }));
-vi.mock('@/features/ripple-sheet/actions', () => ({ deleteRipple: () => Promise.resolve() }));
+const locks: boolean[] = [];
+vi.mock('@/features/ripple-sheet/actions', () => ({
+  deleteRipple: () => Promise.resolve({ ok: true, rippleId: 'r' }),
+  setRippleLock: (_id: string, locked: boolean) => {
+    locks.push(locked);
+    return Promise.resolve({ ok: true, rippleId: 'r' });
+  },
+}));
 
 import { DetailSheet } from '@/features/ripple-sheet/detail-sheet';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 
 const TZ = 'America/Vancouver';
+const TODAY = '2026-09-19';
 
 afterEach(cleanup);
 
 function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
   return {
-    id: 'sess',
+    id: 'r1',
     author_id: 'a1',
     category_id: 'c1',
-    note: 'During Implement',
+    note: 'kitsilano beach',
     media: [],
-    occurred_on: '2026-09-19',
-    occurred_time: '09:00:00',
-    started_at: '2026-09-19T16:00:00.000Z',
-    ended_at: '2026-09-19T18:00:00.000Z',
+    occurred_on: null,
+    occurred_time: null,
+    started_at: null,
+    ended_at: null,
     planned: false,
     participants: [],
     created_at: '2026-09-19T16:00:00.000Z',
     parent_ripple_id: null,
     splash_id: null,
-    category: { name: 'Focus', icon: '🔍' },
+    category: { name: 'Place', icon: '📍' },
     ...over,
   };
 }
-
-const inner: RippleWithCategory[] = [
-  ripple({
-    id: 'inner-1',
-    parent_ripple_id: 'sess',
-    note: 'call from the bank',
-    occurred_time: '09:30:00',
-    started_at: null,
-    ended_at: null,
-  }),
-];
 
 function sheet(props: Partial<Parameters<typeof DetailSheet>[0]> = {}) {
   return render(
     <DetailSheet
       ripple={ripple()}
-      inner={inner}
       locked={false}
+      splashTitle={null}
       timeZone={TZ}
+      today={TODAY}
       onClose={() => {}}
       onEdit={() => {}}
       {...props}
@@ -58,43 +56,77 @@ function sheet(props: Partial<Parameters<typeof DetailSheet>[0]> = {}) {
   );
 }
 
-describe('a record inside a session is still a record', () => {
-  it('opens its own sheet when its row is tapped', () => {
-    const opened: string[] = [];
-    const { getByText } = sheet({ onOpenInner: (id) => opened.push(id) });
+describe('the detail sheet reads the record', () => {
+  it('says a plain fragment was posted, and names an annotation when there is one', () => {
+    const plain = sheet();
+    expect(plain.container.querySelector('[data-annotation]')!.textContent).toBe('Posted');
+    cleanup();
 
-    fireEvent.click(getByText('call from the bank').closest('button') as HTMLButtonElement);
-
-    expect(opened).toEqual(['inner-1']);
-  });
-
-  it('offers the way in from a session that has already finished', () => {
-    const added: number[] = [];
-    const { getByText } = sheet({ onAddInner: () => added.push(1) });
-
-    fireEvent.click(getByText('+ Add to this session'));
-
-    expect(added).toHaveLength(1);
-  });
-
-  it('has no way in on a drop, which has no span to sit inside', () => {
-    const { queryByText } = sheet({
-      // A drop ends where it starts, which is what makes it a drop.
-      ripple: ripple({ ended_at: '2026-09-19T16:00:00.000Z' }),
-      inner: [],
-      onAddInner: () => {},
+    const placed = sheet({
+      ripple: ripple({ occurred_on: '2026-08-17', occurred_time: '14:30:00' }),
     });
-
-    expect(queryByText('+ Add to this session')).toBeNull();
-    // And it claims no duration: a demoted record stops showing the chip.
-    expect(queryByText(/^\d+h/)).toBeNull();
+    expect(placed.container.querySelector('[data-annotation]')!.textContent).toBe('8. 17 14:30');
   });
 
-  it('warns that deleting the session takes what is inside it with it', () => {
+  it('names the board the fragment belongs to', () => {
+    const { getByText } = sheet({ ripple: ripple({ splash_id: 's1' }), splashTitle: 'Whistler' });
+    expect(getByText('· Whistler')).toBeTruthy();
+  });
+
+  it('shows a span its duration, and a point nothing', () => {
+    const { container } = sheet({
+      ripple: ripple({
+        occurred_on: '2026-09-19',
+        occurred_time: '19:00:00',
+        started_at: '2026-09-20T02:00:00.000Z',
+        ended_at: '2026-09-20T04:00:00.000Z',
+      }),
+    });
+    expect(container.textContent).toContain('2h');
+  });
+});
+
+describe('the lock lives here (H20g)', () => {
+  it('toggles between Everyone and Only me, writing the state', async () => {
+    locks.length = 0;
     const { getByText } = sheet();
 
-    fireEvent.click(getByText('Delete'));
+    fireEvent.click(getByText('Everyone'));
+    await waitFor(() => expect(getByText('Only me')).toBeTruthy());
+    expect(locks).toEqual([true]);
 
-    expect(getByText('Deletes this session and 1 record inside it')).toBeTruthy();
+    fireEvent.click(getByText('Only me'));
+    await waitFor(() => expect(getByText('Everyone')).toBeTruthy());
+    expect(locks).toEqual([true, false]);
+  });
+
+  it('opens locked when the record is', () => {
+    const { getByText } = sheet({ locked: true });
+    expect(getByText('Only me')).toBeTruthy();
+  });
+});
+
+describe('what is not here', () => {
+  it('has no view count: counting needs an audience (P2)', () => {
+    const { container } = sheet();
+    expect(container.textContent).not.toMatch(/view|seen by/i);
+  });
+
+  it('offers no way into a session: inner composition is dormant (H20b)', () => {
+    const { container } = sheet({
+      ripple: ripple({
+        occurred_on: '2026-09-19',
+        occurred_time: '09:00:00',
+        started_at: '2026-09-19T16:00:00.000Z',
+        ended_at: '2026-09-19T18:00:00.000Z',
+      }),
+    });
+    expect(container.textContent).not.toMatch(/this session/i);
+  });
+
+  it('confirms a delete as one record, nothing inside it', () => {
+    const { getByText } = sheet();
+    fireEvent.click(getByText('Delete'));
+    expect(getByText('Deletes this record')).toBeTruthy();
   });
 });

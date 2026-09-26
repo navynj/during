@@ -89,14 +89,12 @@ describe('a splash belongs to its owner', () => {
   });
 
   it('refuses a declared range that ends before it starts', async () => {
-    const { error } = await asUser(author)
-      .from('splashes')
-      .insert({
-        owner_id: author,
-        title: 'x',
-        declared_start: '2027-03-04',
-        declared_end: '2027-03-01',
-      });
+    const { error } = await asUser(author).from('splashes').insert({
+      owner_id: author,
+      title: 'x',
+      declared_start: '2027-03-04',
+      declared_end: '2027-03-01',
+    });
     expect(error?.message).toMatch(/splashes_declared_range/);
   });
 });
