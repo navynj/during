@@ -153,7 +153,7 @@ describe('one list, two modes (SPEC 5)', () => {
     ).toBe('📍');
   });
 
-  it('renders splashes as quiet marks in ripple mode: a compact cluster, a + only while open', () => {
+  it('renders splashes as quiet marks in ripple mode: a short cluster, nothing else', () => {
     const { container, getAllByLabelText, queryByText } = home(day, boards);
     fireEvent.click(getAllByLabelText('Ripples')[0]);
 
@@ -172,13 +172,11 @@ describe('one list, two modes (SPEC 5)', () => {
       expect(mark.textContent).not.toMatch(/Whistler|During redesign/);
     }
     expect(queryByText('2026. 8. 17 ~ 2026. 8. 20')).toBeNull();
-    // The open board keeps a small +; the settled one has nothing but waves.
-    expect(
-      container.querySelectorAll('[data-flow-row="splash"] button[aria-label="Show splashes"]')
-        .length,
-    ).toBeGreaterThan(0);
-    expect(marks[0].textContent).toContain('+');
-    expect(marks[1].textContent).not.toContain('+');
+    // Open or settled, a quiet mark is its waves and nothing else: no +.
+    for (const mark of marks) {
+      expect(mark.textContent).toBe('');
+      expect(mark.querySelector('button[aria-label="Show splashes"]')).not.toBeNull();
+    }
   });
 
   it('keeps every row’s node across a switch: a refocus, not navigation', () => {
@@ -330,17 +328,49 @@ describe('a quiet mark occupies only its own box (SPEC 5)', () => {
     expect(rippleRows.every((r) => r.className.includes('py-3'))).toBe(true);
   });
 
-  it('draws the rope once per month, behind the flow, never per row', () => {
+  it('draws the rope once per month, behind the flow, never per row or through a header', () => {
     const { container, getAllByLabelText } = home(day, boards);
     for (const mode of ['splash', 'ripple'] as const) {
       if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
       for (const section of container.querySelectorAll('[data-flow-month]')) {
-        expect(section.querySelectorAll(':scope > header > [data-rope]').length).toBe(1);
+        expect(section.querySelector('header [data-rope]')).toBeNull();
         expect(section.querySelectorAll(':scope > ol > [data-rope]').length).toBe(1);
         expect(section.querySelector('ol')!.className).toContain('flow-root');
       }
       expect(container.querySelector('[data-flow-row] [data-rope]')).toBeNull();
     }
+  });
+
+  it('starts the rope under the first ripple’s badge and runs every later month from its top', () => {
+    const { container } = home(day, boards);
+    const ropes = [...container.querySelectorAll<HTMLElement>('[data-rope]')];
+    expect(ropes.map((r) => r.getAttribute('data-rope-from'))).toEqual(['first-badge', 'top']);
+    // The first stretch begins where the badge was measured, not at 0.
+    expect(ropes[0].style.top).toBe('var(--rope-top, 100%)');
+    expect(ropes[0].parentElement!.style.getPropertyValue('--rope-top')).toMatch(/px$/);
+    expect(ropes[1].style.top).toBe('0px');
+  });
+
+  it('draws no rope above the month that holds the first ripple', () => {
+    // A board created this month with nothing thrown at it yet sits at its
+    // own creation: the newest section is the board alone, and the rope
+    // starts below it.
+    const { container } = home(
+      [ripple({ id: 'r-aug', created_at: '2026-08-18T15:00:00Z' })],
+      [
+        splash({
+          created_at: '2026-09-20T16:00:00.000Z',
+          declared_start: null,
+          declared_end: null,
+        }),
+      ],
+    );
+    const months = [...container.querySelectorAll('[data-flow-month]')];
+    expect(months.map((m) => m.getAttribute('data-flow-month'))).toEqual(['2026-09', '2026-08']);
+    expect(months[0].querySelector('[data-rope]')).toBeNull();
+    expect(months[1].querySelector('[data-rope]')!.getAttribute('data-rope-from')).toBe(
+      'first-badge',
+    );
   });
 });
 

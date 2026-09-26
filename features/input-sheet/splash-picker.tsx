@@ -9,7 +9,8 @@ import type { SplashSummary } from '@/features/splash/summary';
 /**
  * `+ Add to Splash` (SPEC 6): a wave-underlined text link, bottom right above
  * the commit. Opens a small board picker, recent first, with *New splash* at
- * the end; once set it renders as the board's chip, removable.
+ * the end; once set, the board's chip (removable) takes the link's place on
+ * the same rule — the rule stays, the chip sits on it.
  */
 export function SplashPicker({
   splashes,
@@ -27,15 +28,18 @@ export function SplashPicker({
 
   if (selected) {
     return (
-      <span
-        data-splash-chip
-        className="border-pool-100 text-ink inline-flex h-6 items-center gap-1.5 self-end rounded-full border bg-white pr-1.5 pl-2.5 text-xs"
-      >
-        {selected.title}
-        <button type="button" aria-label="Remove from splash" onClick={() => onSelect(null)}>
-          <X aria-hidden size={12} />
-        </button>
-      </span>
+      <div className="flex flex-col items-end">
+        <span
+          data-splash-chip
+          className="border-pool-100 text-ink inline-flex h-6 items-center gap-1.5 rounded-full border bg-white pr-1.5 pl-2.5 text-xs"
+        >
+          {selected.title}
+          <button type="button" aria-label="Remove from splash" onClick={() => onSelect(null)}>
+            <X aria-hidden size={12} />
+          </button>
+        </span>
+        <Rule />
+      </div>
     );
   }
 
@@ -87,11 +91,17 @@ export function SplashPicker({
         className="text-main-900 flex flex-col items-end text-base font-medium"
       >
         + Add to Splash
-        {/* The rule runs off the right edge, per the mockup. */}
-        <span className="mt-1 -mr-5 block w-40">
-          <WaveRule anchor="left" />
-        </span>
+        <Rule />
       </button>
     </div>
+  );
+}
+
+/** The link's rule, which runs off the right edge per the mockup. */
+function Rule() {
+  return (
+    <span data-splash-rule className="mt-1 -mr-5 block w-40">
+      <WaveRule anchor="left" />
+    </span>
   );
 }
