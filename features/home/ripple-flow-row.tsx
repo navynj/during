@@ -10,7 +10,7 @@ import { rippleDurationMinutes, rippleKind } from '@/lib/ripple-kind';
 import type { IsoDate } from '@/lib/time';
 
 import type { HomeMode } from './flow';
-import { BADGE_COLUMN, BESIDE_QUIET_CLUSTER, ROW_GRID } from './rope';
+import { BADGE_COLUMN, ROW_GRID } from './rope';
 
 const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:transition-none';
 
@@ -19,8 +19,8 @@ const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:tr
  * photo thumbnails, its annotation and duration where it has them. A
  * **quiet mark** in splash mode: the bare badge on the rope (SPEC 5).
  *
- * The row is the `li` in both presentations, so a switch keeps its node, and
- * in both it floats left, so it stacks in its own column from the top.
+ * The row is the `li` in both presentations, so a switch keeps its node; it
+ * lives in the month's ripple column either way.
  */
 export function RippleFlowRow({
   ripple,
@@ -66,7 +66,7 @@ export function RippleFlowRow({
         data-flow-id={ripple.id}
         data-flow-row="ripple"
         data-presentation="quiet"
-        className={`float-left clear-left my-2.5 flex ${BADGE_COLUMN} justify-center ${TRANSITION}`}
+        className={`my-2.5 flex ${BADGE_COLUMN} justify-center ${TRANSITION}`}
       >
         {badge}
       </li>
@@ -78,7 +78,7 @@ export function RippleFlowRow({
       data-flow-id={ripple.id}
       data-flow-row="ripple"
       data-presentation="full"
-      className={`float-left clear-left ${BESIDE_QUIET_CLUSTER} ${ROW_GRID} py-3 ${TRANSITION}`}
+      className={`${ROW_GRID} py-3 ${TRANSITION}`}
     >
       <div className="flex justify-center">{badge}</div>
 

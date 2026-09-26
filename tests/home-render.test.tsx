@@ -9,7 +9,7 @@ vi.mock('next/navigation', () => ({
 
 import { buildFlow, monthSections, DEFAULT_HOME_MODE } from '@/features/home/flow';
 import { HomeFlow } from '@/features/home/home-flow';
-import { BESIDE_BADGE_COLUMN, BESIDE_QUIET_CLUSTER, QUIET_CLUSTER } from '@/features/home/rope';
+import { COLUMNS_RIPPLE_MODE, COLUMNS_SPLASH_MODE, QUIET_CLUSTER } from '@/features/home/rope';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { summarizeSplash, type Splash } from '@/features/splash/summary';
 import { EMPTY } from '@/lib/empty-states';
@@ -144,7 +144,6 @@ describe('one list, two modes (SPEC 5)', () => {
     expect(marks.length).toBe(3);
     for (const mark of marks) {
       expect(mark.getAttribute('data-presentation')).toBe('quiet');
-      expect(mark.className).toContain('float-left');
       expect(mark.className).not.toMatch(/grid|py-3/);
     }
     expect(queryByText('parannoul on repeat')).toBeNull();
@@ -162,7 +161,6 @@ describe('one list, two modes (SPEC 5)', () => {
     for (const mark of marks) {
       expect(mark.getAttribute('data-presentation')).toBe('quiet');
       expect(mark.querySelector('[data-splash-waves]')).not.toBeNull();
-      expect(mark.className).toContain('float-right');
       expect(mark.className).toContain(QUIET_CLUSTER);
       expect(mark.querySelector('[data-drop-pill]')).toBeNull();
     }
@@ -278,7 +276,7 @@ describe('the head ghost and the empty states (H19)', () => {
     const first = container.querySelector('[data-flow-month]')!;
     expect(ghost.parentElement).toBe(first);
     expect(ghost.previousElementSibling!.tagName).toBe('HEADER');
-    expect(ghost.nextElementSibling!.tagName).toBe('OL');
+    expect(ghost.nextElementSibling!.querySelector('ol[data-column="ripples"]')).not.toBeNull();
     // Above the first ripple, so above where the rope begins: no rope stub.
     expect(ghost.querySelector('[data-rope]')).toBeNull();
   });
@@ -297,66 +295,60 @@ describe('the head ghost and the empty states (H19)', () => {
   });
 });
 
-describe('a quiet mark occupies only its own box (SPEC 5)', () => {
-  /** Every row in the flow: the list's direct children, in both modes. */
-  function rows(container: HTMLElement): HTMLElement[] {
-    return [...container.querySelectorAll<HTMLElement>('ol > [data-flow-row]')];
-  }
-  const inFlow = (row: HTMLElement): boolean => !/float-(left|right)/.test(row.className);
+describe('two columns, two stacks (SPEC 5)', () => {
+  const columns = (month: Element): [Element, Element] => {
+    const lists = month.querySelectorAll(':scope > div > ol[data-column]');
+    expect([...lists].map((l) => l.getAttribute('data-column'))).toEqual(['ripples', 'splashes']);
+    return [lists[0], lists[1]];
+  };
 
-  it('is the list item itself, floated: no full-row wrapper, no row padding', () => {
-    const { container, getAllByLabelText } = home(day, boards);
-    // Splash mode: the quiet marks are the badges.
-    for (const mark of container.querySelectorAll<HTMLElement>('[data-presentation="quiet"]')) {
-      expect(mark.tagName).toBe('LI');
-      expect(mark.parentElement!.tagName).toBe('OL');
-      expect(mark.className).toMatch(/float-left clear-left/);
-      expect(mark.className).not.toMatch(/\bpy-/);
-    }
-    fireEvent.click(getAllByLabelText('Ripples')[0]);
-    // Ripple mode: the quiet marks are the clusters.
-    for (const mark of container.querySelectorAll<HTMLElement>('[data-presentation="quiet"]')) {
-      expect(mark.tagName).toBe('LI');
-      expect(mark.parentElement!.tagName).toBe('OL');
-      expect(mark.className).toMatch(/float-right clear-right/);
-      expect(mark.className).not.toMatch(/\bpy-/);
-    }
-  });
-
-  it('stacks two columns from the top: every row floats on its own side, cleared there', () => {
-    // No layout engine here, so the columns are read structurally: a float
-    // cleared against its own side stacks under the previous one on that
-    // side and never under the other column's rows, and the full rows are
-    // the same boxes with or without quiet marks beside them.
+  it('lays ripples in the left list and splashes in the right, in both modes', () => {
     const { container, getAllByLabelText } = home(day, boards);
     for (const mode of ['splash', 'ripple'] as const) {
       if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
-      for (const row of rows(container)) {
-        expect(inFlow(row)).toBe(false);
-        expect(row.className).toMatch(
-          row.getAttribute('data-flow-row') === 'ripple'
-            ? /float-left clear-left/
-            : /float-right clear-right/,
+      for (const month of container.querySelectorAll('[data-flow-month]')) {
+        const [ripples, splashes] = columns(month);
+        // The ripple list's only non-row child is the rope.
+        for (const child of ripples.children)
+          expect(
+            child.getAttribute('data-flow-row') ?? child.getAttribute('data-rope'),
+          ).not.toBeNull();
+        for (const row of ripples.querySelectorAll('[data-flow-row]'))
+          expect(row.getAttribute('data-flow-row')).toBe('ripple');
+        for (const row of splashes.children)
+          expect(row.getAttribute('data-flow-row')).toBe('splash');
+        // The columns' widths follow the mode: room for a cluster beside
+        // full ripple rows, a badge column beside full splash entries.
+        expect(ripples.parentElement!.className).toContain(
+          mode === 'ripple' ? COLUMNS_RIPPLE_MODE : COLUMNS_SPLASH_MODE,
         );
       }
     }
-    // Paired widths: a full row and the other column's mark always fit.
-    const full = rows(container).filter((r) => r.getAttribute('data-presentation') === 'full');
-    expect(full.length).toBe(3);
-    for (const row of full) expect(row.className).toContain(BESIDE_QUIET_CLUSTER);
-    fireEvent.click(getAllByLabelText('Splashes')[0]);
-    for (const row of rows(container).filter((r) => r.getAttribute('data-presentation') === 'full'))
-      expect(row.className).toContain(BESIDE_BADGE_COLUMN);
   });
 
-  it('draws the rope once per month, behind the flow, never per row or through a header', () => {
+  it('is the list item itself: no row wrapper, no row padding, nothing floated', () => {
     const { container, getAllByLabelText } = home(day, boards);
     for (const mode of ['splash', 'ripple'] as const) {
       if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
-      for (const section of container.querySelectorAll('[data-flow-month]')) {
-        expect(section.querySelector('header [data-rope]')).toBeNull();
-        expect(section.querySelectorAll(':scope > ol > [data-rope]').length).toBe(1);
-        expect(section.querySelector('ol')!.className).toContain('flow-root');
+      const marks = container.querySelectorAll<HTMLElement>('[data-presentation="quiet"]');
+      expect(marks.length).toBe(mode === 'splash' ? 3 : 2);
+      for (const mark of marks) {
+        expect(mark.tagName).toBe('LI');
+        expect(mark.parentElement!.tagName).toBe('OL');
+        expect(mark.className).not.toMatch(/\bpy-|float-/);
+      }
+    }
+  });
+
+  it('draws the rope once per month, behind the ripple column, never per row or through a header', () => {
+    const { container, getAllByLabelText } = home(day, boards);
+    for (const mode of ['splash', 'ripple'] as const) {
+      if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
+      for (const month of container.querySelectorAll('[data-flow-month]')) {
+        expect(month.querySelector('header [data-rope]')).toBeNull();
+        const [ripples, splashes] = columns(month);
+        expect(ripples.querySelectorAll(':scope > [data-rope]').length).toBe(1);
+        expect(splashes.querySelector('[data-rope]')).toBeNull();
       }
       expect(container.querySelector('[data-flow-row] [data-rope]')).toBeNull();
     }
@@ -401,9 +393,9 @@ describe('a splash entry’s waves (SPEC 5)', () => {
     const entries = container.querySelectorAll<HTMLElement>('[data-splash-entry]');
     expect(entries.length).toBe(2);
     for (const entry of entries) {
-      // The entry is the floated row itself, so it shrink-wraps.
-      expect(entry.className).toMatch(/float-right/);
-      expect(entry.className).not.toMatch(/w-full/);
+      // The entry is the row itself, shrink-wrapped and right-aligned.
+      expect(entry.className).toContain('w-fit');
+      expect(entry.className).toContain('ml-auto');
       const rule = entry.querySelector<HTMLElement>(':scope > [data-splash-rule]')!;
       expect(rule.className).toContain('self-stretch');
       expect(rule.className).toContain('contain-inline-size');
