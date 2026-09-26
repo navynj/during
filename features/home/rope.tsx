@@ -5,22 +5,22 @@
  */
 export const ROW_GRID = 'grid grid-cols-[2rem_1fr] gap-x-4';
 
-/** The badge column's width, which is also what a quiet badge floats at. */
+/** The badge column's width, which is also what a quiet badge sits in. */
 export const BADGE_COLUMN = 'w-8';
 
 /**
- * Two columns sharing one vertical space (SPEC 5): every row floats on its
- * own side, cleared against its own side, so each column stacks from the top
- * and no row sits higher than the row before it in the flow. The widths are
- * paired so a row and a mark always fit beside each other, with a little
- * slack for rounding.
+ * Two columns, two independent stacks (SPEC 5): a month lays its ripples in
+ * the left list and its splashes in the right, each stacking from the top of
+ * the month, and neither column waits for the other. The flow's order holds
+ * within a column; a badge never sits lower because a board was created
+ * between two postings.
  */
-/** A quiet splash cluster: 6rem, 1.5rem of it in the gutter. */
+/** Ripple mode: the rope-and-content column, then room for a quiet cluster. */
+export const COLUMNS_RIPPLE_MODE = 'grid-cols-[minmax(0,1fr)_4.5rem]';
+/** Splash mode: the badge column, then the entries. */
+export const COLUMNS_SPLASH_MODE = 'grid-cols-[2rem_minmax(0,1fr)]';
+/** A quiet splash cluster: 6rem, 1.5rem of it in the gutter, 4.5rem in its column. */
 export const QUIET_CLUSTER = 'w-24 -mr-6';
-/** A full ripple row: the column, less the cluster's 4.5rem and slack. */
-export const BESIDE_QUIET_CLUSTER = 'w-[calc(100%-5rem)]';
-/** A full splash entry: at most the column, less the badge column, its gap and slack. */
-export const BESIDE_BADGE_COLUMN = 'max-w-[calc(100%-3.25rem)]';
 
 /** Set on a list by `useRopeStart`: where its rope begins. */
 export const ROPE_START_VAR = '--rope-top';

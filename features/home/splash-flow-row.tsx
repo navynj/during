@@ -8,7 +8,7 @@ import { formatRange, type SplashSummary } from '@/features/splash/summary';
 import type { MyCategory } from '@/lib/queries/profile';
 
 import type { HomeMode } from './flow';
-import { BESIDE_BADGE_COLUMN, QUIET_CLUSTER } from './rope';
+import { QUIET_CLUSTER } from './rope';
 import { SplashWaves } from './splash-waves';
 
 const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:transition-none';
@@ -24,8 +24,8 @@ const TRANSITION = 'transition-[opacity,transform] duration-200 motion-reduce:tr
  * rows — nothing else, not even a `+`; a board is thrown at from its row or
  * its screen.
  *
- * The row is the `li` in both presentations, so a switch keeps its node, and
- * in both it floats right, so it stacks in its own column from the top.
+ * The row is the `li` in both presentations, so a switch keeps its node; it
+ * lives in the month's splash column either way.
  *
  * Reserved, P2/P3: a pool-shared board renders pool identity and its
  * pool-side lane as one compound pill left of +Drop. Nothing here draws it.
@@ -56,7 +56,7 @@ export function SplashFlowRow({
         data-flow-id={splash.id}
         data-flow-row="splash"
         data-presentation="quiet"
-        className={`float-right clear-right my-1 flex flex-col items-end ${QUIET_CLUSTER} ${TRANSITION}`}
+        className={`my-1 ml-auto flex flex-col items-end ${QUIET_CLUSTER} ${TRANSITION}`}
       >
         <button type="button" aria-label="Show splashes" onClick={onQuietTap} className="w-full">
           <SplashWaves count={splash.count} />
@@ -66,14 +66,15 @@ export function SplashFlowRow({
   }
 
   return (
-    // Shrink-wrapped: the entry is exactly as wide as its widest line —
-    // range, title or meta row — and that width is what its waves take.
+    // Shrink-wrapped and right-aligned: the entry is exactly as wide as its
+    // widest line — range, title or meta row — and that width is what its
+    // waves take.
     <li
       data-flow-id={splash.id}
       data-flow-row="splash"
       data-presentation="full"
       data-splash-entry
-      className={`float-right clear-right flex flex-col items-end gap-2 py-3 ${BESIDE_BADGE_COLUMN} ${TRANSITION}`}
+      className={`ml-auto flex w-fit max-w-full flex-col items-end gap-2 py-3 ${TRANSITION}`}
     >
       <Link href={`/splash/${splash.id}`} className="flex flex-col items-end text-right">
         <span className="text-ink text-xs font-light">{formatRange(splash.range)}</span>

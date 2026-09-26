@@ -28,7 +28,7 @@ import {
 import { ModeToggle } from './mode-toggle';
 import { onHomeModeToggle } from './mode-bus';
 import { RippleFlowRow } from './ripple-flow-row';
-import { Rope } from './rope';
+import { COLUMNS_RIPPLE_MODE, COLUMNS_SPLASH_MODE, Rope } from './rope';
 import { SplashFlowRow } from './splash-flow-row';
 import { FlowGhost } from './flow-ghost';
 import { useRopeStart } from './use-rope-start';
@@ -169,38 +169,49 @@ export function HomeFlow({
                 the newest month's list, under its header (SPEC 5). */}
             {index === 0 ? <FlowGhost mode={mode} /> : null}
 
-            {/* The rope is drawn once behind the whole month, and the list is
-                a flow root: every row floats on its own side (SPEC 5), and
-                the month contains them. */}
-            <ol className="relative flow-root">
-              {ropeFrom ? <Rope from={ropeFrom} /> : null}
-              {section.rows.map((row) =>
-                row.kind === 'ripple' ? (
-                  <RippleFlowRow
-                    key={row.id}
-                    ripple={row.ripple}
-                    mode={mode}
-                    splashTitle={
-                      row.ripple.splash_id
-                        ? (splashById.get(row.ripple.splash_id)?.title ?? null)
-                        : null
-                    }
-                    thumbnails={thumbnails[row.ripple.id] ?? []}
-                    timeZone={timeZone}
-                    today={today}
-                    onQuietTap={() => switchTo('ripple', row.id)}
-                  />
-                ) : (
-                  <SplashFlowRow
-                    key={row.id}
-                    splash={row.splash}
-                    mode={mode}
-                    categories={categories}
-                    onQuietTap={() => switchTo('splash', row.id)}
-                  />
-                ),
-              )}
-            </ol>
+            {/* Two independent stacks (SPEC 5): ripples left, splashes
+                right, each from the top of the month. The rope is drawn once
+                behind the ripple column. */}
+            <div
+              className={`grid items-start gap-x-4 ${
+                mode === 'ripple' ? COLUMNS_RIPPLE_MODE : COLUMNS_SPLASH_MODE
+              }`}
+            >
+              <ol data-column="ripples" className="relative min-w-0">
+                {ropeFrom ? <Rope from={ropeFrom} /> : null}
+                {section.rows.map((row) =>
+                  row.kind === 'ripple' ? (
+                    <RippleFlowRow
+                      key={row.id}
+                      ripple={row.ripple}
+                      mode={mode}
+                      splashTitle={
+                        row.ripple.splash_id
+                          ? (splashById.get(row.ripple.splash_id)?.title ?? null)
+                          : null
+                      }
+                      thumbnails={thumbnails[row.ripple.id] ?? []}
+                      timeZone={timeZone}
+                      today={today}
+                      onQuietTap={() => switchTo('ripple', row.id)}
+                    />
+                  ) : null,
+                )}
+              </ol>
+              <ol data-column="splashes" className="min-w-0">
+                {section.rows.map((row) =>
+                  row.kind === 'splash' ? (
+                    <SplashFlowRow
+                      key={row.id}
+                      splash={row.splash}
+                      mode={mode}
+                      categories={categories}
+                      onQuietTap={() => switchTo('splash', row.id)}
+                    />
+                  ) : null,
+                )}
+              </ol>
+            </div>
           </section>
         );
       })}
