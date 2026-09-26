@@ -287,15 +287,34 @@ describe('the head ghost and the empty states (H19)', () => {
     expect(splashes.querySelector('[data-flow-invite]')).toBeNull();
   });
 
-  it('draws the ring round: fixed size, never shrunk to the badge column', () => {
+  it('draws the ring round and rippling, its disc alone white over the rope', () => {
     const { container } = home(day, boards);
     const ring = container.querySelector('[data-flow-ghost] [data-badge]')!;
     expect(ring.className).toMatch(/\bh-9\b/);
     expect(ring.className).toMatch(/\bw-9\b/);
     expect(ring.className).toContain('shrink-0');
-    // White-backed and round: the rope passes behind it, not through it.
-    expect(ring.className).toContain('bg-white');
-    expect(ring.className).toContain('rounded-full');
+    expect(ring.className).not.toContain('bg-white');
+    // The disc hides the rope; the rings stay open and ripple outward.
+    const disc = ring.querySelector('[data-ghost-disc]')!;
+    expect(disc.className).toContain('bg-white');
+    expect(disc.className).toContain('rounded-full');
+    expect(ring.querySelectorAll('.commit-ring').length).toBe(2);
+  });
+
+  it('shows a member ripple’s splash as a title on its own wave line, never a chip', () => {
+    const { container, getAllByLabelText } = home(day, boards);
+    fireEvent.click(getAllByLabelText('Ripples')[0]);
+    const lines = [...container.querySelectorAll('[data-splash-line]')];
+    expect(lines.map((l) => l.textContent)).toEqual(['During redesign', 'Whistler']);
+    for (const line of lines) {
+      expect(line.className).not.toMatch(/border|rounded/);
+      expect(line.querySelector('span')!.className).toContain('text-main-900');
+      const rule = line.querySelector('[data-splash-rule]')!;
+      expect(rule.className).toContain('self-stretch');
+      expect(rule.className).toContain('contain-inline-size');
+      expect(rule.querySelector('svg')).not.toBeNull();
+    }
+    expect(container.querySelector('[data-splash-tag]')).toBeNull();
   });
 
   it('invites the first ripple when there is nothing at all', () => {
