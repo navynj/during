@@ -7,15 +7,17 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {} }),
 }));
 
+// DORMANT (H20b): these surfaces have no entry point since the Splash pivot.
+// The modules and this file stay for P3's Swim, rendered directly rather than
+// through the retired day axis.
 import { FocusScreen } from '@/features/focus/focus-screen';
+import { NowBand } from '@/features/home-daily/now-band';
 import { formatStopwatch } from '@/features/home-daily/use-elapsed';
-import { TimeAxis } from '@/features/home-daily/time-axis';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
 const TZ = 'America/Vancouver';
-const NOW = new Date('2026-09-19T20:00:00.000Z');
 
 beforeEach(() => {
   Object.defineProperty(window, 'matchMedia', {
@@ -56,43 +58,34 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
   };
 }
 
-function axis(rows: RippleWithCategory[]) {
+function band(row: RippleWithCategory, openBreakId: string | null = null) {
   return render(
     <InputSheetProvider>
-      <TimeAxis ripples={rows} timeZone={TZ} now={NOW} />
+      <ol>
+        <NowBand
+          ripple={row}
+          clock="09:00"
+          elapsedMinutes={240}
+          startedAt={row.started_at!}
+          openBreakId={openBreakId}
+        />
+      </ol>
     </InputSheetProvider>,
   );
 }
 
 describe('the now band', () => {
-  it('replaces the row only while the record is running', () => {
-    const live = axis([ripple({ ended_at: null })]);
-    expect(live.container.querySelector('.live-surface')).not.toBeNull();
-
-    cleanup();
-    const done = axis([ripple()]);
-    expect(done.container.querySelector('.live-surface')).toBeNull();
-  });
-
-  it('collapses to a still bundle with its duration once stopped', () => {
-    const { container, getByText } = axis([ripple()]);
-
-    expect(container.querySelector('.live-surface')).toBeNull();
-    expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
-    expect(getByText('1h 30m')).toBeTruthy();
-  });
-
   it('is still itself: only the water inside it moves (H15b)', () => {
-    const { container } = axis([ripple({ ended_at: null })]);
-    const band = container.querySelector('.live-surface') as HTMLElement;
+    const { container } = band(ripple({ ended_at: null }));
+    const surface = container.querySelector('.live-surface') as HTMLElement;
 
     // No animation on the band; the travelling class is on the waves only.
-    expect(band.className).not.toMatch(/animate|wave-travel/);
-    expect(band.querySelectorAll('path.wave-travel').length).toBeGreaterThan(0);
+    expect(surface.className).not.toMatch(/animate|wave-travel/);
+    expect(surface.querySelectorAll('path.wave-travel').length).toBeGreaterThan(0);
   });
 
   it('opens the focus screen when tapped, and stops from its own chip', () => {
-    const { container, getByText } = axis([ripple({ ended_at: null })]);
+    const { container, getByText } = band(ripple({ ended_at: null }));
 
     expect(container.querySelector('a[href="/now"]')).not.toBeNull();
     // Stop is outside that link, so an irreversible write never shares the
@@ -102,7 +95,7 @@ describe('the now band', () => {
   });
 
   it('asks before stopping', () => {
-    const { getByText, queryByText } = axis([ripple({ ended_at: null })]);
+    const { getByText, queryByText } = band(ripple({ ended_at: null }));
 
     expect(queryByText('Stop now')).toBeNull();
     fireEvent.click(getByText(/^Stop ·/));
@@ -190,11 +183,11 @@ describe('reduced motion', () => {
       }),
     });
 
-    const band = axis([ripple({ ended_at: null })]);
-    expect(band.container.querySelectorAll('.wave-travel')).toHaveLength(0);
+    const still = band(ripple({ ended_at: null }));
+    expect(still.container.querySelectorAll('.wave-travel')).toHaveLength(0);
     // The band still reads: the surface and its waves are drawn, just still.
-    expect(band.container.querySelector('.live-surface')).not.toBeNull();
-    expect(band.container.querySelectorAll('path').length).toBeGreaterThan(0);
+    expect(still.container.querySelector('.live-surface')).not.toBeNull();
+    expect(still.container.querySelectorAll('path').length).toBeGreaterThan(0);
   });
 });
 
@@ -209,29 +202,8 @@ describe('the stopwatch', () => {
 describe('a break, on the surfaces (H15a2)', () => {
   const running = ripple({ ended_at: null });
 
-  it('does not thin the bundle: a break is not drawn in the wave grammar', () => {
-    // Reversed after looking at it: a bundle's count is already an impression,
-    // so a gap inside it reads as a rendering defect rather than as rest.
-    const plain = axis([ripple()]);
-    const lines = plain.container.querySelectorAll('[data-lines] path').length;
-    cleanup();
-
-    const withBreak = render(
-      <InputSheetProvider>
-        <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} openBreakByRipple={{ r1: 'b1' }} />
-      </InputSheetProvider>,
-    );
-
-    expect(withBreak.container.querySelectorAll('[data-lines] path')).toHaveLength(lines);
-    expect(withBreak.container.querySelectorAll('[data-calm]')).toHaveLength(0);
-  });
-
   it('says it is on a break on the band, and offers no net time', () => {
-    const { container } = render(
-      <InputSheetProvider>
-        <TimeAxis ripples={[running]} timeZone={TZ} now={NOW} openBreakByRipple={{ r1: 'b1' }} />
-      </InputSheetProvider>,
-    );
+    const { container } = band(running, 'b1');
 
     expect(container.textContent).toContain('On a break');
     // The chip is the session's own gross time, never a remainder.

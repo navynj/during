@@ -65,3 +65,39 @@ export async function removeRippleMedia(paths: string[]): Promise<void> {
 
   await service.storage.from(MEDIA_BUCKET).remove(paths);
 }
+
+/**
+ * Signs my own photos for the flow's thumbnails, by path, in one round trip.
+ *
+ * Owner-only by construction: only paths under the caller's own folder are
+ * signed, so this cannot be used to reach a record the visibility check on
+ * `signRippleMedia` would refuse. P2's friend-visible rows go through that
+ * one, per Ripple, where the check lives.
+ */
+export async function signOwnMedia(paths: string[]): Promise<Record<string, string>> {
+  if (paths.length === 0) return {};
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  const own = paths.filter((path) => path.startsWith(`${user.id}/`));
+  if (own.length === 0) return {};
+
+  const service = createServiceClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+
+  const { data, error } = await service.storage
+    .from(MEDIA_BUCKET)
+    .createSignedUrls(own, SIGNED_URL_TTL_SECONDS);
+  if (error) return {};
+
+  return Object.fromEntries(
+    data.flatMap((entry) => (entry.signedUrl && entry.path ? [[entry.path, entry.signedUrl]] : [])),
+  );
+}

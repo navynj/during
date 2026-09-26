@@ -14,6 +14,10 @@ import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { endBreak, startBreak } from './break';
 
 /**
+ * DORMANT (H20b). The running-record focus screen has no route and no entry
+ * point since the Splash pivot; it stays, with its tests, for P3's Swim.
+ */
+/**
  * H15a: a running timed, at full size. A solid #0507C9 surface — which law 5
  * now reads as "a live session" — with the elapsed time at display size and
  * slow white water crossing it at the deep preset, because at full width the
@@ -132,10 +136,12 @@ export function FocusScreen({
 
       {/* The sheet opens over the surface rather than navigating to it: this
           screen never unmounts, so the water behind the scrim keeps moving. */}
+      {/* DORMANT (H20b): inner composition has no prefill any more; the sheet
+          opens plain here until P3's Swim gives a session a way in again. */}
       {addingInner && sheetContext ? (
         <InputSheet
           context={sheetContext}
-          prefill={{ parentRippleId: ripple.id }}
+          prefill={{}}
           onClose={() => setAddingInner(false)}
           onCommitted={() => {
             setAddingInner(false);

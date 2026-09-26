@@ -15,12 +15,10 @@ vi.mock('@/features/lanes/actions', () => ({
   deleteLane: () => Promise.resolve({ ok: true }),
 }));
 
-import { LanesStrip } from '@/features/home-daily/lanes-strip';
 import { LanesMatrix } from '@/features/lanes/lanes-matrix';
 import { laneRows } from '@/features/lanes/matrix';
 import { Trail } from '@/features/locker/trail';
 import { EMPTY, quietDayCopy } from '@/lib/empty-states';
-import { TimeAxis } from '@/features/home-daily/time-axis';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import type { LaneCounts } from '@/lib/queries/lanes';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -235,18 +233,6 @@ describe('every empty state says something', () => {
     expect(quietDayCopy('2027-07-09', '2027-07-08')).toBe('Nothing planned yet.');
   });
 
-  it('keeps the ghost slot beside the copy: a quiet day is still recordable', () => {
-    const { container, getByText } = render(
-      <InputSheetProvider>
-        <TimeAxis ripples={[]} timeZone={TZ} now={NOW} quietCopy={EMPTY.todayQuiet} />
-      </InputSheetProvider>,
-    );
-
-    expect(getByText('A quiet day so far.')).toBeTruthy();
-    expect(container.querySelector('[data-quiet-day]')).not.toBeNull();
-    expect(getByText('Add ripple')).toBeTruthy();
-  });
-
   it('invites the first drop where no lane has anything yet', () => {
     const { getByText } = matrix(new Map());
     expect(getByText(EMPTY.lanes)).toBeTruthy();
@@ -270,32 +256,6 @@ describe('the ropes run the whole depth of the matrix', () => {
 
     const quiet = container.querySelector('[data-quiet-row]')!;
     expect(quiet.querySelectorAll('.border-l')).toHaveLength(2);
-  });
-});
-
-describe('the strip makes a lane rather than pointing at one', () => {
-  it('opens the same sheet the Lanes headers open, in place', () => {
-    const { container, getByLabelText, getByText } = render(
-      <InputSheetProvider>
-        <LanesStrip categories={[category()]} countsByCategory={{ [FOCUS]: 2 }} />
-      </InputSheetProvider>,
-    );
-
-    const slot = getByLabelText('New lane');
-    // Not a link away: the tab bar is already the way to the Lanes tab, so a
-    // slot that only moved you there would be a step, not an action.
-    expect(slot.tagName).toBe('BUTTON');
-
-    fireEvent.click(slot);
-
-    const sheet = container.querySelector('[role="dialog"]')!;
-    expect(sheet.getAttribute('aria-label')).toBe('New lane');
-    expect(getByText('Add lane')).toBeTruthy();
-
-    // Outside the strip, because the strip is `sticky z-10` and so makes a
-    // stacking context: a sheet inside one cannot rise above anything outside
-    // it, and the tab bar was landing on top of it.
-    expect(container.querySelector('nav')!.contains(sheet)).toBe(false);
   });
 });
 

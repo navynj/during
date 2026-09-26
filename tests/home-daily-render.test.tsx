@@ -10,9 +10,6 @@ vi.mock('next/navigation', () => ({
 
 import { ROW_SURFACE } from '@/features/home-daily/depth';
 import { RippleRow } from '@/features/home-daily/ripple-row';
-import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
-import { TimeAxis, ADD_RIPPLE_SLOT_ID } from '@/features/home-daily/time-axis';
-import { DailyNoteArea } from '@/features/home-daily/daily-note-area';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 
@@ -56,10 +53,6 @@ function ripple(over: Partial<RippleWithCategory> = {}): RippleWithCategory {
     category: { name: 'Focus', icon: '🔍' },
     ...over,
   };
-}
-
-function renderAxis(ui: React.ReactElement) {
-  return render(<InputSheetProvider>{ui}</InputSheetProvider>);
 }
 
 function row(over: Partial<RippleWithCategory> = {}) {
@@ -119,46 +112,9 @@ describe('a Ripple on the axis', () => {
   });
 });
 
-describe('the day around it', () => {
-  it('ends the flow with the Add ripple slot', () => {
-    const { container, getByText } = renderAxis(
-      <TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} />,
-    );
-
-    expect(getByText('Add ripple')).toBeTruthy();
-    const items = [...container.querySelectorAll('li')];
-    expect(items[items.length - 1].id).toBe(ADD_RIPPLE_SLOT_ID);
-  });
-
-  it('stacks several Daily Notes rather than collapsing them', () => {
-    const { getByText } = renderAxis(
-      <DailyNoteArea
-        notes={[
-          ripple({ id: 'n1', note: 'slept badly', occurred_time: null }),
-          ripple({ id: 'n2', note: 'quiet one', occurred_time: null }),
-        ]}
-      />,
-    );
-
-    expect(getByText('slept badly')).toBeTruthy();
-    expect(getByText('quiet one')).toBeTruthy();
-  });
-
-  it('prompts when the day has no note, and the prompt opens the sheet', () => {
-    const { getByText } = renderAxis(<DailyNoteArea notes={[]} />);
-    const prompt = getByText('Add a Daily Note');
-
-    // A Daily Note has no time, so the prompt is the one entrance that starts
-    // without one rather than defaulting to now.
-    expect(prompt.tagName).toBe('BUTTON');
-  });
-});
-
-describe('motion on the axis (H10)', () => {
+describe('motion on the row (H10)', () => {
   it('travels every line of an in-progress record', () => {
-    const { container } = renderAxis(
-      <TimeAxis ripples={[ripple({ ended_at: null })]} timeZone={TZ} now={NOW} />,
-    );
+    const { container } = row({ ended_at: null });
 
     const paths = container.querySelectorAll('path');
     expect(paths.length).toBeGreaterThan(1);
@@ -166,7 +122,7 @@ describe('motion on the axis (H10)', () => {
   });
 
   it('leaves finished records still', () => {
-    const { container } = renderAxis(<TimeAxis ripples={[ripple()]} timeZone={TZ} now={NOW} />);
+    const { container } = row();
 
     expect(container.querySelectorAll('.wave-travel')).toHaveLength(0);
   });
@@ -190,22 +146,6 @@ describe('the time gutter', () => {
 
     expect(getByText('09:00')).toBeTruthy();
     expect(container.querySelectorAll('time')).toHaveLength(1);
-  });
-
-  it('never decreases down the axis, for any day the seed can produce', () => {
-    const day = [
-      ripple({ id: 'a', occurred_time: '06:00:00', ended_at: null }),
-      ripple({ id: 'b', occurred_time: '09:00:00' }),
-      ripple({ id: 'c', occurred_time: '09:00:00', ended_at: null }),
-      ripple({ id: 'd', occurred_time: '23:59:00', ended_at: null }),
-    ];
-    const { container } = renderAxis(<TimeAxis ripples={day} timeZone={TZ} now={NOW} />);
-
-    const shown = [...container.querySelectorAll('time')].map((el) => el.textContent!);
-    expect(shown).toEqual([...shown].sort());
-    // An end label in the same column would have broken this: a 09:00-10:30
-    // record followed by a 10:00 one reads 09:00, 10:30, 10:00.
-    expect(shown).toHaveLength(day.length);
   });
 });
 

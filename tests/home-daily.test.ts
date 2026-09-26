@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { anchorFor, ROW_SURFACE } from '@/features/home-daily/depth';
+import { ROW_SURFACE } from '@/features/home-daily/depth';
 import { splitByRegion, type RippleWithCategory } from '@/lib/queries/ripples';
 import {
   elapsedMinutes,
@@ -130,22 +130,8 @@ describe('the two regions of a day', () => {
   });
 });
 
-describe('anchors', () => {
-  it('opens today at the current time and any other day at the top', () => {
-    expect(anchorFor('2026-09-20', '2026-09-20')).toBe('now');
-    expect(anchorFor('2026-09-19', '2026-09-20')).toBe('top');
-    expect(anchorFor('2026-09-21', '2026-09-20')).toBe('top');
-  });
-
-  it('gives every day the same ground', () => {
-    // Law 1's sinking is about sections within one scroll. Home Daily pages a
-    // day at a time, so there is nothing to sink: a tinted past page read as
-    // disabled rather than deep, next to waves that stay full strength (H9a).
-    //
-    // The row reads its ground from the surface it sits on, and nothing on
-    // Home sets that, so every date falls back to white. The Trail is the
-    // scroll that does set it.
+describe('the ground', () => {
+  it('is the surface the row sits on, never the row itself', () => {
     expect(ROW_SURFACE).toContain('--row-surface');
-    expect(ROW_SURFACE).toContain('#ffffff');
   });
 });
