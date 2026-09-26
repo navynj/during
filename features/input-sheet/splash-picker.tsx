@@ -9,8 +9,8 @@ import type { SplashSummary } from '@/features/splash/summary';
 /**
  * `+ Add to Splash` (SPEC 6): a wave-underlined text link, bottom right above
  * the commit. Opens a small board picker, recent first, with *New splash* at
- * the end; once set, the board's chip (removable) takes the link's place on
- * the same rule — the rule stays, the chip sits on it.
+ * the end; once set, the board's **name** takes the link's place — blue, not
+ * a chip — on a rule exactly the name's width, with a small × to detach.
  */
 export function SplashPicker({
   splashes,
@@ -28,17 +28,25 @@ export function SplashPicker({
 
   if (selected) {
     return (
-      <div className="flex flex-col items-end">
-        <span
-          data-splash-chip
-          className="border-pool-100 text-ink inline-flex h-6 items-center gap-1.5 rounded-full border bg-white pr-1.5 pl-2.5 text-xs"
-        >
-          {selected.title}
-          <button type="button" aria-label="Remove from splash" onClick={() => onSelect(null)}>
-            <X aria-hidden size={12} />
-          </button>
+      <div className="flex justify-end">
+        {/* Shrink-wrapped, so the rule underneath is the name's width and
+            no more: stretched to the column, never sizing it. */}
+        <span data-splash-chip className="flex flex-col items-end">
+          <span className="text-main-900 flex items-center gap-1.5 text-base font-medium">
+            {selected.title}
+            <button
+              type="button"
+              aria-label="Remove from splash"
+              onClick={() => onSelect(null)}
+              className="text-pool-500"
+            >
+              <X aria-hidden size={12} />
+            </button>
+          </span>
+          <span data-splash-rule className="mt-1 block self-stretch contain-inline-size">
+            <WaveRule anchor="left" />
+          </span>
         </span>
-        <Rule />
       </div>
     );
   }

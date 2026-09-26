@@ -9,7 +9,7 @@ vi.mock('next/navigation', () => ({
 
 import { buildFlow, monthSections, DEFAULT_HOME_MODE } from '@/features/home/flow';
 import { HomeFlow } from '@/features/home/home-flow';
-import { QUIET_CLUSTER } from '@/features/home/splash-flow-row';
+import { BESIDE_BADGE_COLUMN, BESIDE_QUIET_CLUSTER, QUIET_CLUSTER } from '@/features/home/rope';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { summarizeSplash, type Splash } from '@/features/splash/summary';
 import { EMPTY } from '@/lib/empty-states';
@@ -229,6 +229,16 @@ describe('a splash row (SPEC 5)', () => {
     expect(settled.querySelector('[data-drop-pill]')).toBeNull();
   });
 
+  it('shows one lane chip with a +N for the rest', () => {
+    const { container } = home(day, [
+      splash({ id: 'open', title: 'Trip', lane_ids: ['c-place', 'c-music', 'c-food'] }),
+    ]);
+    const chip = container.querySelector('[data-splash-entry] [data-more-lanes]')!;
+    expect(chip.textContent).toBe('+2');
+    expect(chip.closest('span[class*="border"]')!.textContent).toBe('📍Place+2');
+    expect(container.querySelectorAll('[data-splash-entry] span[class*="border"]').length).toBe(1);
+  });
+
   it('always shows a lane chip, outlined, never filled', () => {
     const { container, getAllByText } = home(day, boards);
     const chips = getAllByText('Place');
@@ -253,12 +263,18 @@ describe('a splash row (SPEC 5)', () => {
   });
 });
 
-describe('the tail and the empty states (H19)', () => {
-  it('names the mode’s own ghost', () => {
-    const { getByText, getAllByLabelText } = home(day, boards);
+describe('the head ghost and the empty states (H19)', () => {
+  it('names the mode’s own ghost, at the head of the flow', () => {
+    const { container, getByText, getAllByLabelText } = home(day, boards);
     expect(getByText('+ Drop New Splash')).toBeTruthy();
     fireEvent.click(getAllByLabelText('Ripples')[0]);
     expect(getByText('+ Drop New Ripple')).toBeTruthy();
+
+    const ghost = container.querySelector('[data-flow-ghost]')!;
+    const first = container.querySelector('[data-flow-month]')!;
+    expect(ghost.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Above the first ripple, so above where the rope begins: no rope stub.
+    expect(ghost.querySelector('[data-rope]')).toBeNull();
   });
 
   it('invites the first ripple when there is nothing at all', () => {
@@ -301,31 +317,30 @@ describe('a quiet mark occupies only its own box (SPEC 5)', () => {
     }
   });
 
-  it('leaves the in-flow stack to the full rows alone, in both modes', () => {
-    // No layout engine here, so the stack is read structurally: a floated
-    // box is out of flow and adds nothing to the column's height, and the
-    // full rows are the same boxes with or without quiet marks beside them.
-    const withMarks = home(day, boards);
-    const full = rows(withMarks.container).filter(inFlow);
-    expect(full.map((r) => r.getAttribute('data-presentation'))).toEqual(['full', 'full']);
-    expect(rows(withMarks.container).filter((r) => !inFlow(r)).length).toBe(3);
-    const fullClasses = full.map((r) => r.className);
-    cleanup();
-
-    const alone = home([], boards);
-    expect(
-      rows(alone.container)
-        .filter(inFlow)
-        .map((r) => r.className),
-    ).toEqual(fullClasses);
-    expect(rows(alone.container).filter((r) => !inFlow(r)).length).toBe(0);
-    cleanup();
-
-    const ripplesOnly = home(day);
-    fireEvent.click(ripplesOnly.getAllByLabelText('Ripples')[0]);
-    const rippleRows = rows(ripplesOnly.container);
-    expect(rippleRows.every(inFlow)).toBe(true);
-    expect(rippleRows.every((r) => r.className.includes('py-3'))).toBe(true);
+  it('stacks two columns from the top: every row floats on its own side, cleared there', () => {
+    // No layout engine here, so the columns are read structurally: a float
+    // cleared against its own side stacks under the previous one on that
+    // side and never under the other column's rows, and the full rows are
+    // the same boxes with or without quiet marks beside them.
+    const { container, getAllByLabelText } = home(day, boards);
+    for (const mode of ['splash', 'ripple'] as const) {
+      if (mode === 'ripple') fireEvent.click(getAllByLabelText('Ripples')[0]);
+      for (const row of rows(container)) {
+        expect(inFlow(row)).toBe(false);
+        expect(row.className).toMatch(
+          row.getAttribute('data-flow-row') === 'ripple'
+            ? /float-left clear-left/
+            : /float-right clear-right/,
+        );
+      }
+    }
+    // Paired widths: a full row and the other column's mark always fit.
+    const full = rows(container).filter((r) => r.getAttribute('data-presentation') === 'full');
+    expect(full.length).toBe(3);
+    for (const row of full) expect(row.className).toContain(BESIDE_QUIET_CLUSTER);
+    fireEvent.click(getAllByLabelText('Splashes')[0]);
+    for (const row of rows(container).filter((r) => r.getAttribute('data-presentation') === 'full'))
+      expect(row.className).toContain(BESIDE_BADGE_COLUMN);
   });
 
   it('draws the rope once per month, behind the flow, never per row or through a header', () => {
@@ -380,8 +395,9 @@ describe('a splash entry’s waves (SPEC 5)', () => {
     const entries = container.querySelectorAll<HTMLElement>('[data-splash-entry]');
     expect(entries.length).toBe(2);
     for (const entry of entries) {
-      // The entry shrink-wraps inside a right-aligned row.
-      expect(entry.parentElement!.className).toContain('justify-end');
+      // The entry is the floated row itself, so it shrink-wraps.
+      expect(entry.className).toMatch(/float-right/);
+      expect(entry.className).not.toMatch(/w-full/);
       const rule = entry.querySelector<HTMLElement>(':scope > [data-splash-rule]')!;
       expect(rule.className).toContain('self-stretch');
       expect(rule.className).toContain('contain-inline-size');

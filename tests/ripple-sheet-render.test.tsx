@@ -256,8 +256,13 @@ describe('a board in the sheet (H20d, H20e)', () => {
 
     const chip = view.container.querySelector('[data-splash-chip]')!;
     expect(chip.textContent).toContain('During redesign');
-    // The link's rule stays, and the chip sits on it.
-    expect(chip.nextElementSibling!.matches('[data-splash-rule]')).toBe(true);
+    // The name in blue, not a chip, on a rule the name's width: the rule is
+    // stretched to the shrink-wrapped name, never sized on its own.
+    expect(chip.querySelector('span')!.className).toContain('text-main-900');
+    expect(chip.className).not.toMatch(/border|rounded/);
+    const rule = chip.querySelector('[data-splash-rule]')!;
+    expect(rule.className).toContain('self-stretch');
+    expect(rule.className).not.toMatch(/w-\d|w-\[/);
     fireEvent.change(view.getByLabelText('Note'), { target: { value: 'x' } });
     fireEvent.click(drop(view));
     await waitFor(() => expect(commits).toHaveLength(1));

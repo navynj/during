@@ -37,15 +37,19 @@ export function CategoryChip({
 /**
  * A lane named on a splash: outline only, never a fill (SPEC 5). The same
  * shape at a smaller size, so a board's chips and the sheet's read as one
- * vocabulary.
+ * vocabulary. A board with several lanes shows one chip and a `+N` at its
+ * right end, rather than a row of chips.
  */
 export function OutlineChip({
   icon,
   name,
+  more = 0,
   className = '',
 }: {
   icon: string | null;
   name: string;
+  /** How many further lanes the chip stands for. */
+  more?: number;
   className?: string;
 }) {
   return (
@@ -54,6 +58,11 @@ export function OutlineChip({
     >
       {icon ? <span aria-hidden>{icon}</span> : null}
       {name}
+      {more > 0 ? (
+        <span data-more-lanes className="text-ink pl-0.5">
+          +{more}
+        </span>
+      ) : null}
     </span>
   );
 }

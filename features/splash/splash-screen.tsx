@@ -1,11 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 
 import { DurationChip } from '@/components/ui/chips/duration-chip';
+import { GhostRing } from '@/components/ui/ghost-ring';
 import { WaveRule } from '@/components/ui/waves/wave-rule';
+import { Rope, ROW_GRID } from '@/features/home/rope';
+import { useRopeStart } from '@/features/home/use-rope-start';
 import { annotationLabel, draftFrom } from '@/features/input-sheet/draft';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { useRippleSheet } from '@/features/ripple-sheet/sheet-host';
@@ -14,33 +17,28 @@ import { rippleDurationMinutes, rippleKind } from '@/lib/ripple-kind';
 import { formatPagerDate, type IsoDate } from '@/lib/time';
 
 import { deleteSplash } from './actions';
+import { groupStory, type StoryOrder } from './group';
 import { formatRange, type SplashSummary } from './summary';
-
-import type { SplashDay } from './group';
-
-const ROW_GRID = 'grid grid-cols-[2rem_1fr] gap-x-4';
-const ROPE = 'bg-pool-200 absolute left-1/2 w-px -translate-x-1/2';
 
 /**
  * A board's own screen (SPEC 5, `_docs/mockups/splash-thread.png`): the
- * range, the title over a wave underline, the count; then the rope with
- * category badges and the fragments in time order, oldest first — a story
- * reads forward even though Home reads back — with day labels grouping them
- * and photos inline and large. The add slot at the bottom opens the ripple
- * sheet preset to this board.
+ * range, the title over a wave underline, the count with a Newest / Oldest
+ * control; the add slot at the top, where the newest lands; then the rope
+ * with category badges and the fragments, newest first by default, with day
+ * labels grouping them and photos inline and large.
  *
  * Delete lives here and DETACHES the fragments (H20d); the confirm says so.
  * "Thread" is the working name and never appears on the screen.
  */
 export function SplashScreen({
   splash,
-  days,
+  members,
   photos,
   timeZone,
   today,
 }: {
   splash: SplashSummary;
-  days: SplashDay[];
+  members: RippleWithCategory[];
   /** Signed URLs by ripple id, every photo, drawn large. */
   photos: Record<string, string[]>;
   timeZone: string;
@@ -50,12 +48,16 @@ export function SplashScreen({
   const { openRipple } = useRippleSheet();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
+  const [order, setOrder] = useState<StoryOrder>('newest');
   const [pending, startTransition] = useTransition();
+  const story = useRef<HTMLDivElement>(null);
+  useRopeStart(story, order);
   const count = splash.count;
+  const days = groupStory(members, timeZone, order);
 
   return (
     <div className="flex flex-1 flex-col pt-4">
-      <header className="flex flex-col gap-1 pb-4">
+      <header className="flex flex-col gap-1 pb-2">
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -109,60 +111,22 @@ export function SplashScreen({
         <span className="block w-40">
           <WaveRule anchor="left" />
         </span>
-        <p data-count className="text-main-900 text-[10px]">
-          {count} Ripple{count === 1 ? '' : 's'}
-        </p>
+        <div className="flex items-center justify-between">
+          <p data-count className="text-main-900 text-[10px]">
+            {count} Ripple{count === 1 ? '' : 's'}
+          </p>
+          <OrderToggle order={order} onChange={setOrder} />
+        </div>
       </header>
 
-      {days.map((day) => {
-        const { month, day: number, weekday } = formatPagerDate(day.date);
-        return (
-          <section key={day.date} data-splash-day={day.date}>
-            {/* A small group label, not a section: the story is one piece. */}
-            <p className="text-pool-500 pb-1 pl-12 text-[10px] font-medium">
-              {month} {number} {weekday}
-            </p>
-            <ol>
-              {day.ripples.map((ripple) => (
-                <FragmentRow
-                  key={ripple.id}
-                  ripple={ripple}
-                  photos={photos[ripple.id] ?? []}
-                  timeZone={timeZone}
-                  today={today}
-                  onOpen={() => openRipple(ripple.id)}
-                />
-              ))}
-            </ol>
-          </section>
-        );
-      })}
-
-      {/* The add slot: the seat of the next fragment of this story. */}
-      <div data-add-slot className={`${ROW_GRID} items-start pt-2 pb-8`}>
-        <div className="relative flex justify-center">
-          <span aria-hidden className={`${ROPE} top-0 h-2`} />
-          <button
-            type="button"
-            aria-label="Drop into this splash"
+      {/* The add slot at the head: the seat of the next fragment, where the
+          newest lands. Above the first ripple, so above where the rope begins. */}
+      <div data-add-slot className={`${ROW_GRID} items-start pt-2 pb-2`}>
+        <div className="flex justify-center">
+          <GhostRing
+            label="Drop into this splash"
             onClick={() => openSheet({ splashId: splash.id })}
-            className="text-main-900 relative mt-2 flex h-11 w-11 items-center justify-center"
-          >
-            <span
-              aria-hidden
-              className="absolute inset-0 rounded-full border border-current opacity-10"
-            />
-            <span
-              aria-hidden
-              className="absolute inset-1 rounded-full border border-current opacity-30"
-            />
-            <span
-              className="relative flex h-6 w-6 items-center justify-center rounded-full bg-white text-base leading-none font-light"
-              style={{ opacity: 0.3 }}
-            >
-              +
-            </span>
-          </button>
+          />
         </div>
         <button
           type="button"
@@ -173,6 +137,61 @@ export function SplashScreen({
           + Drop New Ripple
         </button>
       </div>
+
+      {/* One rope behind the whole story, from the first badge down. */}
+      <div ref={story} className="relative pb-8">
+        <Rope from="first-badge" />
+        {days.map((day) => {
+          const { month, day: number, weekday } = formatPagerDate(day.date);
+          return (
+            <section key={day.date} data-splash-day={day.date}>
+              {/* A small group label, not a section: the story is one piece. */}
+              <p className="text-pool-500 pb-1 pl-12 text-[10px] font-medium">
+                {month} {number} {weekday}
+              </p>
+              <ol>
+                {day.ripples.map((ripple) => (
+                  <FragmentRow
+                    key={ripple.id}
+                    ripple={ripple}
+                    photos={photos[ripple.id] ?? []}
+                    timeZone={timeZone}
+                    today={today}
+                    onOpen={() => openRipple(ripple.id)}
+                  />
+                ))}
+              </ol>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Newest / Oldest. The active segment is an ink fill: selection (H20f). */
+function OrderToggle({
+  order,
+  onChange,
+}: {
+  order: StoryOrder;
+  onChange: (next: StoryOrder) => void;
+}) {
+  return (
+    <div role="group" aria-label="Order" className="bg-pool-100 inline-flex rounded-full p-0.5">
+      {(['newest', 'oldest'] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={order === option}
+          onClick={() => onChange(option)}
+          className={`h-5 rounded-full px-2 text-[10px] font-medium capitalize transition-colors ${
+            order === option ? 'bg-ink text-white' : 'text-pool-500'
+          }`}
+        >
+          {option}
+        </button>
+      ))}
     </div>
   );
 }
@@ -195,10 +214,10 @@ function FragmentRow({
 
   return (
     <li data-fragment={ripple.id} className={`${ROW_GRID} py-2`}>
-      <div className="relative flex justify-center">
-        <span aria-hidden className={`${ROPE} inset-y-0`} />
+      <div className="flex justify-center">
         <span
           aria-hidden
+          data-badge
           className="bg-pool-100 relative flex h-8 w-8 items-center justify-center rounded-full text-base"
         >
           {ripple.category?.icon ?? ''}
