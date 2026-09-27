@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 
 import { DurationChip } from '@/components/ui/chips/duration-chip';
 import { GhostRing } from '@/components/ui/ghost-ring';
@@ -27,7 +27,9 @@ import { formatRange, type SplashSummary } from './summary';
  * with category badges and the fragments, newest first by default, with day
  * labels grouping them and photos inline and large.
  *
- * Delete lives here and DETACHES the fragments (H20d); the confirm says so.
+ * Edit and Delete live here and nowhere else. Edit reopens the splash sheet
+ * preset to this board; Delete DETACHES the fragments (H20d), the confirm
+ * says so.
  * "Thread" is the working name and never appears on the screen.
  */
 export function SplashScreen({
@@ -44,7 +46,7 @@ export function SplashScreen({
   timeZone: string;
   today: IsoDate;
 }) {
-  const { openSheet } = useInputSheet();
+  const { openSheet, editSplash } = useInputSheet();
   const { openRipple } = useRippleSheet();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -91,14 +93,34 @@ export function SplashScreen({
               </button>
             </span>
           ) : (
-            <button
-              type="button"
-              aria-label="Delete this splash"
-              onClick={() => setConfirming(true)}
-              className="text-pool-500 flex h-8 w-8 items-center justify-center"
-            >
-              <Trash2 aria-hidden size={15} />
-            </button>
+            <span className="flex items-center">
+              <button
+                type="button"
+                aria-label="Edit this splash"
+                onClick={() =>
+                  editSplash({
+                    id: splash.id,
+                    title: splash.title,
+                    laneIds: splash.laneIds,
+                    // Only a declared range is the board's own to edit; a
+                    // derived one belongs to its fragments.
+                    declaredStart: splash.declared ? (splash.range?.start ?? null) : null,
+                    declaredEnd: splash.declared ? (splash.range?.end ?? null) : null,
+                  })
+                }
+                className="text-pool-500 flex h-8 w-8 items-center justify-center"
+              >
+                <Pencil aria-hidden size={15} />
+              </button>
+              <button
+                type="button"
+                aria-label="Delete this splash"
+                onClick={() => setConfirming(true)}
+                className="text-pool-500 flex h-8 w-8 items-center justify-center"
+              >
+                <Trash2 aria-hidden size={15} />
+              </button>
+            </span>
           )}
         </div>
 

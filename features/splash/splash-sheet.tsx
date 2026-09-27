@@ -9,8 +9,17 @@ import { QuietAffordance } from '@/features/input-sheet/annotation-control';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
 
-import { createSplash } from './actions';
+import { createSplash, updateSplash } from './actions';
 import type { Splash } from './summary';
+
+/** What the sheet edits: the board's own words, lanes and range. */
+export type EditableSplash = {
+  id: string;
+  title: string;
+  laneIds: string[];
+  declaredStart: IsoDate | null;
+  declaredEnd: IsoDate | null;
+};
 
 /**
  * The splash sheet (SPEC 6, `_docs/mockups/sheet-splash.png`): `Add Lanes`
@@ -18,22 +27,28 @@ import type { Splash } from './summary';
  * Same commit verb as the ripple sheet; the placeholder differentiates.
  *
  * After commit the host opens the ripple sheet preset to the new board, so
- * creating and first-throwing is one motion.
+ * creating and first-throwing is one motion. The same sheet edits a board
+ * (`editing`): preset to it, the verb is Update, and the host simply refreshes.
  */
 export function SplashSheet({
   categories,
   today,
+  editing = null,
   onClose,
-  onCreated,
+  onCommitted,
 }: {
   categories: MyCategory[];
   today: IsoDate;
+  /** Present in edit mode: the same sheet, correcting instead of opening. */
+  editing?: EditableSplash | null;
   onClose: () => void;
-  onCreated: (splash: Splash) => void;
+  onCommitted: (splash: Splash) => void;
 }) {
-  const [title, setTitle] = useState('');
-  const [laneIds, setLaneIds] = useState<string[]>([]);
-  const [range, setRange] = useState<{ start: IsoDate; end: IsoDate | null } | null>(null);
+  const [title, setTitle] = useState(editing?.title ?? '');
+  const [laneIds, setLaneIds] = useState<string[]>(editing?.laneIds ?? []);
+  const [range, setRange] = useState<{ start: IsoDate; end: IsoDate | null } | null>(
+    editing?.declaredStart ? { start: editing.declaredStart, end: editing.declaredEnd } : null,
+  );
   const [pickingDate, setPickingDate] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -55,7 +70,7 @@ export function SplashSheet({
 
       <section
         role="dialog"
-        aria-label="Drop a splash"
+        aria-label={editing ? 'Edit this splash' : 'Drop a splash'}
         className={`sheet-rise bg-pool-100 relative mx-auto flex max-h-[88vh] w-full ${COLUMN_MAX_WIDTH} flex-col overflow-hidden rounded-t-[32px]`}
       >
         {/* Declared lanes, several allowed: they govern by inheritance (H20e). */}
@@ -172,19 +187,22 @@ export function SplashSheet({
             disabled={pending || title.trim().length === 0 || !rangeOk}
             onClick={() =>
               startTransition(async () => {
-                const result = await createSplash({
+                const input = {
                   title,
                   laneIds,
                   declaredStart: range?.start ?? null,
                   declaredEnd: range?.end ?? null,
-                });
-                if (result.ok) onCreated(result.splash);
+                };
+                const result = editing
+                  ? await updateSplash(editing.id, input)
+                  : await createSplash(input);
+                if (result.ok) onCommitted(result.splash);
                 else setMessage(result.message);
               })
             }
             className="bg-main-900 w-full rounded-full py-2.5 text-xl font-medium text-white disabled:opacity-50"
           >
-            Drop
+            {editing ? 'Update' : 'Drop'}
           </button>
         </div>
       </section>

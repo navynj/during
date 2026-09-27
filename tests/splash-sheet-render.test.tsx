@@ -3,12 +3,20 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const created: Record<string, unknown>[] = [];
+const updated: { id: string; input: Record<string, unknown> }[] = [];
 vi.mock('@/features/splash/actions', () => ({
   createSplash: (input: Record<string, unknown>) => {
     created.push(input);
     return Promise.resolve({
       ok: true,
       splash: { id: 's-new', title: input.title, lane_ids: input.laneIds },
+    });
+  },
+  updateSplash: (id: string, input: Record<string, unknown>) => {
+    updated.push({ id, input });
+    return Promise.resolve({
+      ok: true,
+      splash: { id, title: input.title, lane_ids: input.laneIds },
     });
   },
 }));
@@ -35,14 +43,60 @@ const LANES = [category({}), category({ id: 'c-mood', name: 'Mood', icon: 'ðŸŒ¤ï
 
 beforeEach(() => {
   created.length = 0;
+  updated.length = 0;
 });
 afterEach(cleanup);
 
-function sheet(onCreated: (splash: unknown) => void = () => {}) {
+function sheet(onCommitted: (splash: unknown) => void = () => {}) {
   return render(
-    <SplashSheet categories={LANES} today={TODAY} onClose={() => {}} onCreated={onCreated} />,
+    <SplashSheet categories={LANES} today={TODAY} onClose={() => {}} onCommitted={onCommitted} />,
   );
 }
+
+describe('the splash sheet edits a board', () => {
+  it('opens preset to the board and commits Update through updateSplash', async () => {
+    const committed: unknown[] = [];
+    const view = render(
+      <SplashSheet
+        categories={LANES}
+        today={TODAY}
+        editing={{
+          id: 's1',
+          title: 'Whistler',
+          laneIds: ['c-mood'],
+          declaredStart: '2026-08-17',
+          declaredEnd: '2026-08-20',
+        }}
+        onClose={() => {}}
+        onCommitted={(splash) => committed.push(splash)}
+      />,
+    );
+    expect(view.getByRole('dialog', { name: 'Edit this splash' })).toBeTruthy();
+    expect((view.getByLabelText('Title') as HTMLInputElement).value).toBe('Whistler');
+    expect(view.getByText('Mood').closest('button')!.getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByText('Place').closest('button')!.getAttribute('aria-pressed')).toBe('false');
+    expect(view.container.querySelector('[data-range-chip]')!.textContent).toContain(
+      '2026-08-17 ~ 2026-08-20',
+    );
+
+    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler, two nights' } });
+    fireEvent.click(view.getByText('Place'));
+    fireEvent.click(view.getByText('Update'));
+    await waitFor(() => expect(updated).toHaveLength(1));
+    expect(updated[0]).toEqual({
+      id: 's1',
+      input: {
+        title: 'Whistler, two nights',
+        laneIds: ['c-mood', 'c-place'],
+        declaredStart: '2026-08-17',
+        declaredEnd: '2026-08-20',
+      },
+    });
+    expect(created).toHaveLength(0);
+    expect(committed).toHaveLength(1);
+    expect(view.queryByText('Drop')).toBeNull();
+  });
+});
 
 describe('the splash sheet (SPEC 6)', () => {
   it('needs a title, and commits with the same verb as a ripple', async () => {

@@ -180,6 +180,20 @@ describe('the splash screen (SPEC 5)', () => {
     expect(container.querySelector('[data-open-sheet]')!.textContent).toContain('"splashId":"s1"');
   });
 
+  it('opens the splash sheet preset to this board from Edit', () => {
+    const { getByLabelText, container } = screen();
+    fireEvent.click(getByLabelText('Edit this splash'));
+    const open = JSON.parse(container.querySelector('[data-open-sheet]')!.textContent!);
+    expect(open.kind).toBe('splash');
+    expect(open.editing).toEqual({
+      id: 's1',
+      title: 'Whistler, two nights',
+      laneIds: ['c-place'],
+      declaredStart: '2026-08-17',
+      declaredEnd: '2026-08-20',
+    });
+  });
+
   it('says a delete detaches the fragments, never deletes them (H20d)', () => {
     const { getByLabelText, getByText } = screen();
     fireEvent.click(getByLabelText('Delete this splash'));

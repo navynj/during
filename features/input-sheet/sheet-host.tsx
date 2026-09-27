@@ -28,10 +28,13 @@ export function SheetHost({ context }: { context: SheetContext }) {
       <SplashSheet
         categories={context.categories}
         today={context.today}
+        editing={sheet.editing}
         onClose={closeSheet}
-        onCreated={(splash) => {
+        onCommitted={(splash) => {
           router.refresh();
-          openSheet({ splash: summarizeSplash(splash, [], context.timeZone, new Date()) });
+          // A correction is done; an opening hands over to the first throw.
+          if (sheet.editing) closeSheet();
+          else openSheet({ splash: summarizeSplash(splash, [], context.timeZone, new Date()) });
         }}
       />
     );
