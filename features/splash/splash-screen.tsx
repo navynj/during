@@ -39,8 +39,8 @@ export function SplashScreen({
 }: {
   splash: SplashSummary;
   members: RippleWithCategory[];
-  /** Signed URLs by ripple id, every photo, drawn large. */
-  photos: Record<string, string[]>;
+  /** Signed URLs by ripple id, every photo, drawn large; `null` is a placeholder. */
+  photos: Record<string, (string | null)[]>;
   timeZone: string;
   today: IsoDate;
 }) {
@@ -205,7 +205,7 @@ function FragmentRow({
   onOpen,
 }: {
   ripple: RippleWithCategory;
-  photos: string[];
+  photos: (string | null)[];
   timeZone: string;
   today: IsoDate;
   onOpen: () => void;
@@ -234,10 +234,20 @@ function FragmentRow({
 
         {/* Large and inline: a story is read with its pictures, not beside
             thumbnails of them. */}
-        {photos.map((url) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={url} src={url} alt="" data-photo className="w-full rounded-xl object-cover" />
-        ))}
+        {photos.map((url, index) =>
+          url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt="" data-photo className="w-full rounded-xl object-cover" />
+          ) : (
+            // A photo that could not be signed: a quiet tile in its place.
+            <span
+              key={index}
+              aria-hidden
+              data-photo-placeholder
+              className="bg-pool-100 block aspect-[4/3] w-full rounded-xl"
+            />
+          ),
+        )}
 
         {annotation?.time || kind === 'timed' ? (
           <span className="flex items-center gap-2">

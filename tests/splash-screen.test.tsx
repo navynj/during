@@ -100,7 +100,7 @@ function screen() {
       <SplashScreen
         splash={summarizeSplash(board, members, TZ, NOW)}
         members={members}
-        photos={{ night: ['https://signed/x.jpg'] }}
+        photos={{ night: [null, 'https://signed/x.jpg'] }}
         timeZone={TZ}
         today={TODAY}
       />
@@ -162,11 +162,16 @@ describe('the splash screen (SPEC 5)', () => {
     expect(container.querySelector('[data-fragment] [data-rope]')).toBeNull();
   });
 
-  it('draws photos inline and large', () => {
+  it('draws photos inline and large, a quiet tile where one could not be signed', () => {
     const { container } = screen();
     const photo = container.querySelector('[data-photo]')!;
     expect(photo.getAttribute('src')).toBe('https://signed/x.jpg');
     expect(photo.className).toContain('w-full');
+    const placeholder = container.querySelector('[data-photo-placeholder]')!;
+    expect(placeholder.className).toContain('bg-pool-100');
+    expect(
+      placeholder.compareDocumentPosition(photo) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('opens the ripple sheet preset to this board from the add slot', () => {

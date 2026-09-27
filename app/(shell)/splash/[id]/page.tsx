@@ -44,11 +44,12 @@ export default async function SplashPage({ params }: PageProps<'/splash/[id]'>) 
       members.length ? members.map((r) => r.id) : ['00000000-0000-0000-0000-000000000000'],
     );
 
+  // A photo that could not be signed is a placeholder, never a failed page.
   const signed = await signOwnMedia(members.flatMap((r) => r.media));
   const photos = Object.fromEntries(
     members
       .filter((r) => r.media.length > 0)
-      .map((r) => [r.id, r.media.flatMap((path) => (signed[path] ? [signed[path]] : []))]),
+      .map((r) => [r.id, r.media.map((path) => signed[path] ?? null)]),
   );
 
   return (

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 import type { Database } from '@/lib/database.types';
+import { supabaseAnonKey, supabaseUrl } from '@/lib/env';
 import { fetchWithDeadline, isUnreachable, withDeadline } from '@/lib/supabase/fetch';
 
 /** How long a page may wait on the auth server before giving up on it. */
@@ -16,29 +17,25 @@ const PUBLIC_PATHS = ['/sign-in', '/auth/callback', '/auth/sign-out', '/dev'];
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      // This call is in front of every request, so it gets a deadline and no
-      // retries: a stack that is down should cost one timeout, not four.
-      global: { fetch: fetchWithDeadline(3_000) },
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          for (const { name, value } of cookiesToSet) {
-            request.cookies.set(name, value);
-          }
-          response = NextResponse.next({ request });
-          for (const { name, value, options } of cookiesToSet) {
-            response.cookies.set(name, value, options);
-          }
-        },
+  const supabase = createServerClient<Database>(supabaseUrl(), supabaseAnonKey(), {
+    // This call is in front of every request, so it gets a deadline and no
+    // retries: a stack that is down should cost one timeout, not four.
+    global: { fetch: fetchWithDeadline(3_000) },
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        for (const { name, value } of cookiesToSet) {
+          request.cookies.set(name, value);
+        }
+        response = NextResponse.next({ request });
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set(name, value, options);
+        }
       },
     },
-  );
+  });
 
   const { pathname, searchParams } = request.nextUrl;
 

@@ -47,13 +47,14 @@ export default async function HomePage() {
       ripples.length ? ripples.map((r) => r.id) : ['00000000-0000-0000-0000-000000000000'],
     );
 
-  // Thumbnails are signed once, here, for the rows that carry photos.
+  // Thumbnails are signed once, here, for the rows that carry photos. A photo
+  // that could not be signed is a placeholder tile, never a failed page.
   const withPhotos = ripples.filter((r) => r.media.length > 0);
   const signed = await signOwnMedia(withPhotos.flatMap((r) => r.media.slice(0, ROW_THUMBNAILS)));
   const thumbnails = Object.fromEntries(
     withPhotos.map((r) => [
       r.id,
-      r.media.slice(0, ROW_THUMBNAILS).flatMap((path) => (signed[path] ? [signed[path]] : [])),
+      r.media.slice(0, ROW_THUMBNAILS).map((path) => signed[path] ?? null),
     ]),
   );
 

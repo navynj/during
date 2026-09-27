@@ -54,8 +54,8 @@ export function HomeFlow({
   sections: MonthSection[];
   splashes: SplashSummary[];
   categories: MyCategory[];
-  /** Signed URLs for the first few photos on each ripple, by ripple id. */
-  thumbnails: Record<string, string[]>;
+  /** Signed URLs for the first few photos on each ripple, by ripple id; `null` is a placeholder. */
+  thumbnails: Record<string, (string | null)[]>;
   timeZone: string;
   today: IsoDate;
 }) {

@@ -3,11 +3,35 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 import type { Database } from '@/lib/database.types';
+import { supabaseServiceRoleKey, supabaseUrl } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
 import { MEDIA_BUCKET } from '@/lib/media-bucket';
 
 /** Long enough to load a sheet, short enough that a leaked URL rots fast. */
 const SIGNED_URL_TTL_SECONDS = 300;
+
+/**
+ * Signed URLs by path. `null` is a photo that could not be signed — the
+ * caller draws a quiet placeholder for it and the page renders regardless.
+ * A render must never 500 because one fragment's media could not sign.
+ */
+export type SignedMedia = Record<string, string | null>;
+
+/**
+ * The service role signs and removes objects. Made here, inside the call
+ * that needs it, so a missing key fails as `Missing SUPABASE_SERVICE_ROLE_KEY`
+ * at that call and nowhere earlier.
+ */
+function serviceClient() {
+  return createServiceClient<Database>(supabaseUrl(), supabaseServiceRoleKey(), {
+    auth: { persistSession: false },
+  });
+}
+
+function reportSigningFailure(error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[during] media signing failed: ${message}`);
+}
 
 /**
  * Signs the media on a Ripple, after checking that the viewer may see the
@@ -20,31 +44,35 @@ const SIGNED_URL_TTL_SECONDS = 300;
  * through the viewer's own session (RLS answers it), and only then does the
  * service role sign. The same code path serves P1's owner-only case and P2's
  * without changing.
+ *
+ * Fallible per item and never throwing: what could not be signed is left out.
  */
 export async function signRippleMedia(rippleId: string): Promise<string[]> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  // RLS decides. A Ripple the viewer may not see simply is not returned.
-  const { data: ripple } = await supabase
-    .from('ripples')
-    .select('media')
-    .eq('id', rippleId)
-    .maybeSingle();
+    // RLS decides. A Ripple the viewer may not see simply is not returned.
+    const { data: ripple } = await supabase
+      .from('ripples')
+      .select('media')
+      .eq('id', rippleId)
+      .maybeSingle();
 
-  if (!ripple || ripple.media.length === 0) return [];
+    if (!ripple || ripple.media.length === 0) return [];
 
-  const service = createServiceClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
+    const { data, error } = await serviceClient()
+      .storage.from(MEDIA_BUCKET)
+      .createSignedUrls(ripple.media, SIGNED_URL_TTL_SECONDS);
 
-  const { data, error } = await service.storage
-    .from(MEDIA_BUCKET)
-    .createSignedUrls(ripple.media, SIGNED_URL_TTL_SECONDS);
-
-  if (error) return [];
-  return data.flatMap((entry) => (entry.signedUrl ? [entry.signedUrl] : []));
+    if (error) {
+      reportSigningFailure(error);
+      return [];
+    }
+    return data.flatMap((entry) => (entry.signedUrl ? [entry.signedUrl] : []));
+  } catch (error) {
+    reportSigningFailure(error);
+    return [];
+  }
 }
 
 /**
@@ -52,18 +80,12 @@ export async function signRippleMedia(rippleId: string): Promise<string[]> {
  *
  * Deletes are hard and include storage (CLAUDE.md): a row that is gone while
  * its photograph survives is not a delete, it is a broken reference with a
- * privacy problem attached.
+ * privacy problem attached. This one is allowed to throw: a delete that
+ * cannot reach storage should fail loudly, with the variable named.
  */
 export async function removeRippleMedia(paths: string[]): Promise<void> {
   if (paths.length === 0) return;
-
-  const service = createServiceClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-
-  await service.storage.from(MEDIA_BUCKET).remove(paths);
+  await serviceClient().storage.from(MEDIA_BUCKET).remove(paths);
 }
 
 /**
@@ -73,31 +95,46 @@ export async function removeRippleMedia(paths: string[]): Promise<void> {
  * signed, so this cannot be used to reach a record the visibility check on
  * `signRippleMedia` would refuse. P2's friend-visible rows go through that
  * one, per Ripple, where the check lives.
+ *
+ * Every requested path comes back: signed, or `null` when it could not be —
+ * a path that is not mine, an entry storage refused, a batch that failed, a
+ * client that could not be made. The failure is logged once, named, and the
+ * page draws placeholders; it does not fall over.
  */
-export async function signOwnMedia(paths: string[]): Promise<Record<string, string>> {
-  if (paths.length === 0) return {};
+export async function signOwnMedia(paths: string[]): Promise<SignedMedia> {
+  const unsigned: SignedMedia = Object.fromEntries(paths.map((path) => [path, null]));
+  if (paths.length === 0) return unsigned;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return {};
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return unsigned;
 
-  const own = paths.filter((path) => path.startsWith(`${user.id}/`));
-  if (own.length === 0) return {};
+    const own = paths.filter((path) => path.startsWith(`${user.id}/`));
+    if (own.length === 0) return unsigned;
 
-  const service = createServiceClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
+    const { data, error } = await serviceClient()
+      .storage.from(MEDIA_BUCKET)
+      .createSignedUrls(own, SIGNED_URL_TTL_SECONDS);
+    if (error) {
+      reportSigningFailure(error);
+      return unsigned;
+    }
 
-  const { data, error } = await service.storage
-    .from(MEDIA_BUCKET)
-    .createSignedUrls(own, SIGNED_URL_TTL_SECONDS);
-  if (error) return {};
-
-  return Object.fromEntries(
-    data.flatMap((entry) => (entry.signedUrl && entry.path ? [[entry.path, entry.signedUrl]] : [])),
-  );
+    // Per item: an entry storage could not sign is one placeholder, not a
+    // failed page.
+    return {
+      ...unsigned,
+      ...Object.fromEntries(
+        data.flatMap((entry) =>
+          entry.signedUrl && entry.path ? [[entry.path, entry.signedUrl]] : [],
+        ),
+      ),
+    };
+  } catch (error) {
+    reportSigningFailure(error);
+    return unsigned;
+  }
 }

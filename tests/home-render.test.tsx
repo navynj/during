@@ -89,7 +89,11 @@ function splash(over: Partial<Splash> = {}): Splash {
   };
 }
 
-function home(ripples: RippleWithCategory[], boards: Splash[] = []) {
+function home(
+  ripples: RippleWithCategory[],
+  boards: Splash[] = [],
+  thumbnails: Record<string, (string | null)[]> = {},
+) {
   const splashes = boards.map((b) =>
     summarizeSplash(
       b,
@@ -105,13 +109,32 @@ function home(ripples: RippleWithCategory[], boards: Splash[] = []) {
         sections={sections}
         splashes={splashes}
         categories={[PLACE]}
-        thumbnails={{}}
+        thumbnails={thumbnails}
         timeZone={TZ}
         today={TODAY}
       />
     </InputSheetProvider>,
   );
 }
+
+describe('a photo that could not be signed (the prod photo incident)', () => {
+  it('renders the feed with a quiet placeholder tile in its place', () => {
+    const { container, getAllByLabelText, getByText } = home(
+      [ripple({ media: ['a1/x.jpg', 'a1/y.jpg'] })],
+      [],
+      { r1: [null, 'https://signed/y.jpg'] },
+    );
+    fireEvent.click(getAllByLabelText('Ripples')[0]);
+    expect(getByText('kitsilano beach')).toBeTruthy();
+
+    const tiles = container.querySelectorAll('[data-thumbnails] > li');
+    expect(tiles.length).toBe(2);
+    expect(tiles[0].hasAttribute('data-thumbnail-placeholder')).toBe(true);
+    expect(tiles[0].querySelector('img')).toBeNull();
+    expect(tiles[0].className).toContain('bg-pool-100');
+    expect(tiles[1].querySelector('img')!.getAttribute('src')).toBe('https://signed/y.jpg');
+  });
+});
 
 const day = [
   ripple({ id: 'open-member', splash_id: 'open', created_at: '2026-09-25T15:00:00Z' }),

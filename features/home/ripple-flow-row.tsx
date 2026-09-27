@@ -37,7 +37,8 @@ export function RippleFlowRow({
   ripple: RippleWithCategory;
   mode: HomeMode;
   splashTitle: string | null;
-  thumbnails: string[];
+  /** A signed URL, or `null` for a photo that could not be signed: a quiet tile. */
+  thumbnails: (string | null)[];
   timeZone: string;
   today: IsoDate;
   /** Tapping the quiet mark switches modes, focused here. */
@@ -94,10 +95,16 @@ export function RippleFlowRow({
 
         {thumbnails.length > 0 ? (
           <ul data-thumbnails className="flex gap-1.5">
-            {thumbnails.map((url) => (
-              <li key={url} className="bg-pool-100 h-14 w-14 overflow-hidden rounded-lg">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" className="h-full w-full object-cover" />
+            {thumbnails.map((url, index) => (
+              <li
+                key={url ?? index}
+                data-thumbnail-placeholder={url === null ? '' : undefined}
+                className="bg-pool-100 h-14 w-14 overflow-hidden rounded-lg"
+              >
+                {url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                ) : null}
               </li>
             ))}
           </ul>

@@ -175,22 +175,40 @@ Import the repo (`navynj/during`). Framework preset: Next.js.
 deploy runs ESLint, the design-token guard, and the test suite minus the
 files that need a live Postgres (`vitest.ci.config.ts` names them).
 
-### Environment variables — all three, Production and Preview
+### Environment variables — all four, Production and Preview
 
-| Name | Value |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the project's anon key |
-| `NEXT_PUBLIC_SITE_URL` | `https://during.today` |
+| Name | Value | Reaches |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` | browser and server |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the project's anon key | browser and server |
+| `NEXT_PUBLIC_SITE_URL` | `https://during.today` | browser and server |
+| `SUPABASE_SERVICE_ROLE_KEY` | the project's service role key | **server only** |
 
-**Server-only variables on Vercel: none.** All three above are
-`NEXT_PUBLIC_`, meaning they reach the browser by design — the anon key is a
-public identifier, and RLS is what protects the data.
+The three `NEXT_PUBLIC_` values reach the browser by design — the anon key is
+a public identifier, and RLS is what protects the data.
 
-**These two never go to Vercel:**
+**`SUPABASE_SERVICE_ROLE_KEY` is server-only and required.** It bypasses RLS,
+so it must never be `NEXT_PUBLIC_` and should be marked *Sensitive* in
+Vercel. It is needed because the `ripple-media` bucket is private: the
+service role signs photo URLs (`lib/media.ts`, after the viewer's own session
+has passed the RLS visibility check) and removes objects on delete. Nothing
+else imports it, and `lib/env.ts` is the only place it is read.
 
-- `SUPABASE_SERVICE_ROLE_KEY` — bypasses RLS entirely. Local tests only; no
-  app code imports it. On Vercel it would be one mis-import from a leak.
+**The photo incident.** An earlier version of this page said the service key
+never goes to Vercel. It was missing on the first photo deploy, the service
+client threw a generic "supabaseKey is required" from inside Home's render,
+and the whole site was down. Two guards came out of it:
+
+- `instrumentation.ts` checks the four variables once at server startup and
+  fails with `Missing <NAME>` — the log says what to set. Every read goes
+  through `lib/env.ts`, which names the variable the same way, and no client
+  is created at a module's top level, so one missing value cannot poison a
+  route's chunk.
+- Media signing is fallible per item: a photo that cannot be signed renders
+  a quiet placeholder tile, and the page renders. `signOwnMedia` never throws.
+
+**These never go to Vercel:**
+
 - `SUPABASE_AUTH_GOOGLE_CLIENT_ID` / `SUPABASE_AUTH_GOOGLE_SECRET` — these
   configure the *local* Supabase stack. In cloud, Supabase holds them.
 
