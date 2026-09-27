@@ -53,9 +53,9 @@ export async function commitRipple(input: Draft): Promise<CommitResult> {
   const categoryId = await categoryFor(supabase, draft.categoryId, draft.splashId);
   if (!categoryId) return { ok: false, reason: 'error', message: 'There is no lane to drop into.' };
 
-  // A point ends where it starts; a manual span ends where it says; an
-  // unannotated fragment has no instant at all (H20c).
-  const endedAt = draft.startInstant === null ? null : (draft.endInstant ?? draft.startInstant);
+  // A point ends where it starts; a span ends where it says — with a clock,
+  // or by dates alone; an unannotated fragment has no instant at all (H20c).
+  const endedAt = draft.endInstant ?? draft.startInstant;
 
   const { data, error } = await supabase
     .from('ripples')
@@ -109,11 +109,16 @@ function checkAnnotation(draft: Draft): Extract<CommitResult, { ok: false }> | n
   if (draft.occurredTime !== null && draft.occurredOn === null) {
     return { ok: false, reason: 'error', message: 'A time needs a date.' };
   }
+  // An end needs a beginning: a clock to follow, or by dates alone a date
+  // (the row's own rule, ripples_ended_needs_date).
   if (draft.endInstant !== null) {
-    if (draft.startInstant === null) {
+    if (draft.occurredOn === null) {
       return { ok: false, reason: 'error', message: 'An end needs a start.' };
     }
-    if (Date.parse(draft.endInstant) <= Date.parse(draft.startInstant)) {
+    if (
+      draft.startInstant !== null &&
+      Date.parse(draft.endInstant) <= Date.parse(draft.startInstant)
+    ) {
       return { ok: false, reason: 'error', message: 'That end is before the start.' };
     }
   }

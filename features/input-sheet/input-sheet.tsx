@@ -18,6 +18,8 @@ import {
   emptyDraft,
   laneRule,
   resolveCategory,
+  spanIsEmpty,
+  spanKeys,
   type Draft,
   type Prefill,
 } from './draft';
@@ -90,10 +92,12 @@ export function InputSheet({
     const a = draft.annotation;
     const startInstant =
       a && a.time ? wallClockToInstant(a.date, a.time, timeZone).toISOString() : null;
-    const endInstant =
-      a && a.endTime && a.endDate
-        ? wallClockToInstant(a.endDate, a.endTime, timeZone).toISOString()
-        : null;
+    // A span's end: the end clock against a start clock, or by dates alone
+    // the close of the end day. A same-day end without clocks is no span.
+    const span = a && !spanIsEmpty(a) ? spanKeys(a) : null;
+    const endInstant = span?.end
+      ? wallClockToInstant(span.end.slice(0, 10), span.end.slice(11), timeZone).toISOString()
+      : null;
 
     if (editing) {
       startTransition(async () => {

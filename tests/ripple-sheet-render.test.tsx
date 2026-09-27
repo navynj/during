@@ -182,21 +182,32 @@ describe('the annotation (H20c)', () => {
     expect(container.textContent).not.toMatch(/\bnow\b/i);
   });
 
-  it('sets a not-now time as one chip, and removes it back to a plain fragment', async () => {
+  it('places the fragment on today as one editable chip: no Done, a clock only on request', () => {
+    const view = sheet();
+    fireEvent.click(view.getByText('+ Add Time'));
+    const chip = view.container.querySelector('[data-annotation-chip]')!;
+    expect((view.getByLabelText('Date') as HTMLInputElement).value).toBe('2026-09-25');
+    expect(view.queryByText('Done')).toBeNull();
+    expect(view.queryByLabelText('Time')).toBeNull();
+    expect(chip.textContent).toContain('+ add time');
+    // The end lives outside the chip.
+    expect(chip.textContent).not.toContain('+ add end date');
+    expect(view.getByText('+ add end date')).toBeTruthy();
+  });
+
+  it('sets a not-now time, and removes it back to a plain fragment', async () => {
     const view = sheet();
     fireEvent.click(view.getByText('+ Add Time'));
     fireEvent.change(view.getByLabelText('Date'), { target: { value: '2026-09-18' } });
+    fireEvent.click(view.getByText('+ add time'));
     fireEvent.change(view.getByLabelText('Time'), { target: { value: '14:30' } });
-    fireEvent.click(view.getByText('Done'));
-
-    const chip = view.container.querySelector('[data-annotation-chip]')!;
-    expect(chip.textContent).toContain('9. 18 14:30');
 
     fireEvent.change(view.getByLabelText('Note'), { target: { value: 'last week' } });
     fireEvent.click(drop(view));
     await waitFor(() => expect(commits).toHaveLength(1));
     expect(commits[0]).toMatchObject({ occurredOn: '2026-09-18', occurredTime: '14:30' });
     expect(commits[0].startInstant).toBe('2026-09-18T21:30:00.000Z');
+    expect(commits[0].endInstant).toBeNull();
 
     fireEvent.click(view.getByLabelText('Remove the time'));
     expect(view.container.querySelector('[data-annotation-chip]')).toBeNull();
@@ -205,41 +216,76 @@ describe('the annotation (H20c)', () => {
     expect(commits[1]).toMatchObject({ occurredOn: null, occurredTime: null, startInstant: null });
   });
 
-  it('takes a date alone as a date-only fragment', async () => {
+  it('takes a date alone as a date-only fragment: a clock is never required', async () => {
     const view = sheet();
     fireEvent.click(view.getByText('+ Add Time'));
     fireEvent.change(view.getByLabelText('Date'), { target: { value: '2026-08-17' } });
-    fireEvent.click(view.getByText('Done'));
-    expect(view.container.querySelector('[data-annotation-chip]')!.textContent).toContain('8. 17');
 
     fireEvent.change(view.getByLabelText('Note'), { target: { value: 'x' } });
+    expect(drop(view).disabled).toBe(false);
     fireEvent.click(drop(view));
     await waitFor(() => expect(commits).toHaveLength(1));
     expect(commits[0]).toMatchObject({
       occurredOn: '2026-08-17',
       occurredTime: null,
       startInstant: null,
+      endInstant: null,
     });
   });
 
-  it('validates a manual span as end > start, and nothing else', async () => {
+  it('spans by dates alone: an end date with no clock ends at the close of that day', async () => {
     const view = sheet();
     fireEvent.click(view.getByText('+ Add Time'));
+    fireEvent.change(view.getByLabelText('Date'), { target: { value: '2026-08-17' } });
+    fireEvent.click(view.getByText('+ add end date'));
+    expect(view.queryByLabelText('End time')).toBeNull();
+    fireEvent.change(view.getByLabelText('End date'), { target: { value: '2026-08-20' } });
+
+    fireEvent.change(view.getByLabelText('Note'), { target: { value: 'whistler' } });
+    fireEvent.click(drop(view));
+    await waitFor(() => expect(commits).toHaveLength(1));
+    expect(commits[0]).toMatchObject({
+      occurredOn: '2026-08-17',
+      occurredTime: null,
+      startInstant: null,
+      // 23:59 on Aug 20 in Vancouver.
+      endInstant: '2026-08-21T06:59:00.000Z',
+    });
+  });
+
+  it('treats a same-day end without clocks as no span, and an earlier one as backwards', async () => {
+    const view = sheet();
+    fireEvent.click(view.getByText('+ Add Time'));
+    fireEvent.change(view.getByLabelText('Date'), { target: { value: '2026-08-17' } });
+    fireEvent.click(view.getByText('+ add end date'));
+    expect((view.getByLabelText('End date') as HTMLInputElement).value).toBe('2026-08-17');
+
+    fireEvent.change(view.getByLabelText('End date'), { target: { value: '2026-08-16' } });
+    expect(view.getByText('ends before it starts')).toBeTruthy();
+    fireEvent.change(view.getByLabelText('Note'), { target: { value: 'x' } });
+    expect(drop(view).disabled).toBe(true);
+
+    fireEvent.change(view.getByLabelText('End date'), { target: { value: '2026-08-17' } });
+    expect(view.queryByText('ends before it starts')).toBeNull();
+    fireEvent.click(drop(view));
+    await waitFor(() => expect(commits).toHaveLength(1));
+    expect(commits[0]).toMatchObject({ occurredOn: '2026-08-17', endInstant: null });
+  });
+
+  it('validates a clocked span as end > start, and nothing else', async () => {
+    const view = sheet();
+    fireEvent.click(view.getByText('+ Add Time'));
+    fireEvent.click(view.getByText('+ add time'));
     fireEvent.change(view.getByLabelText('Time'), { target: { value: '19:00' } });
-    fireEvent.click(view.getByText('+ end'));
+    fireEvent.click(view.getByText('+ add end date'));
 
     fireEvent.change(view.getByLabelText('End time'), { target: { value: '18:00' } });
     expect(view.getByText('ends before it starts')).toBeTruthy();
-    expect((view.getByText('Done') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(view.getByLabelText('Note'), { target: { value: 'dinner' } });
+    expect(drop(view).disabled).toBe(true);
 
     fireEvent.change(view.getByLabelText('End time'), { target: { value: '21:00' } });
     expect(view.queryByText('ends before it starts')).toBeNull();
-    fireEvent.click(view.getByText('Done'));
-    expect(view.container.querySelector('[data-annotation-chip]')!.textContent).toContain(
-      '19:00 ~ 21:00',
-    );
-
-    fireEvent.change(view.getByLabelText('Note'), { target: { value: 'dinner' } });
     fireEvent.click(drop(view));
     await waitFor(() => expect(commits).toHaveLength(1));
     expect(Date.parse(commits[0].endInstant as string)).toBeGreaterThan(

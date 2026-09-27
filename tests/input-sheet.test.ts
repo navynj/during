@@ -4,6 +4,7 @@ import {
   annotationLabel,
   annotationVerdict,
   draftFrom,
+  spanIsEmpty,
   emptyDraft,
   laneRule,
   resolveCategory,
@@ -114,6 +115,25 @@ describe('the annotation chip (H20c)', () => {
     );
   });
 
+  it('reads a span by dates alone as two dates, and a same-day one as its start', () => {
+    expect(annotationLabel(on({ date: '2026-08-17', endDate: '2026-08-20' }), TODAY)).toBe(
+      '8. 17 ~ 8. 20',
+    );
+    expect(annotationLabel(on({ date: '2026-08-17', endDate: '2026-08-17' }), TODAY)).toBe('8. 17');
+    expect(spanIsEmpty(on({ date: '2026-08-17', endDate: '2026-08-17' }))).toBe(true);
+    expect(spanIsEmpty(on({ date: '2026-08-17', endDate: '2026-08-20' }))).toBe(false);
+    expect(spanIsEmpty(on({ time: '19:00', endDate: TODAY, endTime: '21:00' }))).toBe(false);
+  });
+
+  it('validates a span by dates alone as end day after start day', () => {
+    expect(annotationVerdict(on({ date: '2026-08-17', endDate: '2026-08-20' }))).toBe('ok');
+    expect(annotationVerdict(on({ date: '2026-08-17', endDate: '2026-08-17' }))).toBe('ok');
+    expect(annotationVerdict(on({ date: '2026-08-17', endDate: '2026-08-16' }))).toBe('backwards');
+    // A clock at the start with an end date and no end clock: same clock, later day.
+    expect(annotationVerdict(on({ time: '19:00', endDate: '2026-09-26' }))).toBe('ok');
+    expect(annotationVerdict(on({ time: '19:00', endDate: TODAY }))).toBe('backwards');
+  });
+
   it('validates end > start, and nothing else', () => {
     expect(annotationVerdict(on({ time: '19:00', endDate: TODAY, endTime: '21:00' }))).toBe('ok');
     expect(annotationVerdict(on({ time: '19:00', endDate: TODAY, endTime: '18:00' }))).toBe(
@@ -164,5 +184,25 @@ describe('the draft that edits a record', () => {
       endTime: '21:00',
     });
     expect(d.splashId).toBe('s1');
+  });
+
+  it('reads a span by dates alone back as dates with no clock', () => {
+    // The close of Aug 20 in Vancouver, stored as the instant it is.
+    const d = draftFrom(
+      {
+        ...base,
+        occurred_on: '2026-08-17',
+        occurred_time: null,
+        started_at: null,
+        ended_at: '2026-08-21T06:59:00.000Z',
+      },
+      'America/Vancouver',
+    );
+    expect(d.annotation).toEqual({
+      date: '2026-08-17',
+      time: null,
+      endDate: '2026-08-20',
+      endTime: null,
+    });
   });
 });

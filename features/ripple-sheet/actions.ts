@@ -50,11 +50,16 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
   if (edit.occurredTime !== null && edit.occurredOn === null) {
     return { ok: false, reason: 'error', message: 'A time needs a date.' };
   }
+  // An end needs a beginning: a clock to follow, or by dates alone a date
+  // (the row's own rule, ripples_ended_needs_date).
   if (edit.endInstant !== null) {
-    if (edit.startInstant === null) {
+    if (edit.occurredOn === null) {
       return { ok: false, reason: 'error', message: 'An end needs a start.' };
     }
-    if (Date.parse(edit.endInstant) <= Date.parse(edit.startInstant)) {
+    if (
+      edit.startInstant !== null &&
+      Date.parse(edit.endInstant) <= Date.parse(edit.startInstant)
+    ) {
       return { ok: false, reason: 'error', message: 'That end is before the start.' };
     }
   }
@@ -74,7 +79,9 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
   );
   if (!categoryId) return { ok: false, reason: 'error', message: 'There is no lane to drop into.' };
 
-  const endedAt = edit.startInstant === null ? null : (edit.endInstant ?? edit.startInstant);
+  // A point ends where it starts; a span ends where it says — with a clock,
+  // or by dates alone; an unannotated fragment has no instant at all (H20c).
+  const endedAt = edit.endInstant ?? edit.startInstant;
 
   const { error } = await supabase
     .from('ripples')

@@ -113,16 +113,17 @@ export function draftFrom(
   let annotation: Annotation | null = null;
   if (ripple.occurred_on) {
     const time = ripple.occurred_time ? ripple.occurred_time.slice(0, 5) : null;
+    // With a clock, a span is an end past the start instant. Without one, an
+    // end is a span by dates alone: the close of its end day, read back as
+    // a date with no clock.
     const spans =
-      time !== null &&
       ripple.ended_at !== null &&
-      ripple.started_at !== null &&
-      ripple.ended_at !== ripple.started_at;
+      (time === null || (ripple.started_at !== null && ripple.ended_at !== ripple.started_at));
     annotation = {
       date: ripple.occurred_on,
       time,
       endDate: spans ? wallDate(ripple.ended_at!, timeZone) : null,
-      endTime: spans ? wallTime(ripple.ended_at!, timeZone) : null,
+      endTime: spans && time !== null ? wallTime(ripple.ended_at!, timeZone) : null,
     };
   }
 
@@ -151,17 +152,39 @@ export function annotationLabel(annotation: Annotation, today: IsoDate): string 
         ? `${day(annotation.date)} ${annotation.time}`
         : day(annotation.date);
 
-  if (!annotation.endTime || !annotation.endDate) return start;
-  if (annotation.endDate === annotation.date) return `${start} ~ ${annotation.endTime}`;
+  if (!annotation.endDate) return start;
+  if (annotation.endDate === annotation.date) {
+    // A same-day end is a span only with clocks; by dates alone it is nothing.
+    return annotation.endTime ? `${start} ~ ${annotation.endTime}` : start;
+  }
   return `${annotation.date === today ? 'Today' : day(annotation.date)} ~ ${day(annotation.endDate)}`;
 }
 
+/**
+ * The keys a span is compared on. Without clocks a day runs from its open to
+ * its close, so a same-day end by dates alone is not backwards — it is
+ * simply no span, and the commit drops it.
+ */
+export function spanKeys(annotation: Annotation): { start: string; end: string | null } {
+  const start = `${annotation.date}T${annotation.time ?? '00:00'}`;
+  if (!annotation.endDate) return { start, end: null };
+  const endClock = annotation.time === null ? '23:59' : (annotation.endTime ?? annotation.time);
+  return { start, end: `${annotation.endDate}T${endClock}` };
+}
+
+/** True when the end adds nothing: the same day, no clocks. */
+export function spanIsEmpty(annotation: Annotation): boolean {
+  return (
+    annotation.endDate === annotation.date &&
+    annotation.time === null &&
+    annotation.endTime === null
+  );
+}
+
 /** End after start, and nothing else (H20c: the present is no longer policed). */
-export function annotationVerdict(annotation: Annotation): 'ok' | 'backwards' | 'incomplete' {
-  if (!annotation.endTime && !annotation.endDate) return 'ok';
-  if (!annotation.time || !annotation.endTime || !annotation.endDate) return 'incomplete';
-  const start = `${annotation.date}T${annotation.time}`;
-  const end = `${annotation.endDate}T${annotation.endTime}`;
+export function annotationVerdict(annotation: Annotation): 'ok' | 'backwards' {
+  const { start, end } = spanKeys(annotation);
+  if (end === null) return 'ok';
   return end > start ? 'ok' : 'backwards';
 }
 

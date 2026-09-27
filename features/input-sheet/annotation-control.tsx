@@ -5,16 +5,19 @@ import { X } from 'lucide-react';
 
 import type { IsoDate } from '@/lib/time';
 
-import { annotationLabel, annotationVerdict, type Annotation } from './draft';
+import { annotationVerdict, type Annotation } from './draft';
 
 /**
  * `+ Add Time` (H20c): an `occurred` annotation for **not-now only**. Unset
  * is the default and means a plain posted fragment; there is no *now*
  * option, because occurred = now says nothing that posting did not already.
  *
- * The picker is a date (default today), an optional time, and `+ end` for a
- * manual span, validated only as end > start. A set annotation collapses to
- * one removable chip.
+ * Tapping it places the fragment on today, as one chip that is also the
+ * editor — a date, and `+ add time` inside the chip for the optional clock.
+ * Time is never required: a date alone is a date-only fragment. Outside the
+ * chip, `+ add end date` makes a span, by dates alone or, when the start has
+ * a clock, with an end clock too; validated only as end after start. There
+ * is no Done: what the chip shows is what will be committed.
  */
 export function AnnotationControl({
   annotation,
@@ -25,128 +28,109 @@ export function AnnotationControl({
   today: IsoDate;
   onChange: (next: Annotation | null) => void;
 }) {
-  const [picking, setPicking] = useState(false);
+  // The clock field is shown once asked for, even while still empty.
+  const [clockOpen, setClockOpen] = useState(annotation?.time !== null);
 
-  if (annotation && !picking) {
+  if (!annotation) {
     return (
+      <QuietAffordance
+        onClick={() => {
+          setClockOpen(false);
+          onChange({ date: today, time: null, endDate: null, endTime: null });
+        }}
+        label="+ Add Time"
+      />
+    );
+  }
+
+  const set = (patch: Partial<Annotation>): void => onChange({ ...annotation, ...patch });
+  const verdict = annotationVerdict(annotation);
+  const field = 'text-ink rounded bg-white px-1 py-px tabular-nums';
+
+  return (
+    <span data-annotation-picker className="flex flex-wrap items-center gap-2">
       <span
         data-annotation-chip
-        className="bg-pool-100 text-pool-500 inline-flex h-[23px] items-center gap-1 rounded-[5px] px-2 text-[10px] tabular-nums"
+        className="bg-pool-100 text-pool-500 inline-flex h-[23px] items-center gap-1 rounded-[5px] px-1.5 text-[10px] tabular-nums"
       >
-        <button type="button" onClick={() => setPicking(true)} className="text-ink">
-          {annotationLabel(annotation, today)}
-        </button>
+        <input
+          type="date"
+          lang="en"
+          aria-label="Date"
+          value={annotation.date}
+          onChange={(event) => event.target.value && set({ date: event.target.value })}
+          className={field}
+        />
+        {clockOpen || annotation.time !== null ? (
+          <input
+            type="time"
+            lang="en"
+            aria-label="Time"
+            value={annotation.time ?? ''}
+            onChange={(event) =>
+              set({
+                time: event.target.value || null,
+                // An end clock only makes sense against a start clock.
+                ...(event.target.value ? {} : { endTime: null }),
+              })
+            }
+            className={field}
+          />
+        ) : (
+          <button type="button" onClick={() => setClockOpen(true)} className="text-main-900">
+            + add time
+          </button>
+        )}
         <button type="button" aria-label="Remove the time" onClick={() => onChange(null)}>
           <X aria-hidden size={11} />
         </button>
       </span>
-    );
-  }
 
-  if (!picking) {
-    return <QuietAffordance onClick={() => setPicking(true)} label="+ Add Time" />;
-  }
-
-  const draft: Annotation = annotation ?? { date: today, time: null, endDate: null, endTime: null };
-  const verdict = annotationVerdict(draft);
-  const set = (patch: Partial<Annotation>): void => onChange({ ...draft, ...patch });
-
-  return (
-    <div
-      data-annotation-picker
-      className="bg-pool-100 flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 text-xs"
-    >
-      <input
-        type="date"
-        lang="en"
-        aria-label="Date"
-        value={draft.date}
-        max={undefined}
-        onChange={(event) => event.target.value && set({ date: event.target.value })}
-        className="text-ink rounded bg-white px-2 py-1 tabular-nums"
-      />
-      <input
-        type="time"
-        lang="en"
-        aria-label="Time"
-        value={draft.time ?? ''}
-        onChange={(event) =>
-          set({
-            time: event.target.value || null,
-            // An end is a time, so losing the time loses the end with it.
-            ...(event.target.value ? {} : { endDate: null, endTime: null }),
-          })
-        }
-        className="text-ink rounded bg-white px-2 py-1 tabular-nums"
-      />
-
-      {draft.time && !draft.endTime ? (
-        <button
-          type="button"
-          onClick={() => set({ endDate: draft.date, endTime: draft.time })}
-          className="text-main-900 font-medium"
+      {annotation.endDate === null ? (
+        <QuietAffordance
+          onClick={() => set({ endDate: annotation.date, endTime: annotation.time })}
+          label="+ add end date"
+        />
+      ) : (
+        <span
+          data-annotation-end
+          className="bg-pool-100 text-pool-500 inline-flex h-[23px] items-center gap-1 rounded-[5px] px-1.5 text-[10px] tabular-nums"
         >
-          + end
-        </button>
-      ) : null}
-
-      {draft.endTime ? (
-        <>
-          <span aria-hidden className="text-pool-500">
-            ~
-          </span>
+          <span aria-hidden>~</span>
           <input
             type="date"
             lang="en"
             aria-label="End date"
-            value={draft.endDate ?? draft.date}
+            value={annotation.endDate}
             onChange={(event) => event.target.value && set({ endDate: event.target.value })}
-            className="text-ink rounded bg-white px-2 py-1 tabular-nums"
+            className={field}
           />
-          <input
-            type="time"
-            lang="en"
-            aria-label="End time"
-            value={draft.endTime}
-            onChange={(event) => event.target.value && set({ endTime: event.target.value })}
-            className="text-ink rounded bg-white px-2 py-1 tabular-nums"
-          />
+          {annotation.time !== null ? (
+            <input
+              type="time"
+              lang="en"
+              aria-label="End time"
+              value={annotation.endTime ?? ''}
+              onChange={(event) => set({ endTime: event.target.value || null })}
+              className={field}
+            />
+          ) : null}
           <button
             type="button"
             aria-label="Remove the end"
             onClick={() => set({ endDate: null, endTime: null })}
-            className="text-pool-500"
           >
-            <X aria-hidden size={12} />
+            <X aria-hidden size={11} />
           </button>
-        </>
-      ) : null}
+        </span>
+      )}
 
       {verdict === 'backwards' ? (
-        <span role="alert" className="text-pool-500">
+        <span role="alert" className="text-pool-500 text-xs">
           ends before it starts
         </span>
       ) : null}
-
-      <button
-        type="button"
-        disabled={verdict !== 'ok'}
-        onClick={() => setPicking(false)}
-        className="text-main-900 ml-auto font-medium disabled:opacity-40"
-      >
-        Done
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange(null);
-          setPicking(false);
-        }}
-        className="text-pool-500"
-      >
-        Clear
-      </button>
-    </div>
+    </span>
   );
 }
 
