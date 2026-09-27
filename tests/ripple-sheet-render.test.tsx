@@ -249,6 +249,15 @@ describe('the annotation (H20c)', () => {
 });
 
 describe('a board in the sheet (H20d, H20e)', () => {
+  it('hands the note being typed over to New splash', () => {
+    const notes: string[] = [];
+    const view = sheet({ onNewSplash: (note) => notes.push(note) });
+    fireEvent.change(view.getByLabelText('Note'), { target: { value: 'first words' } });
+    fireEvent.click(view.getByText('+ Add to Splash'));
+    fireEvent.click(view.getByText('+ New splash'));
+    expect(notes).toEqual(['first words']);
+  });
+
   it('attaches from the picker and detaches from the chip', async () => {
     const view = sheet();
     fireEvent.click(view.getByText('+ Add to Splash'));

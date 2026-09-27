@@ -121,7 +121,8 @@ Swimmers / Lanes / Splash
 **The splash sheet** — from the tab bar's `+ with wave` or the `+ Drop New Splash` ghost.
 - **Top zone**: `Add Lanes` (optional, several allowed).
 - **Title field** autofocused, placeholder *Drop your splash*; `+ Add Date` beneath it (a date and an optional end date, one removable chip). A declared range is descriptive, never a deadline.
-- **Full-width Drop** — one commit verb for both sheets; the placeholder differentiates. After commit the ripple sheet opens preset to the new board, so creating and first-throwing is one motion; dismissing it is fine.
+- **First ripple field** beneath the date, placeholder *Drop your first words here*: words typed there are thrown into the new board in the same commit, lane inherited (H20e). Opened from the ripple sheet's *New splash*, it carries the note that was being typed there.
+- **Full-width Drop** — one commit verb for both sheets; the placeholder differentiates. With a first ripple the sheet simply closes; left empty, the ripple sheet opens preset to the new board, so creating and first-throwing is one motion either way; dismissing it is fine.
 - **Editing a board** is the same sheet, opened from the splash screen's Edit and preset to the board; the verb is **Update**, and a changed lane declaration governs by inheritance from then on without rewriting what was already thrown.
 
 **Ripple detail half-sheet (H17):** tapping a settled Ripple opens it — category · note, its annotation (date, time, and end plus duration for a span), media, its splash, and the **lock toggle** (Everyone / Only me), which is where audience lives in P1 (H20g). Edit and Delete live here and nowhere else. **No view count and no person-paging in P1**: both need an audience.

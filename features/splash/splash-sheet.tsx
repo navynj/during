@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { CategoryChip } from '@/components/ui/chips/category-chip';
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { QuietAffordance } from '@/features/input-sheet/annotation-control';
+import { commitRipple } from '@/features/input-sheet/commit';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
 
@@ -26,14 +27,19 @@ export type EditableSplash = {
  * on top, an autofocused title, `+ Add Date` beneath it, one full-width Drop.
  * Same commit verb as the ripple sheet; the placeholder differentiates.
  *
- * After commit the host opens the ripple sheet preset to the new board, so
- * creating and first-throwing is one motion. The same sheet edits a board
- * (`editing`): preset to it, the verb is Update, and the host simply refreshes.
+ * Below the date, a **first ripple** field: words typed there are thrown
+ * into the new board in the same commit, its lane inherited (H20e), so
+ * creating and first-throwing is one motion without a second sheet. Left
+ * empty, the host opens the ripple sheet preset to the new board instead.
+ * Opened from the ripple sheet's *New splash*, the field carries the note
+ * that was being typed there. The same sheet edits a board (`editing`):
+ * preset to it, the verb is Update, no first ripple, and the host refreshes.
  */
 export function SplashSheet({
   categories,
   today,
   editing = null,
+  firstNote = '',
   onClose,
   onCommitted,
 }: {
@@ -41,10 +47,14 @@ export function SplashSheet({
   today: IsoDate;
   /** Present in edit mode: the same sheet, correcting instead of opening. */
   editing?: EditableSplash | null;
+  /** Words carried over from the ripple sheet's *New splash*. */
+  firstNote?: string;
   onClose: () => void;
-  onCommitted: (splash: Splash) => void;
+  /** `firstRippleThrown`: the board already holds a fragment; no handover. */
+  onCommitted: (splash: Splash, outcome: { firstRippleThrown: boolean }) => void;
 }) {
   const [title, setTitle] = useState(editing?.title ?? '');
+  const [note, setNote] = useState(editing ? '' : firstNote);
   const [laneIds, setLaneIds] = useState<string[]>(editing?.laneIds ?? []);
   const [range, setRange] = useState<{ start: IsoDate; end: IsoDate | null } | null>(
     editing?.declaredStart ? { start: editing.declaredStart, end: editing.declaredEnd } : null,
@@ -174,6 +184,19 @@ export function SplashSheet({
             />
           )}
 
+          {/* The first fragment, thrown with the board. Not offered on an
+              edit: a board's later fragments come from its own screen. */}
+          {!editing ? (
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Drop your first words here"
+              rows={2}
+              aria-label="First ripple"
+              className="text-ink placeholder:text-ink mt-2 w-full resize-none text-center text-base outline-none placeholder:opacity-20"
+            />
+          ) : null}
+
           {message ? (
             <p role="alert" className="text-pool-500 text-sm">
               {message}
@@ -196,8 +219,29 @@ export function SplashSheet({
                 const result = editing
                   ? await updateSplash(editing.id, input)
                   : await createSplash(input);
-                if (result.ok) onCommitted(result.splash);
-                else setMessage(result.message);
+                if (!result.ok) {
+                  setMessage(result.message);
+                  return;
+                }
+                if (editing || note.trim().length === 0) {
+                  onCommitted(result.splash, { firstRippleThrown: false });
+                  return;
+                }
+                // The first fragment: no lane chosen, so the board's own
+                // rule and the residual lane decide on the server (H20e,
+                // H20i). If it fails the board still exists, and the host
+                // hands over to the ripple sheet as if nothing was typed.
+                const thrown = await commitRipple({
+                  categoryId: null,
+                  note,
+                  media: [],
+                  occurredOn: null,
+                  occurredTime: null,
+                  startInstant: null,
+                  endInstant: null,
+                  splashId: result.splash.id,
+                });
+                onCommitted(result.splash, { firstRippleThrown: thrown.ok });
               })
             }
             className="bg-main-900 w-full rounded-full py-2.5 text-xl font-medium text-white disabled:opacity-50"

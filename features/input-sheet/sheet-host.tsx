@@ -18,7 +18,7 @@ import { useInputSheet } from './sheet-provider';
  * dismissing that second sheet is fine.
  */
 export function SheetHost({ context }: { context: SheetContext }) {
-  const { sheet, openSheet, openSplashSheet, closeSheet } = useInputSheet();
+  const { sheet, openSheet, newSplashFrom, closeSheet } = useInputSheet();
   const router = useRouter();
 
   if (!sheet) return null;
@@ -29,11 +29,13 @@ export function SheetHost({ context }: { context: SheetContext }) {
         categories={context.categories}
         today={context.today}
         editing={sheet.editing}
+        firstNote={sheet.firstNote}
         onClose={closeSheet}
-        onCommitted={(splash) => {
+        onCommitted={(splash, { firstRippleThrown }) => {
           router.refresh();
-          // A correction is done; an opening hands over to the first throw.
-          if (sheet.editing) closeSheet();
+          // A correction is done, and so is a board that already holds its
+          // first fragment; an empty opening hands over to the first throw.
+          if (sheet.editing || firstRippleThrown) closeSheet();
           else openSheet({ splash: summarizeSplash(splash, [], context.timeZone, new Date()) });
         }}
       />
@@ -45,7 +47,7 @@ export function SheetHost({ context }: { context: SheetContext }) {
       context={context}
       prefill={sheet.prefill}
       onClose={closeSheet}
-      onNewSplash={openSplashSheet}
+      onNewSplash={newSplashFrom}
       onCommitted={() => {
         closeSheet();
         // The row is new, so the page has to re-read before it can show it.

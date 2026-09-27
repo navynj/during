@@ -21,6 +21,14 @@ vi.mock('@/features/splash/actions', () => ({
   },
 }));
 
+const thrown: Record<string, unknown>[] = [];
+vi.mock('@/features/input-sheet/commit', () => ({
+  commitRipple: (draft: Record<string, unknown>) => {
+    thrown.push(draft);
+    return Promise.resolve({ ok: true, rippleId: 'r-first' });
+  },
+}));
+
 import { SplashSheet } from '@/features/splash/splash-sheet';
 import type { MyCategory } from '@/lib/queries/profile';
 
@@ -44,6 +52,7 @@ const LANES = [category({}), category({ id: 'c-mood', name: 'Mood', icon: 'ðŸŒ¤ï
 beforeEach(() => {
   created.length = 0;
   updated.length = 0;
+  thrown.length = 0;
 });
 afterEach(cleanup);
 
@@ -52,6 +61,87 @@ function sheet(onCommitted: (splash: unknown) => void = () => {}) {
     <SplashSheet categories={LANES} today={TODAY} onClose={() => {}} onCommitted={onCommitted} />,
   );
 }
+
+describe('the first ripple is thrown with the board (SPEC 6)', () => {
+  it('commits the words in the first-ripple field into the new board, lane inherited', async () => {
+    const outcomes: unknown[] = [];
+    const view = render(
+      <SplashSheet
+        categories={LANES}
+        today={TODAY}
+        onClose={() => {}}
+        onCommitted={(_, outcome) => outcomes.push(outcome)}
+      />,
+    );
+    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler' } });
+    fireEvent.change(view.getByLabelText('First ripple'), { target: { value: 'checked in' } });
+    fireEvent.click(view.getByText('Drop'));
+
+    await waitFor(() => expect(outcomes).toHaveLength(1));
+    expect(created).toHaveLength(1);
+    expect(thrown).toHaveLength(1);
+    // No lane chosen here: the board's rule and the residual lane decide.
+    expect(thrown[0]).toMatchObject({
+      note: 'checked in',
+      splashId: 's-new',
+      categoryId: null,
+      media: [],
+      occurredOn: null,
+    });
+    expect(outcomes[0]).toEqual({ firstRippleThrown: true });
+  });
+
+  it('throws nothing when the field is empty, and hands over as before', async () => {
+    const outcomes: unknown[] = [];
+    const view = render(
+      <SplashSheet
+        categories={LANES}
+        today={TODAY}
+        onClose={() => {}}
+        onCommitted={(_, outcome) => outcomes.push(outcome)}
+      />,
+    );
+    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler' } });
+    fireEvent.click(view.getByText('Drop'));
+    await waitFor(() => expect(outcomes).toHaveLength(1));
+    expect(thrown).toHaveLength(0);
+    expect(outcomes[0]).toEqual({ firstRippleThrown: false });
+  });
+
+  it('carries the note typed in the ripple sheet when opened from New splash', () => {
+    const view = render(
+      <SplashSheet
+        categories={LANES}
+        today={TODAY}
+        firstNote="parannoul on repeat"
+        onClose={() => {}}
+        onCommitted={() => {}}
+      />,
+    );
+    expect((view.getByLabelText('First ripple') as HTMLTextAreaElement).value).toBe(
+      'parannoul on repeat',
+    );
+  });
+
+  it('offers no first ripple on an edit', () => {
+    const view = render(
+      <SplashSheet
+        categories={LANES}
+        today={TODAY}
+        editing={{
+          id: 's1',
+          title: 'Whistler',
+          laneIds: [],
+          declaredStart: null,
+          declaredEnd: null,
+        }}
+        onClose={() => {}}
+        onCommitted={() => {}}
+      />,
+    );
+    expect(view.queryByLabelText('First ripple')).toBeNull();
+  });
+});
 
 describe('the splash sheet edits a board', () => {
   it('opens preset to the board and commits Update through updateSplash', async () => {
@@ -119,7 +209,9 @@ describe('the splash sheet (SPEC 6)', () => {
       declaredEnd: null,
     });
     // The host opens the ripple sheet preset to the new board from here.
-    expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: 's-new' }));
+    expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: 's-new' }), {
+      firstRippleThrown: false,
+    });
   });
 
   it('declares several lanes, selected in ink (H20e, H20f)', async () => {

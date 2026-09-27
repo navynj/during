@@ -13,12 +13,16 @@ import type { Prefill } from './draft';
  * splash screen's Edit opens it preset to that board.
  */
 export type OpenSheet =
-  { kind: 'ripple'; prefill: Prefill } | { kind: 'splash'; editing: EditableSplash | null } | null;
+  | { kind: 'ripple'; prefill: Prefill }
+  | { kind: 'splash'; editing: EditableSplash | null; firstNote: string }
+  | null;
 
 type SheetApi = {
   sheet: OpenSheet;
   openSheet: (prefill?: Prefill) => void;
   openSplashSheet: () => void;
+  /** The ripple sheet's *New splash*: the splash editor, the note carried. */
+  newSplashFrom: (note: string) => void;
   editSplash: (splash: EditableSplash) => void;
   closeSheet: () => void;
 };
@@ -32,16 +36,23 @@ export function InputSheetProvider({ children }: { children: ReactNode }) {
     (prefill: Prefill = {}) => setSheet({ kind: 'ripple', prefill }),
     [],
   );
-  const openSplashSheet = useCallback(() => setSheet({ kind: 'splash', editing: null }), []);
+  const openSplashSheet = useCallback(
+    () => setSheet({ kind: 'splash', editing: null, firstNote: '' }),
+    [],
+  );
+  const newSplashFrom = useCallback(
+    (note: string) => setSheet({ kind: 'splash', editing: null, firstNote: note }),
+    [],
+  );
   const editSplash = useCallback(
-    (splash: EditableSplash) => setSheet({ kind: 'splash', editing: splash }),
+    (splash: EditableSplash) => setSheet({ kind: 'splash', editing: splash, firstNote: '' }),
     [],
   );
   const closeSheet = useCallback(() => setSheet(null), []);
 
   const value = useMemo(
-    () => ({ sheet, openSheet, openSplashSheet, editSplash, closeSheet }),
-    [sheet, openSheet, openSplashSheet, editSplash, closeSheet],
+    () => ({ sheet, openSheet, openSplashSheet, newSplashFrom, editSplash, closeSheet }),
+    [sheet, openSheet, openSplashSheet, newSplashFrom, editSplash, closeSheet],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

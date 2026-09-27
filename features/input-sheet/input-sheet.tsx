@@ -56,8 +56,8 @@ export function InputSheet({
   editing?: { ripple: RippleWithCategory } | null;
   onClose: () => void;
   onCommitted: (rippleId: string) => void;
-  /** The picker's *New splash*: hands over to the splash sheet. */
-  onNewSplash?: () => void;
+  /** The picker's *New splash*: hands over to the splash editor, note and all. */
+  onNewSplash?: (note: string) => void;
 }) {
   const { categories, timeZone, today } = context;
   // A board created a moment ago rides in on the prefill until the page's
@@ -206,7 +206,7 @@ export function InputSheet({
             splashes={splashes}
             selected={splash}
             onSelect={(id) => setDraft((d) => ({ ...d, splashId: id }))}
-            onNew={() => onNewSplash?.()}
+            onNew={() => onNewSplash?.(draft.note)}
           />
 
           {/* Blue means action: the one filled thing here commits (H20f). */}
