@@ -50,7 +50,19 @@ DURING_DDL_APPROVED='drop the btree_gist exclusion constraint by migration (it n
 
 Afterwards the catalogue check below reads one constraint fewer and one
 policy more (`splashes belong to their owner`); the four triggers are
-unchanged, dormant with inner ripples. Existing rows are untouched: every
+unchanged, dormant with inner ripples.
+
+**`0006_date_only_span` is pending too.** It drops the
+`ripples_ended_needs_time` check and adds `ripples_ended_needs_date` in its
+place, so a fragment can span to an end date with no clock (time is
+optional). Approved and applied to the local stack on 2026-09-27; the
+DB-backed `date-only-span` suite covers it. Push it with today's backup and
+the approval passed through:
+
+```bash
+pnpm backup
+DURING_DDL_APPROVED='drop the ripples_ended_needs_time check by migration. time is optional. for ripple.' pnpm db:push
+``` Existing rows are untouched: every
 one keeps its `occurred_on`, and only fragments written from now on can be
 unannotated. The Focus lane retires by hand in-app once it is empty; a lane
 holding records refuses deletion, so nothing here moves a record.
