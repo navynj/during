@@ -31,15 +31,13 @@ function bar() {
 }
 
 describe('the tab bar (D3, H21)', () => {
-  it('is Home / Sessions / Lanes / Locker and the FAB, with no dead seat', () => {
+  it('is Home / Locker and the FAB, with no dead seat (review: Lanes retired, sessions are a sheet)', () => {
     const { container } = bar();
     expect([...container.querySelectorAll('nav a')].map((a) => a.textContent)).toEqual([
       'Home',
-      'Sessions',
-      'Lanes',
       'Locker',
     ]);
-    expect(container.textContent).not.toMatch(/pools|friends/i);
+    expect(container.textContent).not.toMatch(/pools|friends|lanes|sessions/i);
     expect(container.querySelectorAll('nav button')).toHaveLength(1);
     expect(container.querySelector('nav svg path[d*="M"]')).not.toBeNull();
   });
@@ -51,22 +49,20 @@ describe('the tab bar (D3, H21)', () => {
     expect(getByLabelText('Drop a splash').className).toContain('bg-main-900');
   });
 
-  it('keeps Home lit on a post’s page and Sessions lit on a shelf', () => {
-    pathname = '/splash/s1';
-    let view = bar();
-    expect(view.getByText('Home').closest('a')!.getAttribute('aria-current')).toBe('page');
-    cleanup();
-
-    pathname = '/sessions/ss1';
-    view = bar();
-    expect(view.getByText('Sessions').closest('a')!.getAttribute('aria-current')).toBe('page');
-    expect(view.getByText('Home').closest('a')!.getAttribute('aria-current')).toBeNull();
+  it('keeps Home lit on a post’s page and on a shelf: both are reached from Home', () => {
+    for (const where of ['/splash/s1', '/sessions/ss1']) {
+      pathname = where;
+      const view = bar();
+      expect(view.getByText('Home').closest('a')!.getAttribute('aria-current')).toBe('page');
+      expect(view.getByText('Locker').closest('a')!.getAttribute('aria-current')).toBeNull();
+      cleanup();
+    }
   });
 
   it('fades an inactive tab as one item, in the chrome colour', () => {
     const { getByText } = bar();
-    const lanes = getByText('Lanes').closest('a')!;
-    expect(lanes.className).toContain('opacity-20');
-    expect(lanes.className).toContain('text-main-900');
+    const locker = getByText('Locker').closest('a')!;
+    expect(locker.className).toContain('opacity-20');
+    expect(locker.className).toContain('text-main-900');
   });
 });

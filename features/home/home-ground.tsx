@@ -3,10 +3,13 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
-import { filterByLane, laneCounts, type Seat } from '@/features/sessions/shelves';
+import { CategorySheet } from '@/features/lanes/category-sheet';
+import { SessionsSheet } from '@/features/sessions/sessions-sheet';
+import { filterByLane, laneCounts, type Seat, type Session } from '@/features/sessions/shelves';
 import type { SplashSummary } from '@/features/splash/summary';
 import { EMPTY } from '@/lib/empty-states';
 import type { MyCategory } from '@/lib/queries/profile';
+import type { IsoDate } from '@/lib/time';
 
 import { LaneHeader, LaneRopes } from './lane-header';
 import { MonthScrubber } from './month-scrubber';
@@ -19,9 +22,10 @@ const RING_MS = 1800;
 /**
  * Home, the water ground (SPEC 5, H21c, H21d; `_docs/mockups/home-ground.png`):
  * one solid #0507C9 surface scoped to one month. The lane header across the
- * top, ropes through the empty water, the post grid oldest-at-top, the month
- * scrubber beneath it, and the pinned bar above the tab bar. The view opens
- * scrolled to the bottom — the present-and-writing zone.
+ * top (the lanes view, with the seat of a new lane at its end), ropes through
+ * the empty water, the post grid oldest-at-top, the month scrubber beneath it
+ * with the `=` that opens the sessions sheet, and the pinned bar above the tab
+ * bar. The view opens scrolled to the bottom — the present-and-writing zone.
  */
 export function HomeGround({
   month,
@@ -30,6 +34,10 @@ export function HomeGround({
   seats,
   pinned,
   categories,
+  sessions,
+  customCounts,
+  earliestYear,
+  today,
 }: {
   month: string;
   /** Newest first. */
@@ -38,8 +46,14 @@ export function HomeGround({
   seats: Seat[];
   pinned: SplashSummary[];
   categories: MyCategory[];
+  sessions: Session[];
+  customCounts: Record<string, number>;
+  earliestYear: number;
+  today: IsoDate;
 }) {
   const [laneId, setLaneId] = useState<string | null>(null);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [newLane, setNewLane] = useState(false);
   const { justDropped, clearDropped } = useInputSheet();
   // The signature moment (SPEC 6): once the new post's pill is on this
   // ground, the ripple plays there once; the memory of it clears after.
@@ -73,6 +87,7 @@ export function HomeGround({
             counts={laneCounts(seats)}
             selectedId={laneId}
             onSelect={setLaneId}
+            onCreate={() => setNewLane(true)}
           />
           <LaneRopes lanes={categories.length} />
         </div>
@@ -85,10 +100,29 @@ export function HomeGround({
           <SplashGrid seats={shown} month={month} categories={categories} ringAt={ringAt} />
         )}
 
-        <MonthScrubber months={months} counts={counts} scoped={month} />
+        <MonthScrubber
+          months={months}
+          counts={counts}
+          scoped={month}
+          onManage={() => setSessionsOpen(true)}
+        />
 
         <PinnedBar pinned={pinned} categories={categories} month={month} />
       </div>
+
+      {sessionsOpen ? (
+        <SessionsSheet
+          sessions={sessions}
+          counts={Object.fromEntries(counts)}
+          customCounts={customCounts}
+          categories={categories}
+          earliestYear={earliestYear}
+          today={today}
+          onClose={() => setSessionsOpen(false)}
+        />
+      ) : null}
+
+      {newLane ? <CategorySheet category={null} onClose={() => setNewLane(false)} /> : null}
     </div>
   );
 }

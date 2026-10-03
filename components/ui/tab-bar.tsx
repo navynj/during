@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus, Rows3, ShelvingUnit, Waves, type LucideIcon } from 'lucide-react';
+import { Home, Plus, ShelvingUnit, type LucideIcon } from 'lucide-react';
 
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
@@ -10,15 +10,12 @@ import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 /**
  * D3: tab slots are full by design and the bar grows only as screens ship.
  * Pools and Friends are reserved seats — a dead tab is forbidden, so this
- * list is the shipped surface, not a plan. Home / Sessions / Lanes / Locker
- * (H21).
+ * list is the shipped surface, not a plan. Home / Locker (H21, review): the
+ * lanes view is Home's header, and session management is the sheet the
+ * scrubber's `=` opens.
  */
 const TABS: ReadonlyArray<{ href: string; label: string; icon: LucideIcon }> = [
   { href: '/', label: 'Home', icon: Home },
-  // A shelf of posts: rows, laid horizontally in the eye.
-  { href: '/sessions', label: 'Sessions', icon: Rows3 },
-  // Lanes are divisions of the water, which is what the glyph draws.
-  { href: '/lanes', label: 'Lanes', icon: Waves },
   // lucide calls the shelves glyph ShelvingUnit.
   { href: '/locker', label: 'Locker', icon: ShelvingUnit },
 ];
@@ -28,7 +25,7 @@ export function TabBar() {
 
   return (
     <nav
-      className="sticky bottom-0 z-20 rounded-t-[28px] bg-white"
+      className="sticky bottom-0 z-20 rounded-t-[40px] bg-white"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* A fixed height, so anything sitting exactly on top of it can say so. */}
@@ -37,9 +34,12 @@ export function TabBar() {
       >
         <div className="flex items-center gap-7">
           {TABS.map((tab) => {
+            // A post's page and a shelf are reached from Home, so Home stays lit.
             const active =
               tab.href === '/'
-                ? pathname === '/' || pathname.startsWith('/splash')
+                ? pathname === '/' ||
+                  pathname.startsWith('/splash') ||
+                  pathname.startsWith('/sessions')
                 : pathname.startsWith(tab.href);
             const Icon = tab.icon;
             return (

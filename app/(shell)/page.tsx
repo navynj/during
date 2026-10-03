@@ -2,8 +2,9 @@ import { redirect } from 'next/navigation';
 
 import { HomeGround } from '@/features/home/home-ground';
 import { scopedMonth } from '@/features/home/scope';
-import { monthCounts, monthSeats, scrubberMonths } from '@/features/sessions/shelves';
+import { earliestYear, monthCounts, monthSeats, scrubberMonths } from '@/features/sessions/shelves';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
+import { getMySessions } from '@/lib/queries/sessions';
 import { getMySplashes, summarizeSplashes } from '@/lib/queries/splashes';
 import { getMyTrail } from '@/lib/queries/trail';
 import { createClient } from '@/lib/supabase/server';
@@ -24,14 +25,22 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
 
   const now = new Date();
   const today = todayIn(profile.timezone);
-  const month = scopedMonth((await searchParams).m, today);
+  const params = await searchParams;
+  const month = scopedMonth(params.m, today);
 
-  const [ripples, categories, boards] = await Promise.all([
+  const [ripples, categories, boards, sessions] = await Promise.all([
     getMyTrail(supabase, profile.id, profile.timezone),
     getMyCategories(supabase),
     getMySplashes(supabase, profile.id),
+    getMySessions(supabase, profile.id),
   ]);
   const summaries = summarizeSplashes(boards, ripples, profile.timezone, now);
+  const customCounts: Record<string, number> = {};
+  for (const summary of summaries) {
+    if (summary.sessionId) {
+      customCounts[summary.sessionId] = (customCounts[summary.sessionId] ?? 0) + 1;
+    }
+  }
   const pinned = summaries
     .filter((s) => s.pinnedAt !== null)
     .sort((a, b) => b.pinnedAt!.localeCompare(a.pinnedAt!));
@@ -45,6 +54,10 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
         seats={monthSeats(summaries, month, profile.timezone)}
         pinned={pinned}
         categories={categories}
+        sessions={sessions}
+        customCounts={customCounts}
+        earliestYear={earliestYear(summaries, today, profile.timezone)}
+        today={today}
       />
     </main>
   );

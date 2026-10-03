@@ -69,7 +69,7 @@ export function CategorySheet({
             value={name}
             onChange={(event) => setName(event.target.value)}
             aria-label="Lane name"
-            placeholder="Focus"
+            placeholder="Enter the lane name"
             maxLength={24}
             className="text-ink placeholder:text-pool-500 min-w-0 flex-1 text-base outline-none"
           />

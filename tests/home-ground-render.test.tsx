@@ -8,11 +8,22 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {} }),
 }));
+vi.mock('@/features/sessions/actions', () => ({
+  titleMonth: () => Promise.resolve({ ok: true }),
+  createSession: () => Promise.resolve({ ok: true, session: {} }),
+  updateSession: () => Promise.resolve({ ok: true, session: {} }),
+  deleteSession: () => Promise.resolve({ ok: true }),
+}));
+vi.mock('@/features/lanes/actions', () => ({
+  saveLane: () => Promise.resolve({ ok: true }),
+  deleteLane: () => Promise.resolve({ ok: true }),
+}));
 
 import { HomeGround } from '@/features/home/home-ground';
 import { InputSheetProvider, useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { monthCounts, monthSeats, scrubberMonths } from '@/features/sessions/shelves';
 import {
+  summarizeOrphan,
   summarizeSplash,
   type Splash,
   type SplashBlock,
@@ -136,6 +147,10 @@ function ground(month = '2026-09', posts = POSTS, dropped: string | null = null)
         seats={monthSeats(posts, month, TZ)}
         pinned={posts.filter((p) => p.pinnedAt)}
         categories={LANES}
+        sessions={[]}
+        customCounts={{}}
+        earliestYear={2026}
+        today={TODAY}
       />
     </InputSheetProvider>,
   );
@@ -159,8 +174,23 @@ describe('the water ground (H21c)', () => {
 
     const pill = container.querySelector<HTMLElement>('[data-splash-pill]')!;
     expect(pill.className).toContain('bg-white');
-    expect(pill.style.getPropertyValue('--wave-ink')).toBe('var(--color-main-900)');
-    expect(pill.querySelector('[data-wave-mark]')).not.toBeNull();
+    // The mark is white waves on a blue disc, per the mockup.
+    const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
+    expect(mark.className).toContain('bg-main-900');
+    expect(mark.style.getPropertyValue('--wave-ink')).toBe('#ffffff');
+  });
+
+  it('draws a lone block as the inverse pill: blue, a white outer border, a white disc', () => {
+    const lone = summarizeOrphan(block('r-lone', '2026-09-14', 'c-day', 'alone'), TZ, NOW);
+    const { container } = ground('2026-09', [...POSTS, lone]);
+    const pill = container.querySelector<HTMLElement>('[data-splash-pill="r-lone"]')!;
+    expect(pill.hasAttribute('data-lone')).toBe(true);
+    expect(pill.className).toContain('bg-main-900');
+    expect(pill.className).toContain('border-white');
+    expect(pill.className).toContain('text-white');
+    const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
+    expect(mark.className).toContain('bg-white');
+    expect(mark.style.getPropertyValue('--wave-ink')).toBe('var(--color-main-900)');
   });
 
   it('never fills a pill or a lane in blue: ink is selection there', () => {
@@ -173,10 +203,13 @@ describe('the water ground (H21c)', () => {
 });
 
 describe('the post grid (H21d)', () => {
-  it('lays posts oldest at the top in strict coalesced-key order, zigzag by DOM order', () => {
+  it('lays posts oldest at the top in strict coalesced-key order, wrapping like tags', () => {
     const { container } = ground();
     expect(seatIds(container)).toEqual(['early', 'mid', 'late']);
-    expect(container.querySelector('[data-splash-grid]')!.className).toContain('grid-cols-2');
+    // Pills are as wide as their titles and no wider: a wrapping row, not columns.
+    expect(container.querySelector('[data-splash-grid]')!.className).toContain('flex-wrap');
+    expect(container.querySelector('[data-splash-grid]')!.className).not.toMatch(/grid-cols/);
+    expect(container.querySelector('[data-splash-pill]')!.className).not.toMatch(/(^| )w-full|flex-1/);
   });
 
   it('opens scrolled to the bottom: the present-and-writing zone', () => {
@@ -236,22 +269,42 @@ describe('the lane header', () => {
     expect(seatIds(container)).toEqual(['early', 'mid', 'late']);
   });
 
-  it('hangs a rope under every lane', () => {
+  it('hangs a rope under every lane, and the seat of a new one', () => {
     const { container } = ground();
-    expect(container.querySelectorAll('[data-lane-ropes] > span')).toHaveLength(3);
+    expect(container.querySelectorAll('[data-lane-ropes] > span')).toHaveLength(4);
+  });
+
+  it('is the lanes view: its last slot opens the lane sheet for a new lane', () => {
+    const { getByLabelText, getByRole } = ground();
+    fireEvent.click(getByLabelText('New lane'));
+    expect(getByRole('dialog', { name: 'New lane' })).toBeTruthy();
   });
 });
 
 describe('the month scrubber (H21d, H21h)', () => {
-  it('lists months newest first, the scoped one large, with counts', () => {
+  it('lists months newest first, each under its year in white, with counts', () => {
     const { container } = ground();
     const months = [...container.querySelectorAll('[data-scrub-month]')];
     expect(months.map((m) => m.getAttribute('data-scrub-month'))).toEqual(['2026-09', '2026-08']);
     expect(months[0].getAttribute('aria-current')).toBe('true');
-    expect(months[0].className).toContain('text-2xl');
-    expect(months[1].className).not.toContain('text-2xl');
+    // Opacity is the only difference between the scoped month and the rest.
+    expect(months[0].className).toBe(months[1].className);
+    const years = [...container.querySelectorAll('[data-scrub-year]')];
+    expect(years.map((y) => y.textContent)).toEqual(['2026', '2026']);
+    for (const year of years) expect(year.parentElement!.className).toContain('text-white');
     expect(months[0].querySelector('[data-month-count]')!.textContent).toBe('3');
     expect(months[1].querySelector('[data-month-count]')!.textContent).toBe('1');
+  });
+
+  it('opens the sessions sheet from the = at its left: management is a sheet, not a tab', () => {
+    const { container, getByLabelText, getByRole } = ground();
+    expect(container.querySelector('[data-sessions-sheet]')).toBeNull();
+    fireEvent.click(getByLabelText('Manage sessions'));
+    const sheet = getByRole('dialog', { name: 'Sessions' });
+    expect(sheet.querySelector('[data-session-schedule]')).not.toBeNull();
+    expect(sheet.querySelectorAll('[data-month-row]').length).toBeGreaterThan(0);
+    fireEvent.click(getByLabelText('Close'));
+    expect(container.querySelector('[data-sessions-sheet]')).toBeNull();
   });
 
   it('scopes rather than scrolls: each month is a link to the ground at that month', () => {
@@ -263,7 +316,9 @@ describe('the month scrubber (H21d, H21h)', () => {
 
   it('fades the months with distance from the scoped one', () => {
     const { container } = ground('2026-08');
-    const items = [...container.querySelectorAll<HTMLElement>('[data-month-scrubber] li')];
+    const items = [...container.querySelectorAll<HTMLElement>('[data-scrub-month]')].map((m) =>
+      m.closest('li')!,
+    );
     expect(items[1].style.opacity).toBe('1');
     expect(Number(items[0].style.opacity)).toBeLessThan(1);
   });
@@ -298,6 +353,11 @@ describe('an empty month (H19, H21)', () => {
     const line = getByText(EMPTY.ground);
     expect(line.className).toContain('text-white');
     expect(container.querySelector('[data-splash-grid]')).toBeNull();
-    expect(container.querySelector('[data-home-ground] button:not([data-lane-filter])')).toBeNull();
+    // Only the lanes view and the = remain tappable: nothing on the ground creates.
+    expect(
+      container.querySelector(
+        '[data-home-ground] button:not([data-lane-filter]):not([data-new-lane]):not([data-manage-sessions])',
+      ),
+    ).toBeNull();
   });
 });

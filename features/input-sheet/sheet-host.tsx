@@ -24,10 +24,6 @@ export function SheetHost({ context }: { context: SheetContext }) {
     <SplashSheet
       context={context}
       onClose={closeSheet}
-      onNewSession={() => {
-        closeSheet();
-        router.push('/sessions?new=1');
-      }}
       onCommitted={(splash, month) => {
         closeSheet();
         markDropped(splash.id);

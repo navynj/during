@@ -1,5 +1,9 @@
 'use client';
 
+// DORMANT (H21, review): the Lanes tab retired — Home's lane header is the
+// lanes view. The matrix stays for P3's pool Lanes (D2: the same view with the
+// column binding swapped). No route mounts it; do not delete it.
+
 import Link from 'next/link';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
