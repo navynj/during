@@ -29,7 +29,8 @@ import {
 } from '@/features/splash-sheet/splash-sheet';
 import type { SplashSummary } from '@/features/splash/summary';
 import { ComposerPanel } from '@/features/input-sheet/sheet-host';
-import { RecentBlocks, recentItems } from '@/features/splash/recent-blocks';
+import { RecentBlocks } from '@/features/splash/recent-blocks';
+import { recentItems } from '@/features/splash/recent';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { composeDrop, splitTitle } from '@/features/splash-sheet/split-title';
@@ -287,8 +288,12 @@ describe('the wide screen’s standing composer (review)', () => {
   it('sits on the page elsewhere, and is absent on a post’s page: the blocks take the right half', () => {
     pathname = '/locker';
     let view = panel();
-    expect(view.container.querySelector('[data-composer-panel]')!.className).toContain('bg-pool-100');
-    expect(view.container.querySelector('[data-composer-panel]')!.className).not.toContain('water-ground');
+    expect(view.container.querySelector('[data-composer-panel]')!.className).toContain(
+      'bg-pool-100',
+    );
+    expect(view.container.querySelector('[data-composer-panel]')!.className).not.toContain(
+      'water-ground',
+    );
     cleanup();
 
     pathname = '/splash/s1';

@@ -3,7 +3,7 @@ import { ComposerPanel, SheetHost } from '@/features/input-sheet/sheet-host';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
 import { getMyTrail } from '@/lib/queries/trail';
-import { recentItems } from '@/features/splash/recent-blocks';
+import { recentItems } from '@/features/splash/recent';
 import { createClient } from '@/lib/supabase/server';
 import { todayIn } from '@/lib/time';
 

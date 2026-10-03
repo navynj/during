@@ -2,7 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import { RecentBlocks, type RecentItem } from '@/features/splash/recent-blocks';
+import { RecentBlocks } from '@/features/splash/recent-blocks';
+import type { RecentItem } from '@/features/splash/recent';
 import { SplashComposer } from '@/features/splash-sheet/splash-composer';
 import {
   SplashSheet,
