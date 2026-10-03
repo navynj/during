@@ -1,5 +1,7 @@
 'use client';
 
+import { Plus } from 'lucide-react';
+
 import { WaveStack } from '@/components/ui/waves';
 import type { MyCategory } from '@/lib/queries/profile';
 
@@ -11,18 +13,22 @@ export const LANE_COLUMN = '4.5rem';
  * emoji, its name, and small white waves — its post count this month on the
  * log scale, nothing when nothing. Tap = filter the grid to that lane; tap
  * again clears. The selected lane carries the ink selection treatment: on
- * the ground, white is content and ink stays selection (H21c).
+ * the ground, white is content and ink stays selection (H21c). The last slot
+ * is the seat of a lane that does not exist yet — this row is the lanes view
+ * now that the Lanes tab has retired (review).
  */
 export function LaneHeader({
   categories,
   counts,
   selectedId,
   onSelect,
+  onCreate,
 }: {
   categories: MyCategory[];
   counts: Record<string, number>;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  onCreate: () => void;
 }) {
   return (
     <ul
@@ -30,7 +36,7 @@ export function LaneHeader({
       aria-label="Lanes"
       data-lane-header
       className="grid pt-6"
-      style={{ gridTemplateColumns: `repeat(${categories.length}, ${LANE_COLUMN})` }}
+      style={{ gridTemplateColumns: `repeat(${categories.length + 1}, ${LANE_COLUMN})` }}
     >
       {categories.map((lane) => {
         const selected = lane.id === selectedId;
@@ -58,6 +64,17 @@ export function LaneHeader({
           </li>
         );
       })}
+      <li className="flex flex-col items-center pt-1">
+        <button
+          type="button"
+          aria-label="New lane"
+          data-new-lane
+          onClick={onCreate}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-white text-white opacity-40"
+        >
+          <Plus aria-hidden size={14} />
+        </button>
+      </li>
     </ul>
   );
 }
@@ -73,9 +90,9 @@ export function LaneRopes({ lanes }: { lanes: number }) {
       aria-hidden
       data-lane-ropes
       className="grid min-h-8 flex-1"
-      style={{ gridTemplateColumns: `repeat(${lanes}, ${LANE_COLUMN})` }}
+      style={{ gridTemplateColumns: `repeat(${lanes + 1}, ${LANE_COLUMN})` }}
     >
-      {Array.from({ length: lanes }, (_, index) => (
+      {Array.from({ length: lanes + 1 }, (_, index) => (
         <span key={index} className="flex justify-center">
           <span className="block h-full w-px bg-white/15" />
         </span>

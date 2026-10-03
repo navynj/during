@@ -27,7 +27,7 @@ vi.mock('@/features/splash/actions', () => ({
   setSplashSession: record('setSplashSession'),
 }));
 
-import { SessionsTab } from '@/features/sessions/sessions-tab';
+import { SessionSchedule } from '@/features/sessions/session-schedule';
 import { Shelf } from '@/features/sessions/shelf';
 import { sessionSeats, type Session } from '@/features/sessions/shelves';
 import { summarizeSplash, type Splash, type SplashBlock } from '@/features/splash/summary';
@@ -114,9 +114,9 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-function tab(over: Partial<Parameters<typeof SessionsTab>[0]> = {}) {
+function tab(over: Partial<Parameters<typeof SessionSchedule>[0]> = {}) {
   return render(
-    <SessionsTab
+    <SessionSchedule
       sessions={[AUGUST, TRIPS, RUNS]}
       counts={{ '2026-09': 3, '2026-08': 1 }}
       customCounts={{ ss1: 2 }}
@@ -128,7 +128,7 @@ function tab(over: Partial<Parameters<typeof SessionsTab>[0]> = {}) {
   );
 }
 
-describe('the Sessions tab (SPEC 5, H21e)', () => {
+describe('the session schedule (SPEC 5, H21e)', () => {
   it('pages years, and lists the months of this year up to now, newest first', () => {
     const { container, getByLabelText } = tab();
     expect(container.querySelector('[data-year-pager]')!.textContent).toContain('2026');
@@ -142,17 +142,18 @@ describe('the Sessions tab (SPEC 5, H21e)', () => {
     expect((getByLabelText('Earlier year') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('marks the current month in ink, shows a title large where one exists, counts at the right', () => {
+  it('marks the current month in blue, shows a title large where one exists, counts at the right', () => {
     const { container } = tab();
     const current = container.querySelector('[data-month-row="2026-09"]')!;
     expect(current.hasAttribute('data-current')).toBe(true);
-    expect(current.className).toContain('bg-ink');
+    expect(current.className).toContain('text-main-900');
+    expect(current.className).not.toMatch(/bg-ink|bg-main-900/);
     expect(current.textContent).toContain('3');
     const august = container.querySelector('[data-month-row="2026-08"]')!;
     expect(august.querySelector('[data-month-title]')!.textContent).toBe(
       'The month the form changed',
     );
-    expect(august.className).not.toContain('bg-ink');
+    expect(august.className).not.toContain('text-main-900');
     expect(container.querySelector('[data-month-row="2026-07"] [data-month-title]')).toBeNull();
   });
 
@@ -194,7 +195,7 @@ describe('the Sessions tab (SPEC 5, H21e)', () => {
     });
   });
 
-  it('opens the create form when sent from the sheet', () => {
+  it('opens the create form when sent from the post sheet', () => {
     const { container } = tab({ openNew: true });
     expect(container.querySelector('[data-session-form]')).not.toBeNull();
   });
@@ -247,6 +248,7 @@ describe('a custom shelf (SPEC 5, H21e)', () => {
 
   it('reuses the home pill on the page ground, and links back through the shelf', () => {
     const { container } = shelf();
+    expect(container.querySelector('[data-back-chip]')!.getAttribute('href')).toBe('/');
     const pill = container.querySelector('[data-splash-pill="trip"]')!;
     expect(pill.className).toContain('bg-pool-100');
     expect(pill.querySelector('[data-wave-mark]')).not.toBeNull();

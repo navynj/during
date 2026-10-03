@@ -14,13 +14,14 @@ import { SessionForm } from './session-form';
 import { monthlyTitle, monthName, monthsOfYear, type Session } from './shelves';
 
 /**
- * The Sessions tab (SPEC 5, H21e): a white page. A year pager; one row per
- * month of that year up to the current one — the month small, the title
- * large if titled, the post count at the right, the current month in ink;
- * tapping a month scopes Home to it (H21h), and titling one from its row's
- * edit affordance makes its lazy row. Custom sessions in a second section.
+ * The session schedule (SPEC 5, H21e), inside the sheet the scrubber's `=`
+ * opens: a year pager; one row per month of that year up to the current one
+ * — the month small, the title large if titled, the post count at the right,
+ * the current month in blue; tapping a month scopes Home to it (H21h), and
+ * titling one from its row's edit affordance makes its lazy row. Custom
+ * sessions in a second section.
  */
-export function SessionsTab({
+export function SessionSchedule({
   sessions,
   counts,
   customCounts,
@@ -28,6 +29,7 @@ export function SessionsTab({
   earliestYear,
   today,
   openNew = false,
+  onScope,
 }: {
   sessions: Session[];
   /** Posts per month, by `2026-09`. */
@@ -37,8 +39,10 @@ export function SessionsTab({
   categories: MyCategory[];
   earliestYear: number;
   today: IsoDate;
-  /** Opened from the sheet's *New session*: the create form starts open. */
+  /** Opened from the post sheet's *New session*: the create form starts open. */
   openNew?: boolean;
+  /** Scoping a month closes the sheet before Home re-reads. */
+  onScope?: () => void;
 }) {
   const router = useRouter();
   const currentYear = Number(today.slice(0, 4));
@@ -52,7 +56,7 @@ export function SessionsTab({
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
   return (
-    <div data-sessions-tab className="flex flex-1 flex-col gap-8 pt-4 pb-10">
+    <div data-session-schedule className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
         <div data-year-pager className="flex items-center gap-1">
           <button
@@ -86,6 +90,7 @@ export function SessionsTab({
                 titled={monthlyTitle(sessions, month)}
                 count={counts[month] ?? 0}
                 current={month === current}
+                onScope={onScope}
                 onTitle={(title) =>
                   startTransition(async () => {
                     const result = await titleMonth(month, title);
@@ -108,6 +113,7 @@ export function SessionsTab({
             <li key={session.id}>
               <Link
                 href={`/sessions/${session.id}`}
+                onClick={onScope}
                 data-session-row={session.id}
                 className="hover:bg-pool-100 flex items-baseline justify-between gap-3 rounded-xl px-3 py-2"
               >
@@ -170,18 +176,22 @@ function MonthRow({
   titled,
   count,
   current,
+  onScope,
   onTitle,
 }: {
   month: string;
   titled: Session | null;
   count: number;
   current: boolean;
+  onScope?: () => void;
   onTitle: (title: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(titled?.title ?? '');
-  const surface = current ? 'bg-ink text-white' : 'text-ink hover:bg-pool-100';
-  const muted = current ? 'text-white/60' : 'text-pool-500';
+  // The current month in the action colour, by the review of the refounding:
+  // #0507C9 text, no fill. The other rows read in ink.
+  const surface = current ? 'text-main-900 hover:bg-pool-100' : 'text-ink hover:bg-pool-100';
+  const muted = current ? 'text-main-900/60' : 'text-pool-500';
 
   return (
     <li
@@ -191,6 +201,7 @@ function MonthRow({
     >
       <Link
         href={monthHref(month)}
+        onClick={onScope}
         className="flex min-w-0 flex-1 items-baseline justify-between gap-3"
       >
         <span className="flex min-w-0 flex-col">
@@ -224,7 +235,7 @@ function MonthRow({
               setEditing(false);
             }
           }}
-          className="text-ink min-w-0 flex-1 rounded bg-white px-2 py-1 text-base outline-none"
+          className="text-ink bg-pool-100 min-w-0 flex-1 rounded px-2 py-1 text-base outline-none"
         />
       ) : (
         <button

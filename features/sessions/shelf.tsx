@@ -49,12 +49,12 @@ export function Shelf({
   return (
     <div data-shelf className="flex flex-1 flex-col pt-3 pb-10">
       <Link
-        href="/sessions"
+        href="/"
         data-back-chip
         className="text-main-900 -ml-1 flex w-fit items-center gap-0.5 pb-5 text-sm font-medium"
       >
         <ChevronLeft aria-hidden size={16} />
-        Sessions
+        Home
       </Link>
 
       <header className="flex items-start justify-between gap-3 pb-6">

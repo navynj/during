@@ -16,20 +16,16 @@ import {
   MediaPreviews,
   useMediaAttach,
 } from '@/features/input-sheet/media-field';
-import type { Session } from '@/features/sessions/shelves';
 import { dropSplash } from '@/features/splash/actions';
 import type { Splash } from '@/features/splash/summary';
 import type { MyCategory } from '@/lib/queries/profile';
 import { wallClockToInstant } from '@/lib/ripple-kind';
 import type { IsoDate } from '@/lib/time';
 
-import { SessionPicker } from './session-picker';
-import { splitTitle } from './split-title';
+import { composeDrop } from './split-title';
 
 export type SheetContext = {
   categories: MyCategory[];
-  /** Custom shelves, recent first, for `+ Add to Session`. */
-  sessions: Session[];
   timeZone: string;
   today: IsoDate;
 };
@@ -41,11 +37,13 @@ export type SheetContext = {
 export const SHEET_MAX_HEIGHT = 'max-h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)]';
 
 /**
- * The post sheet (SPEC 6, H21): one text area — the first line is the title,
- * everything after the first Enter is the first block's body — the lane chip
- * row (the declared lane), `+ Add Time`, `+ Add Image`, `+ Add to Session`,
- * and one full-width Drop. New posts only; every later word is written on
- * the post's page.
+ * The post sheet (SPEC 6, H21, review): a large bold title field over a
+ * smaller, lighter body field — the first line is still the title and Enter
+ * still moves on to the body — the lane chip row (the declared lane),
+ * the date chip preset to today (`+ add time` inside it, × to clear it),
+ * `+ Add Image`, and one full-width Drop — no session field: sessions are
+ * date-based (review), a post is shelved by its dates. New posts only;
+ * every later word is written on the post's page.
  *
  * A single line with no Enter commits as an untitled post whose line is its
  * block: the dump posture, kept on purpose.
@@ -54,34 +52,41 @@ export function SplashSheet({
   context,
   onClose,
   onCommitted,
-  onNewSession,
 }: {
   context: SheetContext;
   onClose: () => void;
   /** The post that was made, and the month it landed in, for the ground to scope to. */
   onCommitted: (splash: Splash, month: string) => void;
-  onNewSession?: () => void;
 }) {
-  const { categories, sessions, timeZone, today } = context;
-  const [text, setText] = useState('');
+  const { categories, timeZone, today } = context;
+  const [titleText, setTitleText] = useState('');
+  const [bodyText, setBodyText] = useState('');
   const [laneId, setLaneId] = useState<string | null>(null);
-  const [annotation, setAnnotation] = useState<Annotation | null>(null);
+  // Today is in the field from the start (review): the chip opens set to the
+  // date, no clock, and is removed with its × for a plain posted block.
+  const [annotation, setAnnotation] = useState<Annotation | null>({
+    date: today,
+    time: null,
+    endDate: null,
+    endTime: null,
+  });
   const [mediaPaths, setMediaPaths] = useState<string[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const media = useMediaAttach(mediaPaths, setMediaPaths);
   const field = useRef<HTMLTextAreaElement>(null);
+  const bodyField = useRef<HTMLTextAreaElement>(null);
 
-  // The text area grows with its words; the sheet's cap does the clipping.
+  // The fields grow with their words; the sheet's cap does the clipping.
   useLayoutEffect(() => {
-    const el = field.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }, [text]);
+    for (const el of [field.current, bodyField.current]) {
+      if (!el) continue;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [titleText, bodyText]);
 
-  const { title, body } = splitTitle(text);
+  const { title, body } = composeDrop(titleText, bodyText, mediaPaths.length > 0);
   const hasContent =
     title.length > 0 || body.length > 0 || mediaPaths.length > 0 || laneId !== null;
   const annotationOk = !annotation || annotationVerdict(annotation) === 'ok';
@@ -108,7 +113,7 @@ export function SplashSheet({
         occurredTime: a?.time ?? null,
         startInstant,
         endInstant,
-        sessionId,
+        sessionId: null,
       });
       if (!result.ok) {
         setMessage(result.message);
@@ -134,18 +139,37 @@ export function SplashSheet({
         className={`sheet-rise relative mx-auto flex w-full ${COLUMN_MAX_WIDTH} ${SHEET_MAX_HEIGHT} flex-col overflow-hidden rounded-t-[32px] bg-white`}
       >
         <div
-          className="flex min-h-0 flex-col gap-4 overflow-y-auto px-5 pt-6"
-          style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
+          className="flex min-h-0 flex-col gap-5 overflow-y-auto px-7 pt-8"
+          style={{ paddingBottom: 'calc(1.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
+          {/* The title, large and bold; Enter moves on to the body, so the
+              first line is still the title and the rest still follows it. */}
           <textarea
             ref={field}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
+            value={titleText}
+            onChange={(event) => setTitleText(event.target.value.replace(/\n/g, ''))}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                bodyField.current?.focus();
+              }
+            }}
             placeholder="Drop your splash"
-            rows={2}
+            rows={1}
             autoFocus
-            aria-label="Your splash"
-            className="text-ink placeholder:text-ink min-h-16 w-full resize-none text-xl/relaxed outline-none placeholder:opacity-20"
+            aria-label="Title"
+            data-sheet-title
+            className="text-ink placeholder:text-ink w-full resize-none text-2xl/snug font-semibold outline-none placeholder:opacity-20"
+          />
+          <textarea
+            ref={bodyField}
+            value={bodyText}
+            onChange={(event) => setBodyText(event.target.value)}
+            placeholder="Enter the content"
+            rows={2}
+            aria-label="Content"
+            data-sheet-body
+            className="text-ink placeholder:text-ink min-h-12 w-full resize-none text-base/relaxed font-light outline-none placeholder:opacity-20"
           />
 
           {/* The declared lane: where every block of this post starts (H21f). */}
@@ -159,12 +183,6 @@ export function SplashSheet({
           <div className="flex flex-wrap items-center gap-2">
             <AnnotationControl annotation={annotation} today={today} onChange={setAnnotation} />
             <AddImageAffordance attach={media.attach} busy={media.busy} input={media.input} />
-            <SessionPicker
-              sessions={sessions}
-              selectedId={sessionId}
-              onSelect={setSessionId}
-              onNew={onNewSession}
-            />
           </div>
 
           <MediaPreviews

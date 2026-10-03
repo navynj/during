@@ -17,9 +17,8 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-import type { Session } from '@/features/sessions/shelves';
 import { SHEET_MAX_HEIGHT, SplashSheet } from '@/features/splash-sheet/splash-sheet';
-import { splitTitle } from '@/features/splash-sheet/split-title';
+import { composeDrop, splitTitle } from '@/features/splash-sheet/split-title';
 import type { MyCategory } from '@/lib/queries/profile';
 
 const TZ = 'America/Vancouver';
@@ -41,17 +40,6 @@ const LANES = [
   lane('c-mood', 'Mood', '🌤️', 1),
   lane('c-day', 'Day', '🖋', 2),
 ];
-const TRIPS: Session = {
-  id: 'ss1',
-  owner_id: 'a1',
-  kind: 'custom',
-  title: 'Trips',
-  month: null,
-  declared_start: null,
-  declared_end: null,
-  lane_id: null,
-  created_at: '2026-09-01T00:00:00Z',
-};
 
 beforeEach(() => {
   drops.length = 0;
@@ -62,7 +50,7 @@ afterEach(cleanup);
 function sheet(onCommitted = vi.fn()) {
   const view = render(
     <SplashSheet
-      context={{ categories: LANES, sessions: [TRIPS], timeZone: TZ, today: TODAY }}
+      context={{ categories: LANES, timeZone: TZ, today: TODAY }}
       onClose={() => {}}
       onCommitted={onCommitted}
     />,
@@ -78,12 +66,22 @@ describe('the first line is the title (SPEC 6)', () => {
     });
     expect(splitTitle('coffee went cold')).toEqual({ title: '', body: 'coffee went cold' });
     expect(splitTitle('Just a title\n')).toEqual({ title: 'Just a title', body: '' });
+    // Across the two fields: a line in the title alone is still the dump.
+    expect(composeDrop('coffee went cold', '', false)).toEqual({
+      title: '',
+      body: 'coffee went cold',
+    });
+    expect(composeDrop('Whistler', 'sea to sky', false)).toEqual({
+      title: 'Whistler',
+      body: 'sea to sky',
+    });
+    expect(composeDrop('A photo day', '', true)).toEqual({ title: 'A photo day', body: '' });
   });
 
   it('commits a single line with no Enter as an untitled post whose line is its block', async () => {
     const view = sheet();
     expect(view.drop().disabled).toBe(true);
-    fireEvent.change(view.getByLabelText('Your splash'), { target: { value: 'coffee went cold' } });
+    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'coffee went cold' } });
     fireEvent.click(view.drop());
     await waitFor(() => expect(drops).toHaveLength(1));
     expect(drops[0]).toMatchObject({
@@ -91,6 +89,9 @@ describe('the first line is the title (SPEC 6)', () => {
       body: 'coffee went cold',
       declaredLaneId: null,
       sessionId: null,
+      // Today is in the field from the start: a date, no clock.
+      occurredOn: TODAY,
+      occurredTime: null,
     });
     expect(view.onCommitted).toHaveBeenCalledWith(
       expect.objectContaining({ id: 's-new' }),
@@ -98,14 +99,51 @@ describe('the first line is the title (SPEC 6)', () => {
     );
   });
 
-  it('commits the first line as the title and the rest as the first block', async () => {
+  it('commits the title field as the title and the body field as the first block', async () => {
     const view = sheet();
-    fireEvent.change(view.getByLabelText('Your splash'), {
-      target: { value: 'Whistler\nsea to sky\n\nfog the whole way' },
+    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler' } });
+    fireEvent.change(view.getByLabelText('Content'), {
+      target: { value: 'sea to sky\n\nfog the whole way' },
     });
     fireEvent.click(view.drop());
     await waitFor(() => expect(drops).toHaveLength(1));
     expect(drops[0]).toMatchObject({ title: 'Whistler', body: 'sea to sky\n\nfog the whole way' });
+  });
+
+  it('is two fields in one voice: the title large and bold, the content smaller and lighter', () => {
+    const { container } = sheet();
+    const title = container.querySelector<HTMLTextAreaElement>('[data-sheet-title]')!;
+    const body = container.querySelector<HTMLTextAreaElement>('[data-sheet-body]')!;
+    expect(title.placeholder).toBe('Drop your splash');
+    expect(body.placeholder).toBe('Enter the content');
+    expect(title.className).toContain('text-2xl');
+    expect(title.className).toContain('font-semibold');
+    expect(body.className).toContain('text-base');
+    expect(body.className).toContain('font-light');
+    expect(title.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('moves from the title to the content on Enter: the first line stays the title', () => {
+    const { container } = sheet();
+    const title = container.querySelector<HTMLTextAreaElement>('[data-sheet-title]')!;
+    const body = container.querySelector<HTMLTextAreaElement>('[data-sheet-body]')!;
+    title.focus();
+    fireEvent.keyDown(title, { key: 'Enter' });
+    expect(document.activeElement).toBe(body);
+    fireEvent.change(title, { target: { value: 'two\nlines' } });
+    expect(title.value).toBe('twolines');
+  });
+
+  it('opens with today in the field, a date and no clock, removable for a plain block', async () => {
+    const view = sheet();
+    expect((view.getByLabelText('Date') as HTMLInputElement).value).toBe(TODAY);
+    expect(view.queryByText('+ Add Time')).toBeNull();
+    fireEvent.click(view.getByLabelText('Remove the time'));
+    expect(view.getByText('+ Add Time')).toBeTruthy();
+    fireEvent.change(view.getByLabelText('Content'), { target: { value: 'a' } });
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ occurredOn: null });
   });
 });
 
@@ -147,8 +185,7 @@ describe('the sheet’s shape', () => {
 describe('the affordances under the text', () => {
   it('annotates the first block, and the ground scopes to that month on commit', async () => {
     const view = sheet();
-    fireEvent.change(view.getByLabelText('Your splash'), { target: { value: 'a' } });
-    fireEvent.click(view.getByText('+ Add Time'));
+    fireEvent.change(view.getByLabelText('Content'), { target: { value: 'a' } });
     fireEvent.change(view.getByLabelText('Date'), { target: { value: '2026-08-17' } });
     fireEvent.click(view.drop());
     await waitFor(() => expect(drops).toHaveLength(1));
@@ -156,19 +193,10 @@ describe('the affordances under the text', () => {
     expect(view.onCommitted).toHaveBeenCalledWith(expect.anything(), '2026-08');
   });
 
-  it('shelves the post on a custom session from the picker, and takes it off again', async () => {
-    const view = sheet();
-    fireEvent.click(view.getByText('+ Add to Session'));
-    fireEvent.click(view.getByText('Trips'));
-    expect(view.container.querySelector('[data-session-chip]')!.textContent).toContain('Trips');
-    fireEvent.change(view.getByLabelText('Your splash'), { target: { value: 'a' } });
-    fireEvent.click(view.drop());
-    await waitFor(() => expect(drops).toHaveLength(1));
-    expect(drops[0]).toMatchObject({ sessionId: 'ss1' });
-
-    fireEvent.click(view.getByLabelText('Remove from session'));
-    expect(view.container.querySelector('[data-session-chip]')).toBeNull();
-    expect(view.getByText('+ Add to Session')).toBeTruthy();
+  it('has no session field: sessions are date-based, a post is shelved by its dates', () => {
+    const { queryByText, container } = sheet();
+    expect(queryByText('+ Add to Session')).toBeNull();
+    expect(container.querySelector('[data-session-chip]')).toBeNull();
   });
 
   it('offers + Add Image', () => {

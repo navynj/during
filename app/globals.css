@@ -22,7 +22,7 @@
   --color-pool-500: #6b79a3; /* muted and secondary text */
 
   /* Ink — body text */
-  --color-ink: #313338;
+  --color-ink: #161621;
 
   /* The tab bar's own height, so anything that has to sit exactly on top of
    * it can say so instead of guessing. Not a design token — a measurement. */

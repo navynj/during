@@ -1,26 +1,41 @@
 import { impressionLineCount, WAVE_GAP } from './wave-math';
 import { WaveLine } from './wave-line';
 
-/** The ring's diameter, and the wave width inside it. */
+/** The disc's diameter, and the wave width inside it. */
 const MARK_SIZE = 28;
 const MARK_WAVE = 14;
 
 /**
- * A post's wave mark (SPEC 7, H21): its block count on the log scale (law 2),
- * drawn inside a ring at the pill's right end. A post with nothing in it yet
- * draws one line so it has a mark at all. Colour is the surface's: the ring
- * and the waves are `currentColor` and `--wave-ink`, so a white pill on the
- * ground draws it blue and a lane header on the ground draws it white.
+ * A post's wave mark (SPEC 7, H21; `home-ground.png`): its block count on
+ * the log scale (law 2), drawn as white waves on a solid #0507C9 disc at the
+ * pill's right end. A post with nothing in it yet draws one line so it has a
+ * mark at all. On a blue pill — a lone block standing in as a post — the
+ * disc inverts: white, with blue waves.
  */
-export function WaveMark({ count, className = '' }: { count: number; className?: string }) {
+export function WaveMark({
+  count,
+  tone = 'blue',
+  className = '',
+}: {
+  count: number;
+  tone?: 'blue' | 'white';
+  className?: string;
+}) {
   const lines = Math.max(1, impressionLineCount(count));
+  const surface = tone === 'blue' ? 'bg-main-900' : 'bg-white';
   return (
     <span
       aria-hidden
       data-wave-mark
       data-lines={lines}
-      className={`flex shrink-0 flex-col items-center justify-center rounded-full border border-current ${className}`}
-      style={{ width: MARK_SIZE, height: MARK_SIZE, gap: WAVE_GAP }}
+      data-tone={tone}
+      className={`flex shrink-0 flex-col items-center justify-center rounded-full ${surface} ${className}`}
+      style={{
+        width: MARK_SIZE,
+        height: MARK_SIZE,
+        gap: WAVE_GAP,
+        ['--wave-ink' as string]: tone === 'blue' ? '#ffffff' : 'var(--color-main-900)',
+      }}
     >
       {Array.from({ length: lines }, (_, index) => (
         <WaveLine key={index} width={MARK_WAVE} />
