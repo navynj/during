@@ -321,20 +321,44 @@ describe('the lane header', () => {
     expect(orders).toHaveLength(0);
   });
 
-  it('reorders the lanes with the chevrons, and saves the new order', async () => {
+  it('reorders the lanes by dragging a grip, and saves the new order', async () => {
     orders.length = 0;
     const { getByLabelText, getByRole, getByText } = ground();
     fireEvent.click(getByLabelText('Edit lanes'));
     const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    expect((getByLabelText('Move Food up') as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(getByLabelText('Move Day up'));
-    const rows = [...sheet.querySelectorAll('[data-lane-row]')].map((r) =>
-      r.getAttribute('data-lane-row'),
+    const order = (): (string | null)[] =>
+      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row'));
+    // Rows stacked 40px tall, so a pointer at y reads which row it is over.
+    for (const row of sheet.querySelectorAll<HTMLElement>('[data-lane-row]')) {
+      row.getBoundingClientRect = () => {
+        const index = order().indexOf(row.getAttribute('data-lane-row'));
+        return { top: index * 40, height: 40 } as DOMRect;
+      };
+    }
+
+    const grip = getByLabelText('Move Day');
+    fireEvent.pointerDown(grip, { pointerId: 1, clientY: 100 });
+    expect(sheet.querySelector('[data-lane-row="c-day"]')!.hasAttribute('data-dragging')).toBe(
+      true,
     );
-    expect(rows).toEqual(['c-food', 'c-day', 'c-place']);
+    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 10 });
+    expect(order()).toEqual(['c-day', 'c-food', 'c-place']);
+    fireEvent.pointerUp(grip, { pointerId: 1 });
+    expect(sheet.querySelector('[data-dragging]')).toBeNull();
+
     fireEvent.click(getByText('Save'));
     await waitFor(() => expect(orders).toHaveLength(1));
-    expect(orders[0]).toEqual(['c-food', 'c-day', 'c-place']);
+    expect(orders[0]).toEqual(['c-day', 'c-food', 'c-place']);
+  });
+
+  it('moves a lane with the arrow keys on its grip, for a keyboard', () => {
+    const { getByLabelText, getByRole } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    fireEvent.keyDown(getByLabelText('Move Food'), { key: 'ArrowDown' });
+    expect(
+      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row')),
+    ).toEqual(['c-place', 'c-food', 'c-day']);
   });
 
   it('is the lanes view: its last slot opens the lane sheet for a new lane', () => {

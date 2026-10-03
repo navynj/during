@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useRef, useState, useTransition } from 'react';
+import { GripVertical } from 'lucide-react';
 
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -11,8 +11,8 @@ import { reorderLanes, saveLane } from './actions';
 
 /**
  * The lanes sheet: every lane in a row, its icon and its name edited in
- * place and its order moved with the chevrons, one Save for whatever
- * changed. Opened from the pencil beside the
+ * place and its order changed by dragging the grip (arrow keys on the grip
+ * for a keyboard), one Save for whatever changed. Opened from the pencil beside the
  * `+` in Home's lane header — the lanes view's own editor now that the
  * Lanes tab has retired (H21 review). Delete stays out: a lane with records
  * refuses it anyway (H19), and an empty one is rare enough to wait.
@@ -30,6 +30,8 @@ export function LanesSheet({
   );
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [dragging, setDragging] = useState<string | null>(null);
+  const list = useRef<HTMLOListElement>(null);
 
   const changed = rows.filter((row) => {
     const was = categories.find((lane) => lane.id === row.id)!;
@@ -42,15 +44,47 @@ export function LanesSheet({
     setRows((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   }
 
-  function move(id: string, by: -1 | 1): void {
+  /** Puts the row at `to`, shifting the others; the order the drag reads. */
+  function moveTo(id: string, to: number): void {
     setRows((current) => {
       const from = current.findIndex((row) => row.id === id);
-      const to = from + by;
-      if (from === -1 || to < 0 || to >= current.length) return current;
+      if (from === -1 || to < 0 || to >= current.length || to === from) return current;
       const next = [...current];
-      [next[from], next[to]] = [next[to], next[from]];
+      const [row] = next.splice(from, 1);
+      next.splice(to, 0, row);
       return next;
     });
+  }
+
+  /**
+   * Dragging: the grip takes the pointer, and as it crosses a row's middle
+   * the dragged row takes that row's place — a live reorder, no ghost. Works
+   * for touch and mouse alike through pointer events.
+   */
+  function dragFrom(id: string, event: React.PointerEvent<HTMLButtonElement>): void {
+    event.preventDefault();
+    const grip = event.currentTarget;
+    if (typeof grip.setPointerCapture === 'function') grip.setPointerCapture(event.pointerId);
+    setDragging(id);
+
+    const over = (y: number): number => {
+      const rowEls = [...(list.current?.querySelectorAll<HTMLElement>('[data-lane-row]') ?? [])];
+      const index = rowEls.findIndex((el) => {
+        const box = el.getBoundingClientRect();
+        return y < box.top + box.height / 2;
+      });
+      return index === -1 ? rowEls.length - 1 : index;
+    };
+    const onMove = (move: PointerEvent): void => moveTo(id, over(move.clientY));
+    const onUp = (): void => {
+      setDragging(null);
+      grip.removeEventListener('pointermove', onMove);
+      grip.removeEventListener('pointerup', onUp);
+      grip.removeEventListener('pointercancel', onUp);
+    };
+    grip.addEventListener('pointermove', onMove);
+    grip.addEventListener('pointerup', onUp);
+    grip.addEventListener('pointercancel', onUp);
   }
 
   function save(): void {
@@ -95,29 +129,34 @@ export function LanesSheet({
         >
           <h2 className="text-main-900 text-2xl font-semibold">Lanes</h2>
 
-          <ol className="flex flex-col gap-2">
+          <ol ref={list} className="flex flex-col gap-2">
             {rows.map((row, index) => (
-              <li key={row.id} data-lane-row={row.id} className="flex items-center gap-3">
-                <span className="flex shrink-0 flex-col">
-                  <button
-                    type="button"
-                    aria-label={`Move ${row.name || 'this lane'} up`}
-                    disabled={index === 0}
-                    onClick={() => move(row.id, -1)}
-                    className="text-pool-500 flex h-5 w-6 items-center justify-center disabled:opacity-20"
-                  >
-                    <ChevronUp aria-hidden size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Move ${row.name || 'this lane'} down`}
-                    disabled={index === rows.length - 1}
-                    onClick={() => move(row.id, 1)}
-                    className="text-pool-500 flex h-5 w-6 items-center justify-center disabled:opacity-20"
-                  >
-                    <ChevronDown aria-hidden size={14} />
-                  </button>
-                </span>
+              <li
+                key={row.id}
+                data-lane-row={row.id}
+                data-dragging={dragging === row.id ? '' : undefined}
+                className="flex items-center gap-3 transition-[opacity,transform] duration-100 motion-reduce:transition-none"
+                style={dragging === row.id ? { opacity: 0.6, transform: 'scale(1.02)' } : undefined}
+              >
+                <button
+                  type="button"
+                  aria-label={`Move ${row.name || 'this lane'}`}
+                  data-lane-grip
+                  onPointerDown={(event) => dragFrom(row.id, event)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowUp') {
+                      event.preventDefault();
+                      moveTo(row.id, index - 1);
+                    }
+                    if (event.key === 'ArrowDown') {
+                      event.preventDefault();
+                      moveTo(row.id, index + 1);
+                    }
+                  }}
+                  className="text-pool-500 flex h-10 w-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+                >
+                  <GripVertical aria-hidden size={16} />
+                </button>
                 <input
                   value={row.icon}
                   onChange={(event) => edit(row.id, { icon: event.target.value })}
