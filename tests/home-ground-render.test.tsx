@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,8 +14,12 @@ vi.mock('@/features/sessions/actions', () => ({
   updateSession: () => Promise.resolve({ ok: true, session: {} }),
   deleteSession: () => Promise.resolve({ ok: true }),
 }));
+const savedLanes: unknown[] = [];
 vi.mock('@/features/lanes/actions', () => ({
-  saveLane: () => Promise.resolve({ ok: true }),
+  saveLane: (lane: unknown) => {
+    savedLanes.push(lane);
+    return Promise.resolve({ ok: true });
+  },
   deleteLane: () => Promise.resolve({ ok: true }),
 }));
 
@@ -286,9 +290,29 @@ describe('the lane header', () => {
     expect(seatIds(container)).toEqual(['early', 'mid', 'late']);
   });
 
-  it('hangs a rope under every lane, and the seat of a new one', () => {
+  it('hangs a rope under every lane, the seat of a new one, and the pencil', () => {
     const { container } = ground();
-    expect(container.querySelectorAll('[data-lane-ropes] > span')).toHaveLength(4);
+    expect(container.querySelectorAll('[data-lane-ropes] > span')).toHaveLength(5);
+  });
+
+  it('edits every lane’s icon and name in one sheet from the pencil beside the +', async () => {
+    savedLanes.length = 0;
+    const { getByLabelText, getByRole, getByText, container } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(3);
+    // Nothing changed: nothing to save.
+    expect((getByText('Save') as HTMLButtonElement).disabled).toBe(true);
+
+    const food = sheet.querySelector('[data-lane-row="c-food"]')!;
+    fireEvent.change(food.querySelector('input[aria-label^="Icon"]')!, { target: { value: '🍣' } });
+    fireEvent.change(food.querySelector('input[aria-label="Lane name"]')!, {
+      target: { value: 'Meals' },
+    });
+    fireEvent.click(getByText('Save'));
+    await waitFor(() => expect(savedLanes).toHaveLength(1));
+    expect(savedLanes[0]).toEqual({ id: 'c-food', name: 'Meals', icon: '🍣' });
+    await waitFor(() => expect(container.querySelector('[data-lanes-sheet]')).toBeNull());
   });
 
   it('is the lanes view: its last slot opens the lane sheet for a new lane', () => {
@@ -373,7 +397,7 @@ describe('an empty month (H19, H21)', () => {
     // Only the lanes view and the = remain tappable: nothing on the ground creates.
     expect(
       container.querySelector(
-        '[data-home-ground] button:not([data-lane-filter]):not([data-new-lane]):not([data-manage-sessions])',
+        '[data-home-ground] button:not([data-lane-filter]):not([data-new-lane]):not([data-edit-lanes]):not([data-manage-sessions])',
       ),
     ).toBeNull();
   });

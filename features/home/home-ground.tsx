@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { CategorySheet } from '@/features/lanes/category-sheet';
+import { LanesSheet } from '@/features/lanes/lanes-sheet';
 import { SessionsSheet } from '@/features/sessions/sessions-sheet';
 import { filterByLane, laneCounts, type Seat, type Session } from '@/features/sessions/shelves';
 import type { SplashSummary } from '@/features/splash/summary';
@@ -22,7 +23,8 @@ const RING_MS = 1800;
 /**
  * Home, the water ground (SPEC 5, H21c, H21d; `_docs/mockups/home-ground.png`):
  * one solid #0507C9 surface scoped to one month. The lane header across the
- * top (the lanes view, with the seat of a new lane at its end), ropes through
+ * top (the lanes view, with the seat of a new lane and the lanes sheet's pencil
+ * at its end), ropes through
  * the empty water, the post grid oldest-at-top, the month scrubber beneath it
  * with the `=` that opens the sessions sheet, and the pinned bar above the tab
  * bar. The view opens scrolled to the bottom — the present-and-writing zone.
@@ -54,6 +56,7 @@ export function HomeGround({
   const [laneId, setLaneId] = useState<string | null>(null);
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [newLane, setNewLane] = useState(false);
+  const [editingLanes, setEditingLanes] = useState(false);
   const { justDropped, clearDropped } = useInputSheet();
   // The signature moment (SPEC 6): once the new post's pill is on this
   // ground, the ripple plays there once; the memory of it clears after.
@@ -89,6 +92,7 @@ export function HomeGround({
             selectedId={laneId}
             onSelect={setLaneId}
             onCreate={() => setNewLane(true)}
+            onEdit={() => setEditingLanes(true)}
           />
           <LaneRopes lanes={categories.length} />
         </div>
@@ -124,6 +128,9 @@ export function HomeGround({
       ) : null}
 
       {newLane ? <CategorySheet category={null} onClose={() => setNewLane(false)} /> : null}
+      {editingLanes ? (
+        <LanesSheet categories={categories} onClose={() => setEditingLanes(false)} />
+      ) : null}
     </div>
   );
 }
