@@ -67,17 +67,18 @@ begin
   select id into food  from public.my_categories where user_id = me and name = 'Food';
   select id into day   from public.my_categories where user_id = me and name = 'Day';
 
-  -- Two boards (H20d): one with a declared lane and range, one with neither.
+  -- Two posts (H21a): one with a declared lane and range, one with a declared
+  -- lane whose blocks took another lane too (tags, H21f).
   whistler := md5(me::text || ':splash-whistler')::uuid;
   redesign := md5(me::text || ':splash-redesign')::uuid;
 
-  insert into public.splashes (id, owner_id, title, declared_start, declared_end, lane_ids, created_at)
+  insert into public.splashes (id, owner_id, title, declared_start, declared_end, declared_lane_id, created_at)
   values
-    (whistler, me, 'Whistler, two nights', today - 40, today - 37, array[place], (today - 41) + time '09:00'),
-    (redesign, me, 'During redesign', null, null, '{}', (today - 26) + time '09:00')
+    (whistler, me, 'Whistler, two nights', today - 40, today - 37, place, (today - 41) + time '09:00'),
+    (redesign, me, 'During redesign', null, null, day, (today - 26) + time '09:00')
   on conflict (id) do update
      set title = excluded.title, declared_start = excluded.declared_start,
-         declared_end = excluded.declared_end, lane_ids = excluded.lane_ids;
+         declared_end = excluded.declared_end, declared_lane_id = excluded.declared_lane_id;
 
   -- `on_day`: days back for the occurred annotation (null = unannotated).
   -- `made`: days back for created_at. Ends are same-day times.
