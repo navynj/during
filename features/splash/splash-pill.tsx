@@ -17,7 +17,7 @@ export type PillGround = 'water' | 'page';
  * a white page, the same anatomy.
  *
  * A lone block standing in as a post (H21a) is the inverse: a blue pill with
- * a white/50 outer border, white text, and the mark a white/70 disc with blue waves.
+ * a white/50 outer border, white text, and the mark a white disc with blue waves.
  * An untitled post shows its first block's first words as a ghost title.
  */
 export function SplashPill({
