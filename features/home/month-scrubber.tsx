@@ -5,15 +5,14 @@ import { shortMonthName } from '@/features/sessions/shelves';
 
 import { monthHref } from './scope';
 
-/** How far the receding months fade, and the floor they never go under. */
-const FADE_STEP = 0.18;
-const FADE_FLOOR = 0.25;
+/** Every month but the scoped one, at one quiet strength (review). */
+const INACTIVE_OPACITY = 0.3;
 
 /**
  * The month scrubber (`home-ground.png`, H21d): every month with its year
- * above it, in white; the scoped month at full strength and the others
- * receding with distance — opacity is the only difference, never size — the
- * past fading along the scrubber is where sinking lives on the ground. Each
+ * above it, in white; the scoped month at full strength and every other at
+ * 0.3 — opacity is the only difference, never size — the past sitting back
+ * along the scrubber is where sinking lives on the ground. Each
  * month carries its post count small, when it has any. Tap = scope, never
  * scroll-jump (H21h).
  *
@@ -34,7 +33,6 @@ export function MonthScrubber({
   scoped: string;
   onManage: () => void;
 }) {
-  const at = months.indexOf(scoped);
   return (
     <nav aria-label="Month" data-month-scrubber className="no-scrollbar overflow-x-auto pt-5 pb-3">
       <ol className="flex items-end gap-5">
@@ -49,10 +47,9 @@ export function MonthScrubber({
             <Equal aria-hidden size={18} />
           </button>
         </li>
-        {months.map((month, index) => {
+        {months.map((month) => {
           const current = month === scoped;
-          const distance = at === -1 ? index : Math.abs(index - at);
-          const opacity = current ? 1 : Math.max(FADE_FLOOR, 1 - FADE_STEP * distance);
+          const opacity = current ? 1 : INACTIVE_OPACITY;
           const count = counts.get(month) ?? 0;
           return (
             <li key={month} className="flex shrink-0 flex-col text-white" style={{ opacity }}>
