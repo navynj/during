@@ -21,6 +21,8 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const CLOCK = /^\d{2}:\d{2}$/;
 
 const Draft = z.object({
+  /** Minted in the browser, so the block shown at once is the real one (CLAUDE.md, the principle). */
+  id: z.uuid().optional(),
   /** Null = no lane chosen: the residual lane takes it (H20i). */
   categoryId: z.uuid().nullable(),
   note: z.string().trim().max(2000).optional(),
@@ -64,6 +66,7 @@ export async function commitRipple(input: Draft): Promise<CommitResult> {
   const { data, error } = await supabase
     .from('ripples')
     .insert({
+      ...(draft.id ? { id: draft.id } : {}),
       author_id: user.id,
       category_id: categoryId,
       note: draft.note?.length ? draft.note : null,

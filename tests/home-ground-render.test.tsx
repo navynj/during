@@ -139,16 +139,16 @@ const POSTS = [
   }),
 ];
 
-function Dropper({ id }: { id: string }) {
+function Dropper({ splash, month }: { splash: SplashSummary; month: string }) {
   const { markDropped } = useInputSheet();
-  useEffect(() => markDropped(id), [id, markDropped]);
+  useEffect(() => markDropped({ splash, month }), [splash, month, markDropped]);
   return null;
 }
 
-function ground(month = '2026-09', posts = POSTS, dropped: string | null = null) {
+function ground(month = '2026-09', posts = POSTS, dropped: SplashSummary | null = null) {
   return render(
     <InputSheetProvider>
-      {dropped ? <Dropper id={dropped} /> : null}
+      {dropped ? <Dropper splash={dropped} month={month} /> : null}
       <HomeGround
         month={month}
         months={scrubberMonths(posts, TODAY, TZ)}
@@ -160,6 +160,7 @@ function ground(month = '2026-09', posts = POSTS, dropped: string | null = null)
         customCounts={{}}
         earliestYear={2026}
         today={TODAY}
+        timeZone={TZ}
       />
     </InputSheetProvider>,
   );
@@ -260,8 +261,18 @@ describe('the post grid (H21d)', () => {
     );
   });
 
+  it('seats a post the moment it is dropped, before the server has it', () => {
+    // The dropped post is not among the server's seats yet: it is seated
+    // from the handoff, at its place, with the ripple playing there.
+    const fresh = post('fresh', 'Just dropped', [block('f', '2026-09-25', 'c-day')]);
+    const { container } = ground('2026-09', POSTS, fresh);
+    expect(seatIds(container)).toEqual(['early', 'mid', 'late', 'fresh']);
+    expect(container.querySelector('[data-seat="fresh"] [data-commit-ripple]')).not.toBeNull();
+  });
+
   it('plays the ripple once at the pill just dropped, and nowhere else', () => {
-    const { container } = ground('2026-09', POSTS, 'late');
+    const late = POSTS.find((p) => p.id === 'late')!;
+    const { container } = ground('2026-09', POSTS, late);
     const ripple = container.querySelector<HTMLElement>('[data-seat="late"] [data-commit-ripple]')!;
     expect(ripple).not.toBeNull();
     expect(container.querySelectorAll('[data-commit-ripple]')).toHaveLength(1);

@@ -61,6 +61,8 @@ The database holds records someone actually wrote. Everything below outranks con
 
 ## Non-negotiable engineering rules
 
+- **Every edit, add and delete is an optimistic update.** The screen shows the result the moment the hand commits it; the server action runs behind it; the page re-reads inside the same transition so the optimistic state holds until the real rows land; a refusal takes the change back and says why. Never make the author wait on a round trip to see what they just did. The pattern is `lib/use-optimistic-action.ts` (`useOptimistic` + a transition that awaits the action and then `router.refresh()`), and a new post's id is minted in the browser so its pill is the real one from the start.
+
 - **RLS on every table, no exceptions.** The leak model's two visibility paths (Link path, Pool path) are enforced in RLS policies, not in application code. The client must never receive rows the viewer is not allowed to see. Locker-only (locked) ripples are visible solely to their author.
 - **Timezone:** `occurred_on` and `occurred_time` are author-local. Day boundaries are computed in the author's timezone (store the author's tz on the profile). This app will be used across Vancouver and Korea from week one.
 - **Submerge is never stored.** Presence expiry is computed at read time from the last activity timestamp.

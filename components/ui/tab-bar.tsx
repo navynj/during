@@ -70,7 +70,7 @@ export function TabBar() {
   );
 }
 
-/** The FAB, bottom right: the one entry (SPEC 5, H21). Blue as action colour. */
+/** The FAB, bottom right: the phone's one entry (SPEC 5, H21); a wide screen has the standing composer instead. */
 function AddSplashButton() {
   const { openSheet } = useInputSheet();
 
@@ -79,7 +79,7 @@ function AddSplashButton() {
       type="button"
       aria-label="Drop a splash"
       onClick={openSheet}
-      className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white"
+      className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white lg:hidden"
     >
       <Plus aria-hidden size={24} />
     </button>

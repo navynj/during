@@ -17,7 +17,12 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-import { SHEET_MAX_HEIGHT, SplashSheet } from '@/features/splash-sheet/splash-sheet';
+import {
+  SHEET_MAX_HEIGHT,
+  SplashSheet,
+  type DropHandoff,
+} from '@/features/splash-sheet/splash-sheet';
+import type { SplashSummary } from '@/features/splash/summary';
 import { composeDrop, splitTitle } from '@/features/splash-sheet/split-title';
 import type { MyCategory } from '@/lib/queries/profile';
 
@@ -43,19 +48,27 @@ const LANES = [
 
 beforeEach(() => {
   drops.length = 0;
+  handoffs.length = 0;
   window.URL.createObjectURL = () => 'blob:preview';
 });
 afterEach(cleanup);
 
-function sheet(onCommitted = vi.fn()) {
+/** The handoffs the sheet made: the post as the ground should show it, and its month. */
+const handoffs: { splash: SplashSummary; month: string }[] = [];
+
+function sheet() {
+  const onDrop = vi.fn((drop: DropHandoff) => {
+    handoffs.push({ splash: drop.splash, month: drop.month });
+    void drop.commit();
+  });
   const view = render(
     <SplashSheet
       context={{ categories: LANES, timeZone: TZ, today: TODAY }}
       onClose={() => {}}
-      onCommitted={onCommitted}
+      onDrop={onDrop}
     />,
   );
-  return { ...view, onCommitted, drop: () => view.getByText('Drop') as HTMLButtonElement };
+  return { ...view, onDrop, drop: () => view.getByText('Drop') as HTMLButtonElement };
 }
 
 describe('the first line is the title (SPEC 6)', () => {
@@ -93,10 +106,14 @@ describe('the first line is the title (SPEC 6)', () => {
       occurredOn: TODAY,
       occurredTime: null,
     });
-    expect(view.onCommitted).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 's-new' }),
-      '2026-09',
-    );
+    // Handed over at once, the post as the ground should show it: a real id,
+    // an untitled post of one block resting on today.
+    expect(handoffs).toHaveLength(1);
+    expect(handoffs[0].month).toBe('2026-09');
+    expect(handoffs[0].splash).toMatchObject({ title: '', count: 1, orphan: false });
+    expect(handoffs[0].splash.ghostTitle).toBe('coffee went cold');
+    expect(handoffs[0].splash.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(drops[0]).toMatchObject({ id: handoffs[0].splash.id });
   });
 
   it('commits the title field as the title and the body field as the first block', async () => {
@@ -221,7 +238,7 @@ describe('the affordances under the text', () => {
     fireEvent.click(view.drop());
     await waitFor(() => expect(drops).toHaveLength(1));
     expect(drops[0]).toMatchObject({ occurredOn: '2026-08-17', occurredTime: null });
-    expect(view.onCommitted).toHaveBeenCalledWith(expect.anything(), '2026-08');
+    expect(handoffs[0].month).toBe('2026-08');
   });
 
   it('has no session field: sessions are date-based, a post is shelved by its dates', () => {

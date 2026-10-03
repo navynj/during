@@ -6,10 +6,13 @@ import { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 
 import { GhostRing } from '@/components/ui/ghost-ring';
+import { commitRipple, type CommitResult } from '@/features/input-sheet/commit';
+import { deleteRipple, setRippleLock, updateRipple } from '@/features/ripple-sheet/actions';
 import type { Session } from '@/features/sessions/shelves';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import type { IsoDate } from '@/lib/time';
+import { useOptimisticAction, type ActionOutcome } from '@/lib/use-optimistic-action';
 
 import {
   adoptRipple,
@@ -18,19 +21,35 @@ import {
   setSplashSession,
   updateSplashHeader,
 } from './actions';
-import { BlockEditor, type EditorTarget } from './block-editor';
+import { BlockEditor, type BlockDraft, type EditorTarget } from './block-editor';
 import { BlockView } from './block';
 import { SplashHeader, type HeaderEdit } from './splash-header';
-import type { SplashSummary } from './summary';
+import { laneTags, type SplashSummary } from './summary';
 
 /** Where the page came from, for the back chip. */
 export type Origin = { label: string; href: string };
+
+/** A block action's result, read as a plain outcome: the dormant refusals have no surface here. */
+function outcome(result: CommitResult): ActionOutcome {
+  if (result.ok) return { ok: true };
+  return {
+    ok: false,
+    message: result.reason === 'error' ? result.message : 'That could not be saved.',
+  };
+}
+
+/** What the page holds and edits: the post and its blocks, as one value. */
+type PageState = { splash: SplashSummary; blocks: RippleWithCategory[]; lockedIds: string[] };
 
 /**
  * A post's page (SPEC 5, H21c): the white page above the water. The back chip
  * names where it came from; the header stack; the blocks oldest first, each
  * edited in place; an add slot at the bottom that starts a new block on the
  * page. No sheet here.
+ *
+ * Every change shows the moment it is made and the action runs behind it
+ * (CLAUDE.md, the principle): a saved block reads saved, a deleted one is
+ * gone, a pin is pinned, and the page re-reads inside the same transition.
  *
  * A splashless block renders here too, as an untitled post of one; it gets a
  * row of its own the first time it needs one (H21a) and the page moves to it.
@@ -59,26 +78,163 @@ export function SplashPage({
 }) {
   const router = useRouter();
   const [editor, setEditor] = useState<EditorTarget | null>(null);
+  const {
+    value: page,
+    run,
+    message,
+  } = useOptimisticAction<PageState>({
+    splash,
+    blocks,
+    lockedIds,
+  });
 
   /** The post's row, made now if the post is a lone block (H21a). */
   async function ensureSplash(): Promise<string | null> {
-    if (!splash.orphan) return splash.id;
-    const result = await adoptRipple(splash.id);
+    if (!page.splash.orphan) return page.splash.id;
+    const result = await adoptRipple(page.splash.id);
     if (!result.ok) return null;
     router.replace(`/splash/${result.splash.id}?from=${encodeURIComponent(origin.href)}`);
     return result.splash.id;
   }
 
-  async function withRow(work: (id: string) => Promise<unknown>): Promise<void> {
-    const id = await ensureSplash();
-    if (!id) return;
-    await work(id);
-    router.refresh();
+  /** A header change, shown at once; the row is made first if there is none. */
+  function editHeader(edit: HeaderEdit): Promise<void> {
+    run(
+      (current) => ({
+        ...current,
+        splash: {
+          ...current.splash,
+          title: edit.title,
+          declaredLaneId: edit.declaredLaneId,
+          laneIds: laneTags(edit.declaredLaneId, current.blocks),
+          declaredRange: edit.declaredStart
+            ? { start: edit.declaredStart, end: edit.declaredEnd ?? edit.declaredStart }
+            : null,
+        },
+      }),
+      async () => {
+        const id = await ensureSplash();
+        return id ? updateSplashHeader(id, edit) : { ok: false, message: 'That post is gone.' };
+      },
+    );
+    return Promise.resolve();
   }
 
-  function finish(): void {
+  function pin(pinned: boolean): Promise<void> {
+    run(
+      (current) => ({
+        ...current,
+        splash: { ...current.splash, pinnedAt: pinned ? new Date().toISOString() : null },
+      }),
+      async () => {
+        const id = await ensureSplash();
+        return id ? setSplashPinned(id, pinned) : { ok: false, message: 'That post is gone.' };
+      },
+    );
+    return Promise.resolve();
+  }
+
+  function shelve(sessionId: string | null): Promise<void> {
+    run(
+      (current) => ({ ...current, splash: { ...current.splash, sessionId } }),
+      async () => {
+        const id = await ensureSplash();
+        return id ? setSplashSession(id, sessionId) : { ok: false, message: 'That post is gone.' };
+      },
+    );
+    return Promise.resolve();
+  }
+
+  /** The block as the screen should show it, from what the editor handed back. */
+  function shaped(base: RippleWithCategory, draft: BlockDraft): RippleWithCategory {
+    const lane = categories.find((c) => c.id === draft.categoryId) ?? null;
+    return {
+      ...base,
+      category_id: draft.categoryId ?? base.category_id,
+      category: lane ? { name: lane.name, icon: lane.icon } : base.category,
+      note: draft.note.trim().length > 0 ? draft.note : null,
+      media: draft.media,
+      occurred_on: draft.occurredOn,
+      occurred_time: draft.occurredTime ? `${draft.occurredTime}:00` : null,
+      started_at: draft.startInstant,
+      ended_at: draft.endInstant ?? draft.startInstant,
+    };
+  }
+
+  function saveBlock(target: EditorTarget, draft: BlockDraft): void {
     setEditor(null);
-    router.refresh();
+    if (target.kind === 'edit') {
+      const block = target.block;
+      run(
+        (current) => ({
+          ...current,
+          blocks: current.blocks.map((b) => (b.id === block.id ? shaped(b, draft) : b)),
+        }),
+        async () =>
+          outcome(await updateRipple({ ...draft, id: block.id, splashId: block.splash_id })),
+      );
+      return;
+    }
+    const placeholder: RippleWithCategory = shaped(
+      {
+        id: draft.id,
+        author_id: '',
+        category_id: draft.categoryId ?? '',
+        note: null,
+        media: [],
+        occurred_on: null,
+        occurred_time: null,
+        started_at: null,
+        ended_at: null,
+        planned: false,
+        participants: [],
+        created_at: new Date().toISOString(),
+        parent_ripple_id: null,
+        splash_id: target.splashId,
+        category: null,
+        splash: {
+          declared_start: page.splash.declaredRange?.start ?? null,
+          title: page.splash.title,
+        },
+      },
+      draft,
+    );
+    run(
+      (current) => ({
+        ...current,
+        blocks: [...current.blocks, placeholder],
+        splash: {
+          ...current.splash,
+          count: current.splash.count + 1,
+          laneIds: laneTags(current.splash.declaredLaneId, [...current.blocks, placeholder]),
+        },
+      }),
+      async () => outcome(await commitRipple({ ...draft, splashId: target.splashId })),
+    );
+  }
+
+  function removeBlock(block: RippleWithCategory): void {
+    setEditor(null);
+    run(
+      (current) => ({
+        ...current,
+        blocks: current.blocks.filter((b) => b.id !== block.id),
+        splash: { ...current.splash, count: Math.max(0, current.splash.count - 1) },
+      }),
+      async () => outcome(await deleteRipple(block.id)),
+    );
+  }
+
+  function lockBlock(block: RippleWithCategory, locked: boolean): void {
+    run(
+      (current) => ({
+        ...current,
+        lockedIds: locked
+          ? [...current.lockedIds, block.id]
+          : current.lockedIds.filter((id) => id !== block.id),
+      }),
+      async () => outcome(await setRippleLock(block.id, locked)),
+    );
   }
 
   function startBlock(): void {
@@ -97,23 +253,32 @@ export function SplashPage({
       </Link>
 
       <SplashHeader
-        splash={splash}
+        key={page.splash.id}
+        splash={page.splash}
         categories={categories}
         sessions={sessions}
         today={today}
-        onEdit={(edit: HeaderEdit) => withRow((id) => updateSplashHeader(id, edit))}
-        onPin={(pinned) => withRow((id) => setSplashPinned(id, pinned))}
-        onSession={(sessionId) => withRow((id) => setSplashSession(id, sessionId))}
+        onEdit={editHeader}
+        onPin={pin}
+        onSession={shelve}
         onDelete={async () => {
-          const id = splash.orphan ? null : splash.id;
-          if (id) await deleteSplash(id);
+          // Gone the moment it is asked for: back where it came from, and
+          // the rows follow.
+          const id = page.splash.orphan ? null : page.splash.id;
           router.push(origin.href);
+          if (id) await deleteSplash(id);
           router.refresh();
         }}
       />
 
+      {message ? (
+        <p role="alert" className="text-pool-500 pb-4 text-sm">
+          {message}
+        </p>
+      ) : null}
+
       <ol data-blocks className="flex flex-col">
-        {blocks.map((block, index) => (
+        {page.blocks.map((block, index) => (
           <li
             key={block.id}
             id={`block-${block.id}`}
@@ -123,10 +288,12 @@ export function SplashPage({
               <BlockEditor
                 target={editor}
                 categories={categories}
-                defaultLaneId={splash.declaredLaneId}
+                defaultLaneId={page.splash.declaredLaneId}
                 timeZone={timeZone}
                 today={today}
-                onDone={finish}
+                onSubmit={(draft) => saveBlock(editor, draft)}
+                onDelete={() => removeBlock(block)}
+                onLock={(locked) => lockBlock(block, locked)}
                 onCancel={() => setEditor(null)}
               />
             ) : (
@@ -136,7 +303,7 @@ export function SplashPage({
                 timeZone={timeZone}
                 today={today}
                 onEdit={() =>
-                  setEditor({ kind: 'edit', block, locked: lockedIds.includes(block.id) })
+                  setEditor({ kind: 'edit', block, locked: page.lockedIds.includes(block.id) })
                 }
               />
             )}
@@ -151,10 +318,12 @@ export function SplashPage({
           <BlockEditor
             target={editor}
             categories={categories}
-            defaultLaneId={splash.declaredLaneId}
+            defaultLaneId={page.splash.declaredLaneId}
             timeZone={timeZone}
             today={today}
-            onDone={finish}
+            onSubmit={(draft) => saveBlock(editor, draft)}
+            onDelete={() => setEditor(null)}
+            onLock={() => {}}
             onCancel={() => setEditor(null)}
           />
         ) : (

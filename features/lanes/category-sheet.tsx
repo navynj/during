@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 import type { MyCategory } from '@/lib/queries/profile';
+import type { useOptimisticAction } from '@/lib/use-optimistic-action';
 
 import { deleteLane, saveLane } from './actions';
 
@@ -24,10 +25,13 @@ const DEFAULT_ICON = '🌊';
  */
 export function CategorySheet({
   category,
+  apply,
   onClose,
 }: {
   /** Null opens the same sheet on a lane that does not exist yet. */
   category: MyCategory | null;
+  /** Home's optimistic lane state: with it, a new lane shows at once (CLAUDE.md, the principle). */
+  apply?: ReturnType<typeof useOptimisticAction<MyCategory[]>>['run'];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -104,17 +108,37 @@ export function CategorySheet({
           <button
             type="button"
             disabled={pending || name.trim().length === 0}
-            onClick={() =>
+            onClick={() => {
+              const lane = {
+                id: category?.id ?? null,
+                name: name.trim(),
+                icon: icon.trim() || DEFAULT_ICON,
+              };
+              if (apply && !category) {
+                onClose();
+                apply(
+                  (current) => [
+                    ...current,
+                    {
+                      id: `optimistic-${Date.now()}`,
+                      user_id: '',
+                      name: lane.name,
+                      icon: lane.icon,
+                      default_mode: 'drop',
+                      position: current.length,
+                      created_at: new Date().toISOString(),
+                    },
+                  ],
+                  () => saveLane(lane),
+                );
+                return;
+              }
               startTransition(async () => {
-                const result = await saveLane({
-                  id: category?.id ?? null,
-                  name,
-                  icon: icon.trim() || DEFAULT_ICON,
-                });
+                const result = await saveLane(lane);
                 if (result.ok) done();
                 else setMessage(result.message);
-              })
-            }
+              });
+            }}
             className="bg-main-900 rounded-full px-6 py-3 text-base font-medium text-white disabled:opacity-50"
           >
             {category ? 'Save' : 'Add lane'}

@@ -1,10 +1,9 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, useTransition } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 
 import { AnnotationControl } from '@/features/input-sheet/annotation-control';
-import { commitRipple } from '@/features/input-sheet/commit';
 import {
   annotationVerdict,
   draftFrom,
@@ -18,7 +17,6 @@ import {
   MediaPreviews,
   useMediaAttach,
 } from '@/features/input-sheet/media-field';
-import { deleteRipple, setRippleLock, updateRipple } from '@/features/ripple-sheet/actions';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { wallClockToInstant } from '@/lib/ripple-kind';
@@ -27,12 +25,27 @@ import type { IsoDate } from '@/lib/time';
 export type EditorTarget =
   { kind: 'edit'; block: RippleWithCategory; locked: boolean } | { kind: 'add'; splashId: string };
 
+/** What the editor hands back: the block as it should now be, with a fresh id when it is new. */
+export type BlockDraft = {
+  id: string;
+  categoryId: string | null;
+  note: string;
+  media: string[];
+  occurredOn: IsoDate | null;
+  occurredTime: string | null;
+  startInstant: string | null;
+  endInstant: string | null;
+};
+
 /**
  * A block, edited in place on the post's page (SPEC 5, H21): blog-editor
  * style, no sheet. The cursor goes into the words; the lane chips, `+ Add
  * Time`, `+ Add Image`, the lock toggle and Delete sit beneath them; Cancel
  * and Save close it. A new block starts at the post's declared lane and, with
  * no annotation, rests at its declared date (H21f).
+ *
+ * The editor only describes the change; the page applies it optimistically
+ * and runs the action (CLAUDE.md, the principle).
  */
 export function BlockEditor({
   target,
@@ -40,7 +53,9 @@ export function BlockEditor({
   defaultLaneId,
   timeZone,
   today,
-  onDone,
+  onSubmit,
+  onDelete,
+  onLock,
   onCancel,
 }: {
   target: EditorTarget;
@@ -49,7 +64,9 @@ export function BlockEditor({
   defaultLaneId: string | null;
   timeZone: string;
   today: IsoDate;
-  onDone: () => void;
+  onSubmit: (draft: BlockDraft) => void;
+  onDelete: () => void;
+  onLock: (locked: boolean) => void;
   onCancel: () => void;
 }) {
   const editing = target.kind === 'edit' ? target.block : null;
@@ -60,8 +77,6 @@ export function BlockEditor({
   const [media, setMedia] = useState<string[]>(draft?.media ?? []);
   const [locked, setLocked] = useState(target.kind === 'edit' ? target.locked : false);
   const [confirming, setConfirming] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
   const attach = useMediaAttach(media, setMedia);
   const field = useRef<HTMLTextAreaElement>(null);
 
@@ -76,8 +91,7 @@ export function BlockEditor({
   const hasContent = note.trim().length > 0 || media.length > 0;
   const annotationOk = !annotation || annotationVerdict(annotation) === 'ok';
 
-  function save(): void {
-    setMessage(null);
+  function submit(): void {
     const a = annotation;
     const startInstant =
       a && a.time ? wallClockToInstant(a.date, a.time, timeZone).toISOString() : null;
@@ -85,7 +99,8 @@ export function BlockEditor({
     const endInstant = span?.end
       ? wallClockToInstant(span.end.slice(0, 10), span.end.slice(11), timeZone).toISOString()
       : null;
-    const fields = {
+    onSubmit({
+      id: editing?.id ?? crypto.randomUUID(),
       categoryId,
       note,
       media,
@@ -93,17 +108,6 @@ export function BlockEditor({
       occurredTime: a?.time ?? null,
       startInstant,
       endInstant,
-    };
-
-    startTransition(async () => {
-      const outcome = editing
-        ? await updateRipple({ ...fields, id: editing.id, splashId: editing.splash_id })
-        : await commitRipple({
-            ...fields,
-            splashId: target.kind === 'add' ? target.splashId : null,
-          });
-      if (outcome.ok) onDone();
-      else setMessage(outcome.reason === 'error' ? outcome.message : 'That could not be saved.');
     });
   }
 
@@ -140,12 +144,6 @@ export function BlockEditor({
         onChange={setMedia}
       />
 
-      {message ? (
-        <p role="alert" className="text-pool-500 text-sm">
-          {message}
-        </p>
-      ) : null}
-
       <div className="flex items-center gap-3 text-sm">
         {editing ? (
           <>
@@ -154,15 +152,12 @@ export function BlockEditor({
             <button
               type="button"
               aria-pressed={locked}
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  const next = !locked;
-                  const result = await setRippleLock(editing.id, next);
-                  if (result.ok) setLocked(next);
-                })
-              }
-              className="text-pool-500 flex items-center gap-1 disabled:opacity-50"
+              onClick={() => {
+                const next = !locked;
+                setLocked(next);
+                onLock(next);
+              }}
+              className="text-pool-500 flex items-center gap-1"
             >
               {locked ? <Lock aria-hidden size={13} /> : <Unlock aria-hidden size={13} />}
               {locked ? 'Only me' : 'Everyone'}
@@ -171,17 +166,7 @@ export function BlockEditor({
             {confirming ? (
               <span className="flex items-center gap-2">
                 <span className="text-pool-500">Deletes this block</span>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    startTransition(async () => {
-                      await deleteRipple(editing.id);
-                      onDone();
-                    })
-                  }
-                  className="text-main-900 font-medium disabled:opacity-50"
-                >
+                <button type="button" onClick={onDelete} className="text-main-900 font-medium">
                   Delete
                 </button>
                 <button
@@ -207,8 +192,8 @@ export function BlockEditor({
         </button>
         <button
           type="button"
-          disabled={pending || !hasContent || !annotationOk}
-          onClick={save}
+          disabled={!hasContent || !annotationOk}
+          onClick={submit}
           className="bg-main-900 rounded-full px-4 py-1.5 font-medium text-white disabled:opacity-50"
         >
           Save

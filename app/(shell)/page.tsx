@@ -58,6 +58,7 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
         customCounts={customCounts}
         earliestYear={earliestYear(summaries, today, profile.timezone)}
         today={today}
+        timeZone={profile.timezone}
       />
     </main>
   );

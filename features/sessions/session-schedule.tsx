@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 
 import { monthHref } from '@/features/home/scope';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
+import { useOptimisticAction } from '@/lib/use-optimistic-action';
 
 import { createSession, titleMonth } from './actions';
 import { SessionForm } from './session-form';
@@ -15,11 +15,14 @@ import { monthlyTitle, monthName, monthsOfYear, type Session } from './shelves';
 
 /**
  * The session schedule (SPEC 5, H21e), inside the sheet the scrubber's `=`
- * opens: a year pager; one row per month of that year up to the current one
- * — the month small, the title large if titled, the post count at the right,
- * the current month in blue; tapping a month scopes Home to it (H21h), and
- * titling one from its row's edit affordance makes its lazy row. Custom
- * sessions in a second section.
+ * opens: a year pager; one row per month of that year, January first, up to
+ * the current one — the month small, the title large if titled, the post
+ * count at the right, the current month in blue; tapping a month scopes Home
+ * to it (H21h), and titling one from its row's edit affordance makes its lazy
+ * row. Custom sessions in a second section.
+ *
+ * A title or a new shelf shows the moment it is given; the action runs
+ * behind it (CLAUDE.md, the principle).
  */
 export function SessionSchedule({
   sessions,
@@ -39,21 +42,47 @@ export function SessionSchedule({
   categories: MyCategory[];
   earliestYear: number;
   today: IsoDate;
-  /** Opened from the post sheet's *New session*: the create form starts open. */
+  /** The create form starts open. */
   openNew?: boolean;
   /** Scoping a month closes the sheet before Home re-reads. */
   onScope?: () => void;
 }) {
-  const router = useRouter();
   const currentYear = Number(today.slice(0, 4));
   const [year, setYear] = useState(currentYear);
   const [creating, setCreating] = useState(openNew);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const shelves = useOptimisticAction(sessions);
   const current = today.slice(0, 7);
-  const custom = sessions
+  const custom = shelves.value
     .filter((s) => s.kind === 'custom')
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  function title(month: string, text: string): void {
+    const trimmed = text.trim();
+    shelves.run(
+      (rows) => {
+        const rest = rows.filter((s) => !(s.kind === 'monthly' && s.month?.slice(0, 7) === month));
+        if (trimmed.length === 0) return rest;
+        const was = rows.find((s) => s.kind === 'monthly' && s.month?.slice(0, 7) === month);
+        return [
+          ...rest,
+          was
+            ? { ...was, title: trimmed }
+            : {
+                id: `optimistic-${month}`,
+                owner_id: '',
+                kind: 'monthly' as const,
+                title: trimmed,
+                month: `${month}-01`,
+                declared_start: null,
+                declared_end: null,
+                lane_id: null,
+                created_at: new Date().toISOString(),
+              },
+        ];
+      },
+      () => titleMonth(month, text),
+    );
+  }
 
   return (
     <div data-session-schedule className="flex flex-col gap-8">
@@ -86,17 +115,11 @@ export function SessionSchedule({
             <MonthRow
               key={month}
               month={month}
-              titled={monthlyTitle(sessions, month)}
+              titled={monthlyTitle(shelves.value, month)}
               count={counts[month] ?? 0}
               current={month === current}
               onScope={onScope}
-              onTitle={(title) =>
-                startTransition(async () => {
-                  const result = await titleMonth(month, title);
-                  if (result.ok) router.refresh();
-                  else setMessage(result.message);
-                })
-              }
+              onTitle={(text) => title(month, text)}
             />
           ))}
         </ol>
@@ -138,17 +161,28 @@ export function SessionSchedule({
         {creating ? (
           <SessionForm
             categories={categories}
-            pending={pending}
+            pending={false}
             onCancel={() => setCreating(false)}
-            onSubmit={(input) =>
-              startTransition(async () => {
-                const result = await createSession(input);
-                if (result.ok) {
-                  setCreating(false);
-                  router.refresh();
-                } else setMessage(result.message);
-              })
-            }
+            onSubmit={(input) => {
+              setCreating(false);
+              shelves.run(
+                (rows) => [
+                  ...rows,
+                  {
+                    id: `optimistic-${Date.now()}`,
+                    owner_id: '',
+                    kind: 'custom' as const,
+                    title: input.title.trim(),
+                    month: null,
+                    declared_start: input.declaredStart,
+                    declared_end: input.declaredEnd,
+                    lane_id: input.laneId,
+                    created_at: new Date().toISOString(),
+                  },
+                ],
+                () => createSession(input),
+              );
+            }}
           />
         ) : (
           <button
@@ -160,9 +194,9 @@ export function SessionSchedule({
           </button>
         )}
 
-        {message ? (
+        {shelves.message ? (
           <p role="alert" className="text-pool-500 text-sm">
-            {message}
+            {shelves.message}
           </p>
         ) : null}
       </section>

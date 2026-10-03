@@ -43,6 +43,8 @@ function refuseRange(header: Pick<Header, 'declaredStart' | 'declaredEnd'>): str
 }
 
 const Drop = Header.extend({
+  /** The post's id, minted in the browser so the pill on the ground is the real one from the start. */
+  id: z.uuid().optional(),
   /** The first block's body; empty makes a titled post with nothing in it yet. */
   body: z.string().trim().max(8000),
   media: z.array(z.string()).max(8),
@@ -84,6 +86,7 @@ export async function dropSplash(input: Drop): Promise<SplashResult> {
   const { data: splash, error } = await supabase
     .from('splashes')
     .insert({
+      ...(drop.id ? { id: drop.id } : {}),
       owner_id: user.id,
       title: drop.title,
       declared_start: drop.declaredStart,

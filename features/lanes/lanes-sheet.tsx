@@ -1,35 +1,37 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import { GripVertical } from 'lucide-react';
 
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import type { MyCategory } from '@/lib/queries/profile';
+import type { useOptimisticAction } from '@/lib/use-optimistic-action';
 
 import { reorderLanes, saveLane } from './actions';
 
 /**
  * The lanes sheet: every lane in a row, its icon and its name edited in
  * place and its order changed by dragging the grip (arrow keys on the grip
- * for a keyboard), one Save for whatever changed. Opened from the pencil beside the
- * `+` in Home's lane header — the lanes view's own editor now that the
- * Lanes tab has retired (H21 review). Delete stays out: a lane with records
- * refuses it anyway (H19), and an empty one is rare enough to wait.
+ * for a keyboard), one Save for whatever changed. Opened from the pencil
+ * beside the `+` in Home's lane header — the lanes view's own editor now that
+ * the Lanes tab has retired (H21 review). Delete stays out: a lane with
+ * records refuses it anyway (H19), and an empty one is rare enough to wait.
+ *
+ * Save shows the lanes as saved at once and runs the actions behind it
+ * (CLAUDE.md, the principle): `apply` is Home's optimistic lane state.
  */
 export function LanesSheet({
   categories,
+  apply,
   onClose,
 }: {
   categories: MyCategory[];
+  apply: ReturnType<typeof useOptimisticAction<MyCategory[]>>['run'];
   onClose: () => void;
 }) {
-  const router = useRouter();
   const [rows, setRows] = useState(() =>
     categories.map((lane) => ({ id: lane.id, name: lane.name, icon: lane.icon ?? '' })),
   );
-  const [message, setMessage] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
   const [dragging, setDragging] = useState<string | null>(null);
   const list = useRef<HTMLOListElement>(null);
 
@@ -88,25 +90,29 @@ export function LanesSheet({
   }
 
   function save(): void {
-    setMessage(null);
-    startTransition(async () => {
-      for (const row of changed) {
-        const result = await saveLane({ id: row.id, name: row.name.trim(), icon: row.icon.trim() });
-        if (!result.ok) {
-          setMessage(result.message);
-          return;
+    const next = rows.map((row) => ({ id: row.id, name: row.name.trim(), icon: row.icon.trim() }));
+    const toSave = changed.map((row) => ({
+      id: row.id,
+      name: row.name.trim(),
+      icon: row.icon.trim(),
+    }));
+    const order = rows.map((row) => row.id);
+    onClose();
+    apply(
+      (current) =>
+        order.map((id, position) => {
+          const lane = current.find((c) => c.id === id)!;
+          const edited = next.find((row) => row.id === id)!;
+          return { ...lane, name: edited.name, icon: edited.icon, position };
+        }),
+      async () => {
+        for (const row of toSave) {
+          const result = await saveLane(row);
+          if (!result.ok) return result;
         }
-      }
-      if (reordered) {
-        const result = await reorderLanes(rows.map((row) => row.id));
-        if (!result.ok) {
-          setMessage(result.message);
-          return;
-        }
-      }
-      onClose();
-      router.refresh();
-    });
+        return reordered ? reorderLanes(order) : { ok: true };
+      },
+    );
   }
 
   return (
@@ -176,12 +182,6 @@ export function LanesSheet({
             ))}
           </ol>
 
-          {message ? (
-            <p role="alert" className="text-pool-500 text-sm">
-              {message}
-            </p>
-          ) : null}
-
           <div className="flex items-center justify-end gap-3 pt-2 text-sm">
             <button type="button" onClick={onClose} className="text-pool-500">
               Cancel
@@ -189,7 +189,7 @@ export function LanesSheet({
             {/* Blue means action: the one filled thing here saves (H20f). */}
             <button
               type="button"
-              disabled={pending || (changed.length === 0 && !reordered) || !complete}
+              disabled={(changed.length === 0 && !reordered) || !complete}
               onClick={save}
               className="bg-main-900 rounded-full px-5 py-2 font-medium text-white disabled:opacity-50"
             >
