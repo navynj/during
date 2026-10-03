@@ -15,9 +15,14 @@ vi.mock('@/features/sessions/actions', () => ({
   deleteSession: () => Promise.resolve({ ok: true }),
 }));
 const savedLanes: unknown[] = [];
+const orders: string[][] = [];
 vi.mock('@/features/lanes/actions', () => ({
   saveLane: (lane: unknown) => {
     savedLanes.push(lane);
+    return Promise.resolve({ ok: true });
+  },
+  reorderLanes: (ids: string[]) => {
+    orders.push(ids);
     return Promise.resolve({ ok: true });
   },
   deleteLane: () => Promise.resolve({ ok: true }),
@@ -313,6 +318,23 @@ describe('the lane header', () => {
     await waitFor(() => expect(savedLanes).toHaveLength(1));
     expect(savedLanes[0]).toEqual({ id: 'c-food', name: 'Meals', icon: '🍣' });
     await waitFor(() => expect(container.querySelector('[data-lanes-sheet]')).toBeNull());
+    expect(orders).toHaveLength(0);
+  });
+
+  it('reorders the lanes with the chevrons, and saves the new order', async () => {
+    orders.length = 0;
+    const { getByLabelText, getByRole, getByText } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    expect((getByLabelText('Move Food up') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(getByLabelText('Move Day up'));
+    const rows = [...sheet.querySelectorAll('[data-lane-row]')].map((r) =>
+      r.getAttribute('data-lane-row'),
+    );
+    expect(rows).toEqual(['c-food', 'c-day', 'c-place']);
+    fireEvent.click(getByText('Save'));
+    await waitFor(() => expect(orders).toHaveLength(1));
+    expect(orders[0]).toEqual(['c-food', 'c-day', 'c-place']);
   });
 
   it('is the lanes view: its last slot opens the lane sheet for a new lane', () => {

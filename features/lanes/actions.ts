@@ -59,6 +59,26 @@ export async function saveLane(input: Lane): Promise<LaneResult> {
 }
 
 /**
+ * Puts the lanes in the order given: the author's order, written as each
+ * lane's position. Ids not mine are refused by RLS; ids left out keep
+ * their old positions, which is harmless because the sheet always sends
+ * every lane.
+ */
+export async function reorderLanes(ids: string[]): Promise<LaneResult> {
+  const parsed = z.array(z.uuid()).min(1).max(64).safeParse(ids);
+  if (!parsed.success) return { ok: false, message: 'That order is not a list of lanes.' };
+
+  const supabase = await createClient();
+  for (const [position, id] of parsed.data.entries()) {
+    const { error } = await supabase.from('my_categories').update({ position }).eq('id', id);
+    if (error) return { ok: false, message: error.message };
+  }
+
+  revalidatePath('/');
+  return { ok: true };
+}
+
+/**
  * Deletes a lane, but only while it is empty.
  *
  * A lane with records in it cannot be removed without deciding what happens to
