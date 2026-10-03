@@ -1,5 +1,5 @@
 import { impressionLineCount, WAVE_GAP } from './wave-math';
-import { WaveLine } from './wave-line';
+import { WaveLine, WAVE_WIDTH } from './wave-line';
 
 /** The disc's diameter, and the wave width inside it. */
 const MARK_SIZE = 28;
@@ -46,9 +46,11 @@ export function WaveMark({
 
 /**
  * A lane header's waves on the ground: its post count this month on the log
- * scale, stacked small, nothing when nothing.
+ * scale, stacked small, nothing when nothing. Drawn at the export's width —
+ * four segments, so each line ends on a crest (review: one more point, to
+ * end in a ^) rather than coming up out of a trough.
  */
-export function WaveStack({ count, width = 16 }: { count: number; width?: number }) {
+export function WaveStack({ count, width = WAVE_WIDTH }: { count: number; width?: number }) {
   const lines = impressionLineCount(count);
   if (lines === 0) return null;
   return (
