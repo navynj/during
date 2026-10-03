@@ -1,5 +1,10 @@
 'use client';
 
+// DORMANT (H20b, H21): the ripple sheet. No surface reaches this since the
+// refounding — new posts come from the post sheet and every later word is
+// written on the post's page. Kept, compiling, because the dormant focus
+// screen hosts it for P3's Swim. Do not wire it back in; do not delete it.
+
 import { useState, useTransition } from 'react';
 
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
@@ -76,8 +81,8 @@ export function InputSheet({
   const media = useMediaAttach(draft.media, (next) => setDraft((d) => ({ ...d, media: next })));
 
   const splash = splashes.find((s) => s.id === draft.splashId) ?? null;
-  // Inheritance, not rejection (H20e): the board's declared lanes decide what
-  // the chip row offers, and the resolved lane is what the badge shows.
+  // A declaration is a default (H21f): the post's declared lane is where the
+  // selection starts, and the resolved lane is what the badge shows.
   const rule = laneRule(splash);
   const categoryId = resolveCategory(draft.categoryId, rule, categories);
   const selected = categories.find((c) => c.id === categoryId) ?? null;
@@ -148,15 +153,12 @@ export function InputSheet({
         aria-label={isEdit ? 'Edit this ripple' : 'Drop a ripple'}
         className={`sheet-rise bg-pool-100 relative mx-auto flex max-h-[88vh] w-full ${COLUMN_MAX_WIDTH} flex-col overflow-hidden rounded-t-[32px]`}
       >
-        {/* One declared lane: the choice disappears, the lane is it (H20e). */}
-        {rule.kind !== 'hidden' ? (
-          <LaneChips
-            categories={categories}
-            selectedId={categoryId}
-            allowed={rule.kind === 'restricted' ? rule.allowed : undefined}
-            onSelect={(id) => setDraft((d) => ({ ...d, categoryId: id }))}
-          />
-        ) : null}
+        {/* The post's declared lane is where the selection starts (H21f). */}
+        <LaneChips
+          categories={categories}
+          selectedId={categoryId}
+          onSelect={(id) => setDraft((d) => ({ ...d, categoryId: id }))}
+        />
 
         <div
           className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-t-[32px] bg-white px-5 pt-6"

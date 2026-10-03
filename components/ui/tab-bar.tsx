@@ -2,22 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus, ShelvingUnit, Waves, type LucideIcon } from 'lucide-react';
+import { Home, Plus, Rows3, ShelvingUnit, Waves, type LucideIcon } from 'lucide-react';
 
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
-import { WaveLine } from '@/components/ui/waves';
-import { requestHomeModeToggle } from '@/features/home/mode-bus';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 
 /**
  * D3: tab slots are full by design and the bar grows only as screens ship.
- * Pools is deliberately absent until P3 — a dead tab is forbidden, so this
- * list is the shipped surface, not a plan.
+ * Pools and Friends are reserved seats — a dead tab is forbidden, so this
+ * list is the shipped surface, not a plan. Home / Sessions / Lanes / Locker
+ * (H21).
  */
 const TABS: ReadonlyArray<{ href: string; label: string; icon: LucideIcon }> = [
   { href: '/', label: 'Home', icon: Home },
-  // Lanes are divisions of the water, which is what the glyph draws. The
-  // mockup's icon is a lane-rope figure with no lucide equivalent.
+  // A shelf of posts: rows, laid horizontally in the eye.
+  { href: '/sessions', label: 'Sessions', icon: Rows3 },
+  // Lanes are divisions of the water, which is what the glyph draws.
   { href: '/lanes', label: 'Lanes', icon: Waves },
   // lucide calls the shelves glyph ShelvingUnit.
   { href: '/locker', label: 'Locker', icon: ShelvingUnit },
@@ -28,39 +28,25 @@ export function TabBar() {
 
   return (
     <nav
-      className="sticky bottom-0 z-20 bg-white"
+      className="sticky bottom-0 z-20 rounded-t-[28px] bg-white"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* A fixed height, so anything sitting exactly on top of it can say so. */}
       <div
         className={`mx-auto flex h-[var(--tab-bar-h)] ${COLUMN_MAX_WIDTH} items-center justify-between px-6`}
       >
-        <AddSplashButton />
-
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-7">
           {TABS.map((tab) => {
             const active =
               tab.href === '/'
                 ? pathname === '/' || pathname.startsWith('/splash')
                 : pathname.startsWith(tab.href);
-            // Re-tapping Home while on Home flips the view mode (SPEC 5): a
-            // refocus, so the page keeps its scroll instead of reloading. A
-            // splash screen is not Home; from there the tab is the way back.
-            const retap = tab.href === '/' && pathname === '/';
             const Icon = tab.icon;
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
-                onClick={
-                  retap
-                    ? (event) => {
-                        event.preventDefault();
-                        requestHomeModeToggle();
-                      }
-                    : undefined
-                }
                 className={`flex flex-col items-center gap-1 ${
                   active ? 'text-main-900 font-semibold' : 'text-main-900 font-medium opacity-20'
                 }`}
@@ -73,45 +59,24 @@ export function TabBar() {
           })}
         </div>
 
-        <AddRippleButton />
+        <AddSplashButton />
       </div>
     </nav>
   );
 }
 
-/** The FAB, bottom right: the ripple sheet, in both modes (SPEC 5). */
-function AddRippleButton() {
+/** The FAB, bottom right: the one entry (SPEC 5, H21). Blue as action colour. */
+function AddSplashButton() {
   const { openSheet } = useInputSheet();
 
   return (
     <button
       type="button"
-      aria-label="Drop a ripple"
-      onClick={() => openSheet()}
+      aria-label="Drop a splash"
+      onClick={openSheet}
       className="bg-main-900 flex h-12 w-12 items-center justify-center rounded-full text-white"
     >
       <Plus aria-hidden size={24} />
-    </button>
-  );
-}
-
-/**
- * The bar's left `+ with wave`: the splash sheet, in both modes (SPEC 5). A
- * plus over a wave, per the mockup — the board is the water a ripple lands
- * in. Blue as action colour (H20f): it creates.
- */
-function AddSplashButton() {
-  const { openSplashSheet } = useInputSheet();
-
-  return (
-    <button
-      type="button"
-      aria-label="Drop a splash"
-      onClick={openSplashSheet}
-      className="text-main-900 flex flex-col items-center"
-    >
-      <span className="text-2xl leading-none font-medium">+</span>
-      <WaveLine width={40} />
     </button>
   );
 }

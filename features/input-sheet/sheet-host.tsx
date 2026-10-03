@@ -2,55 +2,36 @@
 
 import { useRouter } from 'next/navigation';
 
-import { SplashSheet } from '@/features/splash/splash-sheet';
-import { summarizeSplash } from '@/features/splash/summary';
+import { SplashSheet, type SheetContext } from '@/features/splash-sheet/splash-sheet';
 
-import { InputSheet, type SheetContext } from './input-sheet';
 import { useInputSheet } from './sheet-provider';
 
 /**
- * Mounts whichever sheet the provider says is open. Lives in the shell, so
- * the FAB, the tab bar's splash button, a board's +Drop and the splash
- * screen's add slot all reach the same two sheets.
+ * Mounts the post sheet when the provider says it is open. Lives in the
+ * shell, so the FAB reaches it from every tab.
  *
- * Committing a splash hands straight over to the ripple sheet preset to the
- * new board: creating and first-throwing is one motion (SPEC 6), and
- * dismissing that second sheet is fine.
+ * After a commit the ground scopes to the month the post landed in and
+ * re-reads, and the provider remembers the post's id so the ripple can play
+ * at its pill once it is on screen (SPEC 6): the signature moment.
  */
 export function SheetHost({ context }: { context: SheetContext }) {
-  const { sheet, openSheet, newSplashFrom, closeSheet } = useInputSheet();
+  const { sheet, closeSheet, markDropped } = useInputSheet();
   const router = useRouter();
 
   if (!sheet) return null;
 
-  if (sheet.kind === 'splash') {
-    return (
-      <SplashSheet
-        categories={context.categories}
-        today={context.today}
-        editing={sheet.editing}
-        firstNote={sheet.firstNote}
-        onClose={closeSheet}
-        onCommitted={(splash, { firstRippleThrown }) => {
-          router.refresh();
-          // A correction is done, and so is a board that already holds its
-          // first fragment; an empty opening hands over to the first throw.
-          if (sheet.editing || firstRippleThrown) closeSheet();
-          else openSheet({ splash: summarizeSplash(splash, [], context.timeZone, new Date()) });
-        }}
-      />
-    );
-  }
-
   return (
-    <InputSheet
+    <SplashSheet
       context={context}
-      prefill={sheet.prefill}
       onClose={closeSheet}
-      onNewSplash={newSplashFrom}
-      onCommitted={() => {
+      onNewSession={() => {
         closeSheet();
-        // The row is new, so the page has to re-read before it can show it.
+        router.push('/sessions?new=1');
+      }}
+      onCommitted={(splash, month) => {
+        closeSheet();
+        markDropped(splash.id);
+        router.push(`/?m=${month}`);
         router.refresh();
       }}
     />
