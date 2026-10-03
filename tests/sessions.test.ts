@@ -76,15 +76,13 @@ describe('a monthly session is a lazy row (H21e)', () => {
       .insert({ owner_id: author, kind: 'monthly', title: 'x', month: '2026-09-02' });
     expect(error?.message).toMatch(/sessions_shape/);
 
-    const { error: laned } = await asUser(author)
-      .from('sessions')
-      .insert({
-        owner_id: author,
-        kind: 'monthly',
-        title: 'x',
-        month: '2026-09-01',
-        lane_id: PLACE,
-      });
+    const { error: laned } = await asUser(author).from('sessions').insert({
+      owner_id: author,
+      kind: 'monthly',
+      title: 'x',
+      month: '2026-09-01',
+      lane_id: PLACE,
+    });
     expect(laned?.message).toMatch(/sessions_shape/);
   });
 
