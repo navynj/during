@@ -317,13 +317,13 @@ describe('the month scrubber (H21d, H21h)', () => {
     );
   });
 
-  it('fades the months with distance from the scoped one', () => {
+  it('sits every other month back at 0.3, the scoped one at full strength', () => {
     const { container } = ground('2026-08');
     const items = [...container.querySelectorAll<HTMLElement>('[data-scrub-month]')].map((m) =>
       m.closest('li')!,
     );
     expect(items[1].style.opacity).toBe('1');
-    expect(Number(items[0].style.opacity)).toBeLessThan(1);
+    expect(items[0].style.opacity).toBe('0.3');
   });
 });
 
