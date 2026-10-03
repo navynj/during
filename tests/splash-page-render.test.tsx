@@ -1,0 +1,375 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const router = { push: vi.fn(), replace: vi.fn(), refresh: vi.fn() };
+vi.mock('next/navigation', () => ({ usePathname: () => '/splash/s1', useRouter: () => router }));
+
+// Hoisted with the mocks that use them: a vi.mock factory runs before the
+// file's own top level.
+const { calls, record } = vi.hoisted(() => {
+  const calls: { name: string; args: unknown[] }[] = [];
+  const record =
+    (name: string, result: unknown = { ok: true }) =>
+    (...args: unknown[]) => {
+      calls.push({ name, args });
+      return Promise.resolve(result);
+    };
+  return { calls, record };
+});
+vi.mock('@/features/splash/actions', () => ({
+  updateSplashHeader: record('updateSplashHeader', { ok: true, splash: {} }),
+  setSplashPinned: record('setSplashPinned'),
+  setSplashSession: record('setSplashSession'),
+  deleteSplash: record('deleteSplash'),
+  adoptRipple: record('adoptRipple', { ok: true, splash: { id: 's-adopted' } }),
+}));
+vi.mock('@/features/input-sheet/commit', () => ({
+  commitRipple: record('commitRipple', { ok: true, rippleId: 'r-new' }),
+}));
+vi.mock('@/features/ripple-sheet/actions', () => ({
+  updateRipple: record('updateRipple', { ok: true, rippleId: 'r' }),
+  deleteRipple: record('deleteRipple', { ok: true, rippleId: 'r' }),
+  setRippleLock: record('setRippleLock', { ok: true, rippleId: 'r' }),
+}));
+vi.mock('@/lib/downscale', () => ({ downscale: (file: File) => Promise.resolve(file) }));
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: { getUser: () => Promise.resolve({ data: { user: { id: 'a1' } } }) },
+    storage: { from: () => ({ upload: () => Promise.resolve({ error: null }) }) },
+  }),
+}));
+
+import type { Session } from '@/features/sessions/shelves';
+import { SplashPage } from '@/features/splash/splash-page';
+import { summarizeOrphan, summarizeSplash, type Splash } from '@/features/splash/summary';
+import type { MyCategory } from '@/lib/queries/profile';
+import type { RippleWithCategory } from '@/lib/queries/ripples';
+
+const TZ = 'America/Vancouver';
+const TODAY = '2026-09-25';
+const NOW = new Date('2026-09-25T20:00:00.000Z');
+
+function lane(id: string, name: string, icon: string, position: number): MyCategory {
+  return {
+    id,
+    user_id: 'a1',
+    name,
+    icon,
+    default_mode: 'drop',
+    position,
+    created_at: '2026-01-01T00:00:00Z',
+  };
+}
+const LANES = [
+  lane('c-place', 'Place', '📍', 0),
+  lane('c-media', 'Media', '🎬', 1),
+  lane('c-day', 'Day', '🖋', 2),
+];
+const TRIPS: Session = {
+  id: 'ss1',
+  owner_id: 'a1',
+  kind: 'custom',
+  title: 'Trips',
+  month: null,
+  declared_start: null,
+  declared_end: null,
+  lane_id: null,
+  created_at: '2026-09-01T00:00:00Z',
+};
+
+function block(over: Partial<RippleWithCategory> & { id: string }): RippleWithCategory {
+  return {
+    author_id: 'a1',
+    category_id: 'c-place',
+    note: 'fixture',
+    media: [],
+    occurred_on: null,
+    occurred_time: null,
+    started_at: null,
+    ended_at: null,
+    planned: false,
+    participants: [],
+    created_at: '2026-08-18T16:00:00.000Z',
+    parent_ripple_id: null,
+    splash_id: 's1',
+    category: { name: 'Place', icon: '📍' },
+    ...over,
+  };
+}
+
+const board: Splash = {
+  id: 's1',
+  owner_id: 'a1',
+  title: 'Whistler, two nights',
+  declared_start: '2026-08-17',
+  declared_end: '2026-08-20',
+  declared_lane_id: 'c-place',
+  session_id: null,
+  pinned_at: null,
+  pool_id: null,
+  type: 'free',
+  prompt: null,
+  ends_at: null,
+  created_at: '2026-08-16T16:00:00.000Z',
+};
+
+// Oldest first, as the page receives them.
+const blocks = [
+  block({ id: 'first', note: 'sea to sky', occurred_on: '2026-08-17', occurred_time: '11:30:00' }),
+  block({
+    id: 'night',
+    note: 'the village',
+    occurred_on: '2026-08-17',
+    occurred_time: '21:15:00',
+    media: ['a1/x.jpg'],
+  }),
+  block({
+    id: 'later',
+    note: 'watched it back',
+    category_id: 'c-media',
+    category: { name: 'Media', icon: '🎬' },
+    occurred_on: '2026-08-20',
+  }),
+];
+
+beforeEach(() => {
+  calls.length = 0;
+  router.push.mockClear();
+  router.replace.mockClear();
+  router.refresh.mockClear();
+  window.URL.createObjectURL = () => 'blob:preview';
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    }),
+  });
+});
+afterEach(cleanup);
+
+function page(over: Partial<Parameters<typeof SplashPage>[0]> = {}) {
+  return render(
+    <SplashPage
+      splash={summarizeSplash(board, blocks, TZ, NOW)}
+      blocks={blocks}
+      photos={{ night: [null, 'https://signed/x.jpg'] }}
+      lockedIds={[]}
+      categories={LANES}
+      sessions={[TRIPS]}
+      origin={{ label: 'August', href: '/?m=2026-08' }}
+      timeZone={TZ}
+      today={TODAY}
+      {...over}
+    />,
+  );
+}
+
+describe('the white page above the water (SPEC 5, H21c)', () => {
+  it('is a white page, not a sheet, with a back chip in blue naming where it came from', () => {
+    const { container } = page();
+    const root = container.querySelector('[data-splash-page]')!;
+    expect(root.className).toContain('bg-white');
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    const back = container.querySelector('[data-back-chip]')!;
+    expect(back.textContent).toBe('August');
+    expect(back.getAttribute('href')).toBe('/?m=2026-08');
+    expect(back.className).toContain('text-main-900');
+  });
+
+  it('stacks the header left-aligned: tags declared first, title, range, wave underline by blocks', () => {
+    const { container } = page();
+    const tags = [...container.querySelectorAll('[data-lane-tags] > span')].map(
+      (t) => t.textContent,
+    );
+    expect(tags).toEqual(['📍Place', '🎬Media']);
+    expect(container.querySelector('[data-splash-title]')!.textContent).toBe(
+      'Whistler, two nights',
+    );
+    expect(container.querySelector('[data-range]')!.textContent).toBe('2026. 8. 17 ~ 2026. 8. 20');
+    expect(container.querySelector('[data-wave-underline]')!.getAttribute('data-lines')).toBe('2');
+  });
+
+  it('reads the blocks oldest first under small date labels, photos full width', () => {
+    const { container } = page();
+    const ids = [...container.querySelectorAll('[data-block]')].map((b) =>
+      b.getAttribute('data-block'),
+    );
+    expect(ids).toEqual(['first', 'night', 'later']);
+    const labels = [...container.querySelectorAll('[data-block-date]')].map((l) => l.textContent);
+    expect(labels[0]).toBe('Aug 17 · 8. 17 11:30');
+    expect(labels[2]).toBe('Aug 20');
+    expect(container.querySelector('[data-block-body]')!.className).toMatch(/text-\[15px\]/);
+    expect(container.querySelector('[data-photo]')!.className).toContain('w-full');
+    expect(container.querySelector('[data-photo-placeholder]')).not.toBeNull();
+  });
+
+  it('never says thread, never fills a tag', () => {
+    const { container } = page();
+    expect(container.textContent).not.toMatch(/thread/i);
+    for (const tag of container.querySelectorAll('[data-lane-tags] > span')) {
+      expect(tag.className).not.toMatch(/bg-main-900|bg-ink/);
+    }
+  });
+});
+
+describe('writing on the page, in place', () => {
+  it('puts the cursor in a tapped block, and Cancel puts it back', () => {
+    const { container, getByText, getByLabelText } = page();
+    fireEvent.click(container.querySelector('[data-block="night"]')!);
+    const editor = container.querySelector('[data-block-editor="night"]')!;
+    expect(editor).not.toBeNull();
+    expect((getByLabelText('Block') as HTMLTextAreaElement).value).toBe('the village');
+    expect(container.querySelector('[data-block="night"]')).toBeNull();
+    fireEvent.click(getByText('Cancel'));
+    expect(container.querySelector('[data-block-editor]')).toBeNull();
+    expect(container.querySelector('[data-block="night"]')).not.toBeNull();
+  });
+
+  it('saves a block with the lane it took, keeping it in its post', async () => {
+    const { container, getByText, getByLabelText } = page();
+    fireEvent.click(container.querySelector('[data-block="first"]')!);
+    fireEvent.change(getByLabelText('Block'), { target: { value: 'sea to sky, fog' } });
+    const editor = container.querySelector<HTMLElement>('[data-block-editor="first"]')!;
+    fireEvent.click(within(editor).getByText('Media'));
+    fireEvent.click(getByText('Save'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'updateRipple')).toBe(true));
+    const edit = calls.find((c) => c.name === 'updateRipple')!.args[0];
+    expect(edit).toMatchObject({
+      id: 'first',
+      note: 'sea to sky, fog',
+      categoryId: 'c-media',
+      splashId: 's1',
+    });
+    expect(router.refresh).toHaveBeenCalled();
+  });
+
+  it('starts a new block from the add slot at the post’s declared lane and date (H21f)', async () => {
+    const { container, getByText, getByLabelText } = page();
+    fireEvent.click(getByText('+ Write'));
+    await waitFor(() =>
+      expect(container.querySelector('[data-block-editor="new"]')).not.toBeNull(),
+    );
+    const row = container.querySelector(
+      '[data-block-editor="new"] [role="group"][aria-label="Lane"]',
+    )!;
+    expect(row.querySelector('[aria-pressed="true"]')!.textContent).toContain('Place');
+    expect(getByText('+ Add Time')).toBeTruthy();
+    fireEvent.change(getByLabelText('Block'), { target: { value: 'the drive home' } });
+    fireEvent.click(getByText('Save'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'commitRipple')).toBe(true));
+    expect(calls.find((c) => c.name === 'commitRipple')!.args[0]).toMatchObject({
+      splashId: 's1',
+      categoryId: 'c-place',
+      note: 'the drive home',
+      occurredOn: null,
+    });
+    expect(calls.some((c) => c.name === 'adoptRipple')).toBe(false);
+  });
+
+  it('carries the lock beside the block, and deletes a block behind a confirm', async () => {
+    const { container, getByText } = page({ lockedIds: ['night'] });
+    fireEvent.click(container.querySelector('[data-block="night"]')!);
+    expect(getByText('Only me')).toBeTruthy();
+    fireEvent.click(getByText('Only me'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'setRippleLock')).toBe(true));
+    expect(calls.find((c) => c.name === 'setRippleLock')!.args).toEqual(['night', false]);
+
+    fireEvent.click(getByText('Delete'));
+    expect(getByText('Deletes this block')).toBeTruthy();
+    fireEvent.click(container.querySelector('[data-block-editor] .text-main-900')!);
+    await waitFor(() => expect(calls.some((c) => c.name === 'deleteRipple')).toBe(true));
+  });
+});
+
+describe('the header menu', () => {
+  it('pins and unpins from the quiet menu', async () => {
+    const { getByLabelText, getByText } = page();
+    fireEvent.click(getByLabelText('More'));
+    fireEvent.click(getByText('Pin'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'setSplashPinned')).toBe(true));
+    expect(calls.find((c) => c.name === 'setSplashPinned')!.args).toEqual(['s1', true]);
+  });
+
+  it('shelves the post on a session by replacement, saying so', async () => {
+    const other: Session = { ...TRIPS, id: 'ss2', title: 'Food runs' };
+    const { getByLabelText, getByText, container } = page({
+      splash: summarizeSplash({ ...board, session_id: 'ss2' }, blocks, TZ, NOW),
+      sessions: [TRIPS, other],
+    });
+    fireEvent.click(getByLabelText('More'));
+    fireEvent.click(getByText('On Food runs'));
+    expect(container.textContent).toContain('moves from Food runs');
+    fireEvent.click(getByText('Trips'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'setSplashSession')).toBe(true));
+    expect(calls.find((c) => c.name === 'setSplashSession')!.args).toEqual(['s1', 'ss1']);
+  });
+
+  it('says a delete takes the blocks with it (H21), then goes back where it came from', async () => {
+    const { getByLabelText, getByText, container } = page();
+    fireEvent.click(getByLabelText('More'));
+    fireEvent.click(getByText('Delete'));
+    expect(container.querySelector('[data-delete-confirm]')!.textContent).toBe(
+      'Deletes the post and its 3 blocks.',
+    );
+    fireEvent.click(container.querySelector('[role="alertdialog"] .text-main-900')!);
+    await waitFor(() => expect(calls.some((c) => c.name === 'deleteSplash')).toBe(true));
+    expect(router.push).toHaveBeenCalledWith('/?m=2026-08');
+  });
+
+  it('edits the title in place', async () => {
+    const { getByLabelText } = page();
+    fireEvent.click(getByLabelText('Edit the title'));
+    const input = getByLabelText('Title') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Whistler, three nights' } });
+    fireEvent.blur(input);
+    await waitFor(() => expect(calls.some((c) => c.name === 'updateSplashHeader')).toBe(true));
+    expect(calls.find((c) => c.name === 'updateSplashHeader')!.args).toEqual([
+      's1',
+      {
+        title: 'Whistler, three nights',
+        declaredStart: '2026-08-17',
+        declaredEnd: '2026-08-20',
+        declaredLaneId: 'c-place',
+      },
+    ]);
+  });
+});
+
+describe('a lone block as an untitled post (H21a)', () => {
+  const lone = block({
+    id: 'r-lone',
+    note: 'coffee went cold while I read the whole thing',
+    splash_id: null,
+  });
+
+  it('reads as one, with its first words as a ghost title', () => {
+    const { container } = page({ splash: summarizeOrphan(lone, TZ, NOW), blocks: [lone] });
+    expect(container.querySelector('[data-splash-title]')!.textContent).toBe(
+      'coffee went cold while I read…',
+    );
+    expect(container.querySelectorAll('[data-block]')).toHaveLength(1);
+  });
+
+  it('gets a row of its own the first time it is extended, and the page moves to it', async () => {
+    const { getByText, container } = page({
+      splash: summarizeOrphan(lone, TZ, NOW),
+      blocks: [lone],
+    });
+    fireEvent.click(getByText('+ Write'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'adoptRipple')).toBe(true));
+    expect(calls.find((c) => c.name === 'adoptRipple')!.args).toEqual(['r-lone']);
+    expect(router.replace).toHaveBeenCalledWith(expect.stringMatching(/^\/splash\/s-adopted/));
+    await waitFor(() =>
+      expect(container.querySelector('[data-block-editor="new"]')).not.toBeNull(),
+    );
+  });
+});
