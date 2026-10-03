@@ -19,6 +19,8 @@ export type SplashBlock = FlowKeyed & {
   id: string;
   category_id: string;
   note: string | null;
+  /** A span's end, when the block has one: its last day counts for the range. */
+  ended_at?: string | null;
 };
 
 export type DateRange = { start: IsoDate; end: IsoDate };
@@ -41,8 +43,8 @@ export type SplashSummary = {
   /** Display range: declared ∪ block-derived. Null for an empty, undeclared post. */
   range: DateRange | null;
   count: number;
-  /** Each block's resting day and instant by the coalesced key, oldest first. */
-  blocks: { day: IsoDate; instant: number }[];
+  /** Each block's resting day, the last day of its span, and its instant, oldest first. */
+  blocks: { day: IsoDate; endDay: IsoDate; instant: number }[];
   /** When the post last received something, for recency and the open rule. */
   latestCreatedAt: string;
   open: boolean;
@@ -101,6 +103,17 @@ export function ghostTitle(note: string | null): string | null {
   return words.length > GHOST_TITLE_WORDS ? `${head}…` : head;
 }
 
+/**
+ * The last day a block covers: its span's end in the author's zone, else the
+ * day it rests on. A span by dates alone ends at the close of its end day, so
+ * that day is the one read back.
+ */
+function spanEndDay(block: SplashBlock, day: IsoDate, timeZone: string): IsoDate {
+  if (!block.ended_at || !block.occurred_on) return day;
+  const end = todayIn(timeZone, new Date(block.ended_at));
+  return end > day ? end : day;
+}
+
 function union(a: DateRange | null, b: DateRange | null): DateRange | null {
   if (!a) return b;
   if (!b) return a;
@@ -121,19 +134,28 @@ export function summarizeSplash(
     splash: block.splash ?? { declared_start: splash.declared_start },
   }));
   const placed = keyed
-    .map((block) => ({
-      day: dayOf(block, timeZone),
-      instant: flowInstant(block, timeZone),
-      createdAt: block.created_at,
-      note: block.note,
-    }))
+    .map((block) => {
+      const day = dayOf(block, timeZone);
+      return {
+        day,
+        endDay: spanEndDay(block, day, timeZone),
+        instant: flowInstant(block, timeZone),
+        createdAt: block.created_at,
+        note: block.note,
+      };
+    })
     .sort((a, b) => a.instant - b.instant || a.createdAt.localeCompare(b.createdAt));
 
   const declaredRange = splash.declared_start
     ? { start: splash.declared_start, end: splash.declared_end ?? splash.declared_start }
     : null;
   const derived =
-    placed.length > 0 ? { start: placed[0].day, end: placed[placed.length - 1].day } : null;
+    placed.length > 0
+      ? {
+          start: placed[0].day,
+          end: placed.reduce((latest, b) => (b.endDay > latest ? b.endDay : latest), placed[0].day),
+        }
+      : null;
 
   const latestCreatedAt = blocks.reduce<string | null>(
     (latest, b) => (latest === null || b.created_at > latest ? b.created_at : latest),
@@ -149,7 +171,7 @@ export function summarizeSplash(
     declaredRange,
     range: union(declaredRange, derived),
     count: blocks.length,
-    blocks: placed.map(({ day, instant }) => ({ day, instant })),
+    blocks: placed.map(({ day, endDay, instant }) => ({ day, endDay, instant })),
     latestCreatedAt: latestCreatedAt ?? splash.created_at,
     open: isSplashOpen(blocks.length, latestCreatedAt, now),
     createdAt: splash.created_at,
@@ -174,7 +196,9 @@ export function summarizeOrphan(block: SplashBlock, timeZone: string, now: Date)
     declaredRange: null,
     range: { start: day, end: day },
     count: 1,
-    blocks: [{ day, instant: flowInstant(block, timeZone) }],
+    blocks: [
+      { day, endDay: spanEndDay(block, day, timeZone), instant: flowInstant(block, timeZone) },
+    ],
     latestCreatedAt: block.created_at,
     open: isSplashOpen(1, block.created_at, now),
     createdAt: block.created_at,
@@ -262,27 +286,35 @@ export function monthsOf(summary: SplashSummary, timeZone: string): string[] {
 /**
  * Where a post sits within a month (H21e): at its latest block in that month;
  * with no block there, at the end of its range clipped to the month; with no
- * range at all, where it was made.
+ * range at all, where it was made. `span` is what the pill reads: that
+ * block's own period when it spans days (review), clipped to the month, else
+ * the one date.
  */
 export function positionInMonth(
   summary: SplashSummary,
   month: string,
   timeZone: string,
-): { instant: number; date: IsoDate } {
+): { instant: number; date: IsoDate; span: DateRange } {
+  const last = lastDayOf(month);
   const inMonth = summary.blocks.filter((block) => monthKey(block.day) === month);
   if (inMonth.length > 0) {
     const latest = inMonth[inMonth.length - 1];
-    return { instant: latest.instant, date: latest.day };
+    return {
+      instant: latest.instant,
+      date: latest.day,
+      span: { start: latest.day, end: latest.endDay < last ? latest.endDay : last },
+    };
   }
   if (summary.range) {
-    const last = lastDayOf(month);
     const date = summary.range.end < last ? summary.range.end : last;
-    return { instant: wallClockToInstant(date, END_OF_DAY, timeZone).getTime(), date };
+    return {
+      instant: wallClockToInstant(date, END_OF_DAY, timeZone).getTime(),
+      date,
+      span: { start: date, end: date },
+    };
   }
-  return {
-    instant: Date.parse(summary.createdAt),
-    date: todayIn(timeZone, new Date(summary.createdAt)),
-  };
+  const made = todayIn(timeZone, new Date(summary.createdAt));
+  return { instant: Date.parse(summary.createdAt), date: made, span: { start: made, end: made } };
 }
 
 /** `2026. 8. 17 ~ 2026. 8. 20`, or one date, as the mockups write it. */
