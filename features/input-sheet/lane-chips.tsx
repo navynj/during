@@ -17,30 +17,36 @@ export const LANE_SEARCH_THRESHOLD = 8;
  * The sheet's top zone (`_docs/mockups/sheet-ripple.png`): the lane chips in
  * one horizontally scrolling row, selected = ink fill (H20f).
  *
- * `allowed` narrows the row to a board's declared lanes (H20e, restricted);
- * `locked` marks the row as not the author's to change (a board with one
- * declared lane hides the row entirely — this component is not rendered).
+ * Always the author's (H21f): a post's declared lane is where the selection
+ * starts, never a narrowing of what may be chosen.
  */
 export function LaneChips({
   categories,
   selectedId,
-  allowed,
   onSelect,
+  surface = 'pool',
 }: {
   categories: MyCategory[];
   selectedId: string | null;
-  allowed?: string[];
   onSelect: (id: string | null) => void;
+  /** The row's own ground: the old sheet's grey band, or a white page. */
+  surface?: 'pool' | 'white';
 }) {
   const [query, setQuery] = useState('');
-  const offered = allowed ? categories.filter((c) => allowed.includes(c.id)) : categories;
+  const offered = categories;
   const searchable = offered.length > LANE_SEARCH_THRESHOLD;
   const shown = searchable
     ? offered.filter((c) => c.name.toLowerCase().includes(query.trim().toLowerCase()))
     : offered;
 
   return (
-    <div className="bg-pool-100 flex flex-col gap-2 px-5 pt-3 pb-3">
+    <div
+      className={
+        surface === 'pool'
+          ? 'bg-pool-100 flex flex-col gap-2 px-5 pt-3 pb-3'
+          : 'flex flex-col gap-2'
+      }
+    >
       {searchable ? (
         <label className="text-pool-500 flex items-center gap-2 text-base">
           <Search aria-hidden size={14} />

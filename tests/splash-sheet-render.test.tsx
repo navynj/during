@@ -2,256 +2,178 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const created: Record<string, unknown>[] = [];
-const updated: { id: string; input: Record<string, unknown> }[] = [];
+const drops: Record<string, unknown>[] = [];
 vi.mock('@/features/splash/actions', () => ({
-  createSplash: (input: Record<string, unknown>) => {
-    created.push(input);
-    return Promise.resolve({
-      ok: true,
-      splash: { id: 's-new', title: input.title, lane_ids: input.laneIds },
-    });
-  },
-  updateSplash: (id: string, input: Record<string, unknown>) => {
-    updated.push({ id, input });
-    return Promise.resolve({
-      ok: true,
-      splash: { id, title: input.title, lane_ids: input.laneIds },
-    });
+  dropSplash: (input: Record<string, unknown>) => {
+    drops.push(input);
+    return Promise.resolve({ ok: true, splash: { id: 's-new', title: input.title } });
   },
 }));
-
-const thrown: Record<string, unknown>[] = [];
-vi.mock('@/features/input-sheet/commit', () => ({
-  commitRipple: (draft: Record<string, unknown>) => {
-    thrown.push(draft);
-    return Promise.resolve({ ok: true, rippleId: 'r-first' });
-  },
+vi.mock('@/lib/downscale', () => ({ downscale: (file: File) => Promise.resolve(file) }));
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: { getUser: () => Promise.resolve({ data: { user: { id: 'a1' } } }) },
+    storage: { from: () => ({ upload: () => Promise.resolve({ error: null }) }) },
+  }),
 }));
 
-import { SplashSheet } from '@/features/splash/splash-sheet';
+import type { Session } from '@/features/sessions/shelves';
+import { SHEET_MAX_HEIGHT, SplashSheet } from '@/features/splash-sheet/splash-sheet';
+import { splitTitle } from '@/features/splash-sheet/split-title';
 import type { MyCategory } from '@/lib/queries/profile';
 
+const TZ = 'America/Vancouver';
 const TODAY = '2026-09-25';
 
-function category(over: Partial<MyCategory>): MyCategory {
+function lane(id: string, name: string, icon: string, position: number): MyCategory {
   return {
-    id: 'c-place',
+    id,
     user_id: 'a1',
-    name: 'Place',
-    icon: '📍',
+    name,
+    icon,
     default_mode: 'drop',
-    position: 0,
+    position,
     created_at: '2026-01-01T00:00:00Z',
-    ...over,
   };
 }
-
-const LANES = [category({}), category({ id: 'c-mood', name: 'Mood', icon: '🌤️' })];
+const LANES = [
+  lane('c-place', 'Place', '📍', 0),
+  lane('c-mood', 'Mood', '🌤️', 1),
+  lane('c-day', 'Day', '🖋', 2),
+];
+const TRIPS: Session = {
+  id: 'ss1',
+  owner_id: 'a1',
+  kind: 'custom',
+  title: 'Trips',
+  month: null,
+  declared_start: null,
+  declared_end: null,
+  lane_id: null,
+  created_at: '2026-09-01T00:00:00Z',
+};
 
 beforeEach(() => {
-  created.length = 0;
-  updated.length = 0;
-  thrown.length = 0;
+  drops.length = 0;
+  window.URL.createObjectURL = () => 'blob:preview';
 });
 afterEach(cleanup);
 
-function sheet(onCommitted: (splash: unknown) => void = () => {}) {
-  return render(
-    <SplashSheet categories={LANES} today={TODAY} onClose={() => {}} onCommitted={onCommitted} />,
+function sheet(onCommitted = vi.fn()) {
+  const view = render(
+    <SplashSheet
+      context={{ categories: LANES, sessions: [TRIPS], timeZone: TZ, today: TODAY }}
+      onClose={() => {}}
+      onCommitted={onCommitted}
+    />,
   );
+  return { ...view, onCommitted, drop: () => view.getByText('Drop') as HTMLButtonElement };
 }
 
-describe('the first ripple is thrown with the board (SPEC 6)', () => {
-  it('commits the words in the first-ripple field into the new board, lane inherited', async () => {
-    const outcomes: unknown[] = [];
-    const view = render(
-      <SplashSheet
-        categories={LANES}
-        today={TODAY}
-        onClose={() => {}}
-        onCommitted={(_, outcome) => outcomes.push(outcome)}
-      />,
-    );
-    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler' } });
-    fireEvent.change(view.getByLabelText('First ripple'), { target: { value: 'checked in' } });
-    fireEvent.click(view.getByText('Drop'));
-
-    await waitFor(() => expect(outcomes).toHaveLength(1));
-    expect(created).toHaveLength(1);
-    expect(thrown).toHaveLength(1);
-    // No lane chosen here: the board's rule and the residual lane decide.
-    expect(thrown[0]).toMatchObject({
-      note: 'checked in',
-      splashId: 's-new',
-      categoryId: null,
-      media: [],
-      occurredOn: null,
+describe('the first line is the title (SPEC 6)', () => {
+  it('splits at the first Enter, and a single line is untitled', () => {
+    expect(splitTitle('Whistler\nsea to sky\nfog the whole way')).toEqual({
+      title: 'Whistler',
+      body: 'sea to sky\nfog the whole way',
     });
-    expect(outcomes[0]).toEqual({ firstRippleThrown: true });
+    expect(splitTitle('coffee went cold')).toEqual({ title: '', body: 'coffee went cold' });
+    expect(splitTitle('Just a title\n')).toEqual({ title: 'Just a title', body: '' });
   });
 
-  it('throws nothing when the field is empty, and hands over as before', async () => {
-    const outcomes: unknown[] = [];
-    const view = render(
-      <SplashSheet
-        categories={LANES}
-        today={TODAY}
-        onClose={() => {}}
-        onCommitted={(_, outcome) => outcomes.push(outcome)}
-      />,
-    );
-    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler' } });
-    fireEvent.click(view.getByText('Drop'));
-    await waitFor(() => expect(outcomes).toHaveLength(1));
-    expect(thrown).toHaveLength(0);
-    expect(outcomes[0]).toEqual({ firstRippleThrown: false });
-  });
-
-  it('carries the note typed in the ripple sheet when opened from New splash', () => {
-    const view = render(
-      <SplashSheet
-        categories={LANES}
-        today={TODAY}
-        firstNote="parannoul on repeat"
-        onClose={() => {}}
-        onCommitted={() => {}}
-      />,
-    );
-    expect((view.getByLabelText('First ripple') as HTMLTextAreaElement).value).toBe(
-      'parannoul on repeat',
+  it('commits a single line with no Enter as an untitled post whose line is its block', async () => {
+    const view = sheet();
+    expect(view.drop().disabled).toBe(true);
+    fireEvent.change(view.getByLabelText('Your splash'), { target: { value: 'coffee went cold' } });
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({
+      title: '',
+      body: 'coffee went cold',
+      declaredLaneId: null,
+      sessionId: null,
+    });
+    expect(view.onCommitted).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 's-new' }),
+      '2026-09',
     );
   });
 
-  it('offers no first ripple on an edit', () => {
-    const view = render(
-      <SplashSheet
-        categories={LANES}
-        today={TODAY}
-        editing={{
-          id: 's1',
-          title: 'Whistler',
-          laneIds: [],
-          declaredStart: null,
-          declaredEnd: null,
-        }}
-        onClose={() => {}}
-        onCommitted={() => {}}
-      />,
-    );
-    expect(view.queryByLabelText('First ripple')).toBeNull();
+  it('commits the first line as the title and the rest as the first block', async () => {
+    const view = sheet();
+    fireEvent.change(view.getByLabelText('Your splash'), {
+      target: { value: 'Whistler\nsea to sky\n\nfog the whole way' },
+    });
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ title: 'Whistler', body: 'sea to sky\n\nfog the whole way' });
   });
 });
 
-describe('the splash sheet edits a board', () => {
-  it('opens preset to the board and commits Update through updateSplash', async () => {
-    const committed: unknown[] = [];
-    const view = render(
-      <SplashSheet
-        categories={LANES}
-        today={TODAY}
-        editing={{
-          id: 's1',
-          title: 'Whistler',
-          laneIds: ['c-mood'],
-          declaredStart: '2026-08-17',
-          declaredEnd: '2026-08-20',
-        }}
-        onClose={() => {}}
-        onCommitted={(splash) => committed.push(splash)}
-      />,
+describe('the sheet’s shape', () => {
+  it('is one white sheet on the dimmed ground, capped near fullscreen by the safe area', () => {
+    const { container, getByRole } = sheet();
+    const dialog = getByRole('dialog');
+    expect(dialog.className).toContain(SHEET_MAX_HEIGHT);
+    expect(SHEET_MAX_HEIGHT).toMatch(/100dvh/);
+    expect(SHEET_MAX_HEIGHT).toMatch(/safe-area-inset-top/);
+    expect(dialog.className).toContain('bg-white');
+    expect(container.querySelector('[aria-label="Close"]')!.className).toContain('bg-main-900/60');
+    expect(getByRole('dialog').querySelector('textarea')!.getAttribute('placeholder')).toBe(
+      'Drop your splash',
     );
-    expect(view.getByRole('dialog', { name: 'Edit this splash' })).toBeTruthy();
-    expect((view.getByLabelText('Title') as HTMLInputElement).value).toBe('Whistler');
-    expect(view.getByText('Mood').closest('button')!.getAttribute('aria-pressed')).toBe('true');
-    expect(view.getByText('Place').closest('button')!.getAttribute('aria-pressed')).toBe('false');
-    expect(view.container.querySelector('[data-range-chip]')!.textContent).toContain(
-      '2026-08-17 ~ 2026-08-20',
-    );
+  });
 
-    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler, two nights' } });
+  it('fills the selected lane chip with ink, never blue, and declares it (H20f, H21f)', async () => {
+    const view = sheet();
     fireEvent.click(view.getByText('Place'));
-    fireEvent.click(view.getByText('Update'));
-    await waitFor(() => expect(updated).toHaveLength(1));
-    expect(updated[0]).toEqual({
-      id: 's1',
-      input: {
-        title: 'Whistler, two nights',
-        laneIds: ['c-mood', 'c-place'],
-        declaredStart: '2026-08-17',
-        declaredEnd: '2026-08-20',
-      },
-    });
-    expect(created).toHaveLength(0);
-    expect(committed).toHaveLength(1);
-    expect(view.queryByText('Drop')).toBeNull();
+    expect(view.getByText('Place').className).toContain('bg-ink');
+    expect(view.getByText('Place').className).not.toContain('bg-main-900');
+    // A chip alone is a valid post: the zero-character diary (E1).
+    expect(view.drop().disabled).toBe(false);
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ declaredLaneId: 'c-place', body: '' });
+  });
+
+  it('has no Timer, no audience chip, no mode toggle, no Add to Splash', () => {
+    const { queryByText, queryByRole } = sheet();
+    expect(queryByText('Timer')).toBeNull();
+    expect(queryByText(/everyone|only me/i)).toBeNull();
+    expect(queryByRole('group', { name: 'View' })).toBeNull();
+    expect(queryByText('+ Add to Splash')).toBeNull();
   });
 });
 
-describe('the splash sheet (SPEC 6)', () => {
-  it('needs a title, and commits with the same verb as a ripple', async () => {
-    const onCreated = vi.fn();
-    const view = sheet(onCreated);
-    const drop = view.getByText('Drop') as HTMLButtonElement;
-    expect(drop.disabled).toBe(true);
-
-    fireEvent.change(view.getByPlaceholderText('Drop your splash'), {
-      target: { value: 'Whistler, two nights' },
-    });
-    expect(drop.disabled).toBe(false);
-    fireEvent.click(drop);
-
-    await waitFor(() => expect(created).toHaveLength(1));
-    expect(created[0]).toMatchObject({
-      title: 'Whistler, two nights',
-      laneIds: [],
-      declaredStart: null,
-      declaredEnd: null,
-    });
-    // The host opens the ripple sheet preset to the new board from here.
-    expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: 's-new' }), {
-      firstRippleThrown: false,
-    });
+describe('the affordances under the text', () => {
+  it('annotates the first block, and the ground scopes to that month on commit', async () => {
+    const view = sheet();
+    fireEvent.change(view.getByLabelText('Your splash'), { target: { value: 'a' } });
+    fireEvent.click(view.getByText('+ Add Time'));
+    fireEvent.change(view.getByLabelText('Date'), { target: { value: '2026-08-17' } });
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ occurredOn: '2026-08-17', occurredTime: null });
+    expect(view.onCommitted).toHaveBeenCalledWith(expect.anything(), '2026-08');
   });
 
-  it('declares several lanes, selected in ink (H20e, H20f)', async () => {
+  it('shelves the post on a custom session from the picker, and takes it off again', async () => {
     const view = sheet();
-    fireEvent.click(view.getByText('Place'));
-    fireEvent.click(view.getByText('Mood'));
-    expect(view.getByText('Place').closest('button')!.className).toContain('bg-ink');
+    fireEvent.click(view.getByText('+ Add to Session'));
+    fireEvent.click(view.getByText('Trips'));
+    expect(view.container.querySelector('[data-session-chip]')!.textContent).toContain('Trips');
+    fireEvent.change(view.getByLabelText('Your splash'), { target: { value: 'a' } });
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ sessionId: 'ss1' });
 
-    fireEvent.change(view.getByPlaceholderText('Drop your splash'), {
-      target: { value: 'Kitchen' },
-    });
-    fireEvent.click(view.getByText('Drop'));
-    await waitFor(() => expect(created).toHaveLength(1));
-    expect(created[0]).toMatchObject({ laneIds: ['c-place', 'c-mood'] });
+    fireEvent.click(view.getByLabelText('Remove from session'));
+    expect(view.container.querySelector('[data-session-chip]')).toBeNull();
+    expect(view.getByText('+ Add to Session')).toBeTruthy();
   });
 
-  it('declares a date range as one removable chip, descriptive only', async () => {
-    const view = sheet();
-    fireEvent.click(view.getByText('+ Add Date'));
-    fireEvent.change(view.getByLabelText('Start date'), { target: { value: '2026-08-17' } });
-    fireEvent.change(view.getByLabelText('End date'), { target: { value: '2026-08-20' } });
-    fireEvent.click(view.getByText('Done'));
-    expect(view.container.querySelector('[data-range-chip]')!.textContent).toContain(
-      '2026-08-17 ~ 2026-08-20',
-    );
-
-    fireEvent.change(view.getByPlaceholderText('Drop your splash'), {
-      target: { value: 'Whistler' },
-    });
-    fireEvent.click(view.getByText('Drop'));
-    await waitFor(() => expect(created).toHaveLength(1));
-    expect(created[0]).toMatchObject({ declaredStart: '2026-08-17', declaredEnd: '2026-08-20' });
-  });
-
-  it('refuses an end before its start', () => {
-    const view = sheet();
-    fireEvent.click(view.getByText('+ Add Date'));
-    fireEvent.change(view.getByLabelText('Start date'), { target: { value: '2026-08-20' } });
-    fireEvent.change(view.getByLabelText('End date'), { target: { value: '2026-08-17' } });
-    expect(view.getByText('ends before it starts')).toBeTruthy();
-    expect((view.getByText('Done') as HTMLButtonElement).disabled).toBe(true);
+  it('offers + Add Image', () => {
+    const { getByText, container } = sheet();
+    expect(getByText('+ Add Image')).toBeTruthy();
+    expect(container.querySelector('[data-media-input]')).not.toBeNull();
   });
 });

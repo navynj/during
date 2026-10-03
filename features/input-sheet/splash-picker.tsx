@@ -1,5 +1,8 @@
 'use client';
 
+// DORMANT (H21): `+ Add to Splash` belonged to the retired ripple sheet,
+// which the dormant focus screen still hosts. Do not wire it back in.
+
 import { useState } from 'react';
 import { X } from 'lucide-react';
 

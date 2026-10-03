@@ -57,27 +57,32 @@ const LANES = [
   category({ id: 'c-day', name: 'Day', icon: '🖋' }),
 ];
 
+// DORMANT (H21): the ripple sheet has no entry point since the refounding;
+// the dormant focus screen hosts it for P3's Swim, so its test stays.
 function board(over: Partial<SplashSummary>): SplashSummary {
   return {
     id: 's-free',
     title: 'During redesign',
-    laneIds: [],
+    ghostTitle: null,
+    declaredLaneId: null,
+    laneIds: ['c-day'],
+    declaredRange: null,
     range: null,
-    declared: false,
     count: 1,
-    dominantCategoryId: 'c-day',
+    blocks: [],
     latestCreatedAt: '2026-09-24T16:00:00Z',
-    flowKey: 0,
     open: true,
     createdAt: '2026-09-01T16:00:00Z',
+    pinnedAt: null,
+    sessionId: null,
+    orphan: false,
     ...over,
   };
 }
 
 const BOARDS = [
   board({}),
-  board({ id: 's-one', title: 'Whistler', laneIds: ['c-place'] }),
-  board({ id: 's-two', title: 'Kitchen', laneIds: ['c-place', 'c-mood'] }),
+  board({ id: 's-one', title: 'Whistler', declaredLaneId: 'c-place', laneIds: ['c-place'] }),
 ];
 
 const context: SheetContext = { categories: LANES, splashes: BOARDS, timeZone: TZ, today: TODAY };
@@ -335,33 +340,18 @@ describe('a board in the sheet (H20d, H20e)', () => {
     );
   });
 
-  it('one declared lane: the category choice disappears and the lane is inherited', async () => {
+  it('a declared lane is where the selection starts, never a lock on it (H21f)', async () => {
     const view = sheet({ prefill: { splashId: 's-one' } });
 
-    expect(view.queryByRole('group', { name: 'Lane' })).toBeNull();
+    // The row stays the author's, and the badge shows the default.
+    const row = view.getByRole('group', { name: 'Lane' });
+    expect(row.textContent).toContain('Day');
     expect(view.container.querySelector('[data-lane-badge]')!.textContent).toBe('📍');
 
     fireEvent.change(view.getByLabelText('Note'), { target: { value: 'peak chair' } });
     fireEvent.click(drop(view));
     await waitFor(() => expect(commits).toHaveLength(1));
-    expect(commits[0]).toMatchObject({ splashId: 's-one' });
-  });
-
-  it('several declared lanes: the chip row offers only those', () => {
-    const view = sheet({ prefill: { splashId: 's-two' } });
-    const row = view.getByRole('group', { name: 'Lane' });
-    expect(row.textContent).toContain('Place');
-    expect(row.textContent).toContain('Mood');
-    expect(row.textContent).not.toContain('Day');
-  });
-
-  it('detaching restores the free choice', () => {
-    const view = sheet({ prefill: { splashId: 's-one' } });
-    expect(view.queryByRole('group', { name: 'Lane' })).toBeNull();
-
-    fireEvent.click(view.getByLabelText('Remove from splash'));
-    const row = view.getByRole('group', { name: 'Lane' });
-    expect(row.textContent).toContain('Day');
+    expect(commits[0]).toMatchObject({ splashId: 's-one', categoryId: null });
   });
 });
 
