@@ -264,6 +264,11 @@ describe('the lane header', () => {
         .getAttribute('data-lines'),
     ).toBe('1');
 
+    // Four segments, so each line ends on a crest: the path's last curve rises.
+    expect(food.querySelector('[data-wave-stack] svg')!.getAttribute('width')).toBe('22');
+    const path = food.querySelector('[data-wave-stack] svg path')!.getAttribute('d')!;
+    expect((path.match(/C/g) ?? []).length).toBe(4);
+
     fireEvent.click(getByText('Food'));
     expect(food.getAttribute('aria-pressed')).toBe('true');
     expect(seatIds(container)).toEqual(['late']);
