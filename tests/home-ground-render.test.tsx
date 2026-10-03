@@ -235,6 +235,15 @@ describe('the post grid (H21d)', () => {
     ).toBe('1');
   });
 
+  it('reads a period on the pill when the block it sits at spans days', () => {
+    const trip = post('trip', 'Tofino', [
+      { ...block('t', '2026-09-12', 'c-place'), ended_at: '2026-09-15T06:59:59.999Z' },
+    ]);
+    const { container } = ground('2026-09', [...POSTS, trip]);
+    expect(container.querySelector('[data-seat="trip"]')!.textContent).toContain('Sep 12–14');
+    expect(container.querySelector('[data-seat="late"]')!.textContent).toContain('Sep 20');
+  });
+
   it('links a pill to its post’s page, naming the month it came from', () => {
     const { container } = ground();
     expect(container.querySelector('[data-seat="late"] a')!.getAttribute('href')).toBe(

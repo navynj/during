@@ -14,7 +14,9 @@ import { splashHref } from './scope';
  * reads downward within a month (H21d). The DOM order is the order; the wrap
  * is the layout.
  *
- * The pill a post was just dropped at gets the commit ripple once (SPEC 6).
+ * A pill reads its post's date — or its period, when the block it sits at
+ * spans days (review). The pill a post was just dropped at gets the commit
+ * ripple once (SPEC 6).
  */
 export function SplashGrid({
   seats,
@@ -29,7 +31,7 @@ export function SplashGrid({
 }) {
   return (
     <ol data-splash-grid className="flex flex-wrap gap-2">
-      {seats.map(({ splash, date }) => {
+      {seats.map(({ splash, span }) => {
         const ring = ringAt === splash.id;
         return (
           <li key={splash.id} data-seat={splash.id} className="relative max-w-full">
@@ -44,7 +46,7 @@ export function SplashGrid({
             ) : null}
             <SplashPill
               splash={splash}
-              range={{ start: date, end: date }}
+              range={span}
               categories={categories}
               href={splashHref(splash.id, month)}
               ground="water"

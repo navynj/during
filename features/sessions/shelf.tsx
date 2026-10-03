@@ -182,11 +182,11 @@ export function Shelf({
               </h2>
             ) : null}
             <ol className="flex flex-col gap-2">
-              {group.seats.map(({ splash, date }) => (
+              {group.seats.map(({ splash, span }) => (
                 <li key={splash.id} data-seat={splash.id}>
                   <SplashPill
                     splash={splash}
-                    range={splash.range ?? { start: date, end: date }}
+                    range={span}
                     categories={categories}
                     href={`/splash/${splash.id}?from=session:${session.id}`}
                     ground="page"

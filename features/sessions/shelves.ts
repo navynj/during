@@ -12,8 +12,13 @@ import { todayIn, type IsoDate } from '@/lib/time';
 
 export type Session = Database['public']['Tables']['sessions']['Row'];
 
-/** A post on a shelf, at the place the shelf gives it. */
-export type Seat = { splash: SplashSummary; instant: number; date: IsoDate };
+/** A post on a shelf, at the place the shelf gives it, and the period its pill reads. */
+export type Seat = {
+  splash: SplashSummary;
+  instant: number;
+  date: IsoDate;
+  span: { start: IsoDate; end: IsoDate };
+};
 
 /**
  * A month's shelf (H21e): every post whose display range touches the month,
@@ -85,7 +90,12 @@ export function sessionSeats(
     .filter((summary) => summary.sessionId === sessionId)
     .map((splash) => {
       const date = splash.range?.start ?? todayIn(timeZone, new Date(splash.createdAt));
-      return { splash, instant: Date.parse(`${date}T00:00:00Z`), date };
+      return {
+        splash,
+        instant: Date.parse(`${date}T00:00:00Z`),
+        date,
+        span: splash.range ?? { start: date, end: date },
+      };
     })
     .sort((a, b) => a.instant - b.instant || a.splash.createdAt.localeCompare(b.splash.createdAt));
 }

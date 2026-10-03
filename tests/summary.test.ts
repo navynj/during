@@ -127,6 +127,34 @@ describe('a post’s range and months (H21e)', () => {
     expect(positionInMonth(summary, '2026-08', TZ).date).toBe('2026-08-29');
   });
 
+  it('counts a span’s last day into the range, and reads the period on the pill', () => {
+    // A span by dates alone, Sep 12 to 14: the end is the close of Sep 14.
+    const span = block({
+      id: 'trip',
+      occurred_on: '2026-09-12',
+      ended_at: '2026-09-15T06:59:59.999Z',
+      created_at: '2026-09-12T16:00:00.000Z',
+    });
+    const summary = summarizeSplash(splash(), [span], TZ, NOW);
+    expect(summary.range).toEqual({ start: '2026-09-12', end: '2026-09-14' });
+    expect(summary.blocks[0].endDay).toBe('2026-09-14');
+    const at = positionInMonth(summary, '2026-09', TZ);
+    expect(at.date).toBe('2026-09-12');
+    expect(at.span).toEqual({ start: '2026-09-12', end: '2026-09-14' });
+    expect(formatPillDate(at.span)).toBe('Sep 12–14');
+    // A point block reads one date.
+    const point = summarizeSplash(
+      splash(),
+      [block({ id: 'p', occurred_on: '2026-09-03' })],
+      TZ,
+      NOW,
+    );
+    expect(positionInMonth(point, '2026-09', TZ).span).toEqual({
+      start: '2026-09-03',
+      end: '2026-09-03',
+    });
+  });
+
   it('sits where it was made while it has nothing and declares nothing', () => {
     const summary = summarizeSplash(splash({ created_at: '2026-09-23T16:00:00Z' }), [], TZ, NOW);
     expect(summary.range).toBeNull();
