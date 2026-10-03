@@ -33,6 +33,8 @@ export type SheetContext = {
 export type DropHandoff = {
   splash: SplashSummary;
   month: string;
+  /** The first block's words, for the recent column to preview at once. */
+  note: string | null;
   commit: () => Promise<SplashResult>;
 };
 
@@ -150,7 +152,12 @@ export function SplashComposer({
       now,
     );
 
-    onDrop({ splash, month: (a?.date ?? today).slice(0, 7), commit: () => dropSplash(input) });
+    onDrop({
+      splash,
+      month: (a?.date ?? today).slice(0, 7),
+      note: body.length > 0 ? body : null,
+      commit: () => dropSplash(input),
+    });
 
     setTitleText('');
     setBodyText('');

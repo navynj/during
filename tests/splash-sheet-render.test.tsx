@@ -29,6 +29,8 @@ import {
 } from '@/features/splash-sheet/splash-sheet';
 import type { SplashSummary } from '@/features/splash/summary';
 import { ComposerPanel } from '@/features/input-sheet/sheet-host';
+import { RecentBlocks, recentItems } from '@/features/splash/recent-blocks';
+import type { RippleWithCategory } from '@/lib/queries/ripples';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { composeDrop, splitTitle } from '@/features/splash-sheet/split-title';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -285,12 +287,84 @@ describe('the wide screen’s standing composer (review)', () => {
   it('sits on the page elsewhere, and is absent on a post’s page: the blocks take the right half', () => {
     pathname = '/locker';
     let view = panel();
-    expect(view.container.querySelector('[data-composer-panel]')!.className).toContain('bg-white');
+    expect(view.container.querySelector('[data-composer-panel]')!.className).toContain('bg-pool-100');
+    expect(view.container.querySelector('[data-composer-panel]')!.className).not.toContain('water-ground');
     cleanup();
 
     pathname = '/splash/s1';
     view = panel();
     expect(view.container.querySelector('[data-composer-panel]')).toBeNull();
     pathname = '/';
+  });
+});
+
+describe('the recent column under the composer (review)', () => {
+  const ripple = (over: Partial<RippleWithCategory> & { id: string }): RippleWithCategory => ({
+    author_id: 'a1',
+    category_id: 'c-day',
+    note: 'words',
+    media: [],
+    occurred_on: null,
+    occurred_time: null,
+    started_at: null,
+    ended_at: null,
+    planned: false,
+    participants: [],
+    created_at: '2026-09-25T16:00:00.000Z',
+    parent_ripple_id: null,
+    splash_id: 's1',
+    category: { name: 'Day', icon: '🖋' },
+    splash: { declared_start: null, title: 'Whistler' },
+    ...over,
+  });
+
+  it('reads newest day first, newest posted first within a day, under the posts’ titles', () => {
+    const items = recentItems(
+      [
+        ripple({ id: 'old-day', occurred_on: '2026-09-20', created_at: '2026-09-25T18:00:00Z' }),
+        ripple({ id: 'early', created_at: '2026-09-25T10:00:00Z' }),
+        ripple({ id: 'late', created_at: '2026-09-25T15:00:00Z', note: 'the later words' }),
+        ripple({ id: 'lone', splash_id: null, splash: null, created_at: '2026-09-24T15:00:00Z' }),
+      ],
+      TZ,
+    );
+    expect(items.map((i) => i.id)).toEqual(['late', 'early', 'lone', 'old-day']);
+    expect(items[0]).toMatchObject({ title: 'Whistler', note: 'the later words', splashId: 's1' });
+    expect(items[2]).toMatchObject({ title: '', splashId: 'lone' });
+
+    const { container } = render(
+      <InputSheetProvider>
+        <RecentBlocks items={items} today={TODAY} />
+      </InputSheetProvider>,
+    );
+    const titles = [...container.querySelectorAll('[data-recent-title]')];
+    expect(titles[0].className).toContain('text-xl');
+    expect(titles[0].className).toContain('font-semibold');
+    expect(container.querySelector('[data-recent-preview]')!.className).toContain('line-clamp-3');
+    expect([...container.querySelectorAll('[data-recent-day]')].map((d) => d.textContent)).toEqual([
+      'Today',
+      'Sep 24',
+      'Sep 20',
+    ]);
+    expect(container.querySelector('[data-recent-block="late"] a')!.getAttribute('href')).toBe(
+      '/splash/s1?from=2026-09',
+    );
+  });
+
+  it('stands under the composer on the panel', () => {
+    pathname = '/';
+    const { container } = render(
+      <InputSheetProvider>
+        <ComposerPanel
+          context={{ categories: LANES, timeZone: TZ, today: TODAY }}
+          recent={recentItems([ripple({ id: 'r' })], TZ)}
+        />
+      </InputSheetProvider>,
+    );
+    const composer = container.querySelector('[data-splash-composer]')!;
+    const column = container.querySelector('[data-recent-blocks]')!;
+    expect(
+      composer.compareDocumentPosition(column) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

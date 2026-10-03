@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 
+import { RecentBlocks, type RecentItem } from '@/features/splash/recent-blocks';
 import { SplashComposer } from '@/features/splash-sheet/splash-composer';
 import {
   SplashSheet,
@@ -20,7 +21,7 @@ function useDrop(): (drop: DropHandoff) => void {
   const { markDropped, dropFailed } = useInputSheet();
   const router = useRouter();
   return (drop) => {
-    markDropped({ splash: drop.splash, month: drop.month });
+    markDropped({ splash: drop.splash, month: drop.month, note: drop.note });
     router.push(`/?m=${drop.month}`);
     void drop.commit().then((result) => {
       if (!result.ok) dropFailed(result.message);
@@ -55,11 +56,18 @@ export function SheetHost({ context }: { context: SheetContext }) {
 
 /**
  * The wide screen's composer (review): not a sheet but a rounded white card
- * standing in the right half, always there with *Drop your splash* waiting.
- * On Home it floats on the water; elsewhere it sits on the page. Not on a
- * post's page, whose right half holds the post's blocks instead.
+ * standing in the right half, always there with *Drop your splash* waiting,
+ * and beneath it the recent column: my latest blocks under their posts'
+ * titles. On Home it floats on the water; elsewhere it sits on the page.
+ * Not on a post's page, whose right half holds the post's blocks instead.
  */
-export function ComposerPanel({ context }: { context: SheetContext }) {
+export function ComposerPanel({
+  context,
+  recent = [],
+}: {
+  context: SheetContext;
+  recent?: RecentItem[];
+}) {
   const pathname = usePathname();
   const drop = useDrop();
   const onWater = pathname === '/';
@@ -68,16 +76,18 @@ export function ComposerPanel({ context }: { context: SheetContext }) {
   return (
     <aside
       data-composer-panel
-      className={`hidden lg:sticky lg:top-0 lg:flex lg:h-[calc(100dvh-var(--tab-bar-h))] lg:w-1/2 lg:shrink-0 lg:items-start lg:justify-center lg:overflow-y-auto lg:p-8 ${
-        onWater ? 'water-ground' : 'bg-white'
+      className={`no-scrollbar hidden lg:sticky lg:top-0 lg:flex lg:h-[calc(100dvh-var(--tab-bar-h))] lg:w-1/2 lg:shrink-0 lg:flex-col lg:items-center lg:gap-8 lg:overflow-y-auto lg:p-8 ${
+        onWater ? 'water-ground' : 'bg-pool-100'
       }`}
     >
-      <div
-        className={`w-full max-w-xl rounded-[32px] bg-white px-8 py-8 ${
-          onWater ? '' : 'border-pool-100 border'
-        }`}
-      >
+      <div className="w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-8">
         <SplashComposer context={context} onDrop={drop} autoFocus={false} />
+      </div>
+      {/* The column reads white on the water; on a page it reads in ink. */}
+      <div
+        className={`flex w-full max-w-xl flex-col ${onWater ? '' : '[&_[data-recent-title]]:text-ink [&_[data-recent-preview]]:text-ink/80 [&_[data-recent-day]]:text-pool-500'}`}
+      >
+        <RecentBlocks items={recent} today={context.today} />
       </div>
     </aside>
   );

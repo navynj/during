@@ -15,7 +15,7 @@ import type { SplashSummary } from '@/features/splash/summary';
  */
 export type OpenSheet = { kind: 'splash' } | null;
 
-export type PendingDrop = { splash: SplashSummary; month: string };
+export type PendingDrop = { splash: SplashSummary; month: string; note: string | null };
 
 type SheetApi = {
   sheet: OpenSheet;

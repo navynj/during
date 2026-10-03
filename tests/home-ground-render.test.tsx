@@ -141,7 +141,7 @@ const POSTS = [
 
 function Dropper({ splash, month }: { splash: SplashSummary; month: string }) {
   const { markDropped } = useInputSheet();
-  useEffect(() => markDropped({ splash, month }), [splash, month, markDropped]);
+  useEffect(() => markDropped({ splash, month, note: null }), [splash, month, markDropped]);
   return null;
 }
 

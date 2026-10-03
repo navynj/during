@@ -2,6 +2,8 @@ import { TabBar } from '@/components/ui/tab-bar';
 import { ComposerPanel, SheetHost } from '@/features/input-sheet/sheet-host';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
+import { getMyTrail } from '@/lib/queries/trail';
+import { recentItems } from '@/features/splash/recent-blocks';
 import { createClient } from '@/lib/supabase/server';
 import { todayIn } from '@/lib/time';
 
@@ -25,13 +27,18 @@ export default async function ShellLayout({ children }: LayoutProps<'/'>) {
         today: todayIn(profile.timezone),
       }
     : null;
+  // The recent column under the wide screen's composer: the Trail's head.
+  const recent =
+    profile && context
+      ? recentItems(await getMyTrail(supabase, profile.id, profile.timezone), profile.timezone)
+      : [];
 
   return (
     <InputSheetProvider>
       <div className="flex min-h-dvh flex-col">
         <div className="flex flex-1 flex-col lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-          {context ? <ComposerPanel context={context} /> : null}
+          {context ? <ComposerPanel context={context} recent={recent} /> : null}
         </div>
         <TabBar />
       </div>
