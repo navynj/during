@@ -300,6 +300,31 @@ describe('the wide screen’s standing composer (review)', () => {
   });
 });
 
+describe('the composer minimises (review)', () => {
+  it('folds to one line so the Trail can be read on its own, and opens back up', () => {
+    pathname = '/';
+    try {
+      window.localStorage.removeItem('during.composer-minimized');
+    } catch {
+      // No storage, no memory.
+    }
+    const { container, getByLabelText } = render(
+      <InputSheetProvider>
+        <ComposerPanel context={{ categories: LANES, timeZone: TZ, today: TODAY }} />
+      </InputSheetProvider>,
+    );
+    expect(container.querySelector('[data-splash-composer]')).not.toBeNull();
+    fireEvent.click(getByLabelText('Minimize the composer'));
+    expect(container.querySelector('[data-splash-composer]')).toBeNull();
+    const line = container.querySelector('[data-composer-minimized]')!;
+    expect(line.textContent).toContain('Drop your splash');
+    expect(window.localStorage.getItem('during.composer-minimized')).toBe('1');
+    fireEvent.click(getByLabelText('Open the composer'));
+    expect(container.querySelector('[data-splash-composer]')).not.toBeNull();
+    window.localStorage.removeItem('during.composer-minimized');
+  });
+});
+
 describe('the Trail under the composer (review)', () => {
   it('reads under the composer in its own card: a wide screen has no Locker tab', () => {
     pathname = '/';

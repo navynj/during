@@ -1,7 +1,8 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 import { PendingDropHead } from '@/features/splash/pending-drop';
 import { SplashComposer } from '@/features/splash-sheet/splash-composer';
@@ -61,8 +62,12 @@ export function SheetHost({ context }: { context: SheetContext }) {
  * and beneath it the Locker's Trail — a wide screen has no Locker tab; the
  * archive reads here, under the composer. On Home it floats on the water;
  * elsewhere it sits on the page. Not on a post's page, whose right half holds
- * the post's blocks instead.
+ * the post's blocks instead. The card minimises to one line (review), so the
+ * Trail beneath can be read on its own; the choice is remembered per
+ * browser.
  */
+const MINIMIZED_KEY = 'during.composer-minimized';
+
 export function ComposerPanel({
   context,
   trail,
@@ -74,7 +79,23 @@ export function ComposerPanel({
   const pathname = usePathname();
   const drop = useDrop();
   const onWater = pathname === '/';
+  const [minimized, setMinimized] = useState(() => {
+    try {
+      return window.localStorage.getItem(MINIMIZED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
   if (pathname.startsWith('/splash/')) return null;
+
+  function minimize(next: boolean): void {
+    setMinimized(next);
+    try {
+      window.localStorage.setItem(MINIMIZED_KEY, next ? '1' : '0');
+    } catch {
+      // Not remembered, then.
+    }
+  }
 
   return (
     <aside
@@ -83,9 +104,32 @@ export function ComposerPanel({
         onWater ? 'water-ground' : 'bg-pool-100'
       }`}
     >
-      <div className="w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-8">
-        <SplashComposer context={context} onDrop={drop} autoFocus={false} />
-      </div>
+      {minimized ? (
+        // One line, with the invitation still on it: tap to open the composer back up.
+        <button
+          type="button"
+          aria-label="Open the composer"
+          data-composer-minimized
+          onClick={() => minimize(false)}
+          className="flex w-full max-w-xl shrink-0 items-center justify-between rounded-[32px] bg-white px-8 py-5 text-left"
+        >
+          <span className="text-main-900 text-2xl font-semibold opacity-20">Drop your splash</span>
+          <ChevronDown aria-hidden size={18} className="text-pool-500" />
+        </button>
+      ) : (
+        <div className="relative w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-8">
+          <button
+            type="button"
+            aria-label="Minimize the composer"
+            data-composer-minimize
+            onClick={() => minimize(true)}
+            className="text-pool-500 absolute top-4 right-5 flex h-8 w-8 items-center justify-center"
+          >
+            <ChevronUp aria-hidden size={18} />
+          </button>
+          <SplashComposer context={context} onDrop={drop} autoFocus={false} />
+        </div>
+      )}
       {/* The Trail, in its own white card: the Locker on a wide screen. */}
       <div data-panel-trail className="w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-6">
         <PendingDropHead today={context.today} />
