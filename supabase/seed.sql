@@ -73,27 +73,58 @@ values
   ('a3000000-0000-0000-0000-000000000006', '33333333-3333-3333-3333-333333333333', 'Day',   '🖋', 'drop', 0);
 
 -- ---------------------------------------------------------------------------
--- splashes — two boards (H20d): one with a declared lane, one without
+-- sessions — shelves (H21e): a titled month (its lazy row) and a custom one
 -- ---------------------------------------------------------------------------
 
--- Dates are relative to today so both home modes, month sinking, lane
--- inheritance and backfill placement are visible whenever this is run.
 with day as (select (now() at time zone 'America/Vancouver')::date as d)
-insert into public.splashes (id, owner_id, title, declared_start, declared_end, lane_ids, created_at)
-select v.id, '11111111-1111-1111-1111-111111111111', v.title,
-       case when v.from_days is null then null else day.d - v.from_days end,
-       case when v.to_days is null then null else day.d - v.to_days end,
-       v.lanes, (day.d - v.made) + time '09:00'
+insert into public.sessions (id, owner_id, kind, title, month, declared_start, declared_end, lane_id, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', v.kind::public.session_kind, v.title,
+       v.month, v.from_date, v.to_date, v.lane, (day.d - 30) + time '09:00'
   from day,
-       (values
-         -- Declared range and one declared lane: every fragment thrown in is
-         -- a Place, and the sheet shows no category choice (H20e).
+       lateral (values
+         -- Last month, titled: the one monthly row this account has. Every
+         -- other month exists without one.
+         ('d1000000-0000-0000-0000-000000000001'::uuid, 'monthly', 'The month the form changed',
+          (date_trunc('month', day.d) - interval '1 month')::date, null::date, null::date, null::uuid),
+         -- A custom shelf with a declared lane: posts assigned to it group
+         -- flat, because the shelf already says what they are about.
+         ('d1000000-0000-0000-0000-000000000002', 'custom', 'Trips',
+          null, day.d - 60, null, 'a1000000-0000-0000-0000-000000000001'::uuid)
+       ) as v(id, kind, title, month, from_date, to_date, lane);
+
+-- ---------------------------------------------------------------------------
+-- splashes — posts (H21a): a declared lane and range, a spanning one, a
+-- mixed-lane one, an untitled one, a pinned one
+-- ---------------------------------------------------------------------------
+
+-- Dates are relative to today so the ground, the scrubber, the shelves and
+-- the inheritance defaults are visible whenever this is run.
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.splashes (id, owner_id, title, declared_start, declared_end, declared_lane_id, session_id, pinned_at, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', v.title,
+       v.from_date, v.to_date, v.lane, v.session,
+       case when v.pinned then (day.d - 1) + time '09:00' else null end,
+       (day.d - v.made) + time '09:00'
+  from day,
+       lateral (values
+         -- Declared range and declared lane: a new block defaults to Place
+         -- and to the declared date (H21f). On the Trips shelf.
          ('c1000000-0000-0000-0000-000000000001'::uuid, 'Whistler, two nights',
-          40, 37, array['a1000000-0000-0000-0000-000000000001'::uuid], 41),
-         -- Nothing declared: range and chip are derived from what lands in it.
+          day.d - 40, day.d - 37, 'a1000000-0000-0000-0000-000000000001'::uuid,
+          'd1000000-0000-0000-0000-000000000002'::uuid, false, 41),
+         -- Declared lane Day, but its blocks took Media too: the lane turns
+         -- into tags, Day first (H21f). Pinned: still being written.
          ('c1000000-0000-0000-0000-000000000002', 'During redesign',
-          null::int, null::int, '{}'::uuid[], 26)
-       ) as v(id, title, from_days, to_days, lanes, made);
+          null, null, 'a1000000-0000-0000-0000-000000000006', null, true, 26),
+         -- A declared range across the month boundary: on both shelves,
+         -- positioned by its latest block in each (H21e).
+         ('c1000000-0000-0000-0000-000000000003', 'The long weekend that ran over',
+          (date_trunc('month', day.d) - interval '3 days')::date,
+          (date_trunc('month', day.d) + interval '2 days')::date,
+          'a1000000-0000-0000-0000-000000000005', 'd1000000-0000-0000-0000-000000000002', false, 3),
+         -- Untitled: a one-line post. Its ghost title is its block's first words.
+         ('c1000000-0000-0000-0000-000000000004', '', null, null, null, null, false, 0)
+       ) as v(id, title, from_date, to_date, lane, session, pinned, made);
 
 -- ---------------------------------------------------------------------------
 -- ripples
@@ -104,7 +135,7 @@ select v.id, '11111111-1111-1111-1111-111111111111', v.title,
 -- this month but placed last month, splash members, loose fragments, locked.
 -- ---------------------------------------------------------------------------
 
--- The Whistler board: four placed fragments inside its declared range, all in
+-- The Whistler post: four placed blocks inside its declared range, all in
 -- its declared lane, made when they happened.
 with day as (select (now() at time zone 'America/Vancouver')::date as d)
 insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, splash_id, created_at)
@@ -120,9 +151,9 @@ select v.id, '11111111-1111-1111-1111-111111111111', 'a1000000-0000-0000-0000-00
          ('b1000000-0000-0000-0000-000000000024', 'last coffee before the drive', 37, '08:40')
        ) as v(id, note, ago, at);
 
--- The redesign board: fragments across two months, plus one BACKFILL — made
--- today, placed last month — so its row sits in last month's section while
--- the diary remembers it was written now.
+-- The redesign post: blocks across two months, plus one BACKFILL — made
+-- today, placed last month — so the post surfaces on both shelves while the
+-- diary remembers it was written now.
 with day as (select (now() at time zone 'America/Vancouver')::date as d)
 insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, splash_id, created_at)
 select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note,
@@ -143,8 +174,32 @@ select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note,
           'the sketch that started it, found in a notebook', 0, 35, interval '8 hours')
        ) as v(id, category, note, made, placed, at);
 
--- Loose fragments, today and yesterday. `on_day` counts days back from today
--- (null = unannotated); `made` is when it was written.
+-- The spanning post: one block in each month it touches, so each shelf
+-- positions it by its own latest block (H21e).
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, splash_id, created_at)
+select v.id, '11111111-1111-1111-1111-111111111111', 'a1000000-0000-0000-0000-000000000005', v.note,
+       v.placed, null, null, 'c1000000-0000-0000-0000-000000000003',
+       v.placed + time '20:00'
+  from day,
+       lateral (values
+         ('b1000000-0000-0000-0000-000000000041'::uuid, 'the drive down, nothing but radio',
+          (date_trunc('month', day.d) - interval '3 days')::date),
+         ('b1000000-0000-0000-0000-000000000042', 'home a day late and glad of it',
+          (date_trunc('month', day.d) + interval '2 days')::date)
+       ) as v(id, note, placed);
+
+-- The untitled post: one block, no annotation, written this morning.
+with day as (select (now() at time zone 'America/Vancouver')::date as d)
+insert into public.ripples (id, author_id, category_id, note, splash_id, created_at)
+select 'b1000000-0000-0000-0000-000000000051', '11111111-1111-1111-1111-111111111111',
+       'a1000000-0000-0000-0000-000000000006', 'coffee went cold while I read the whole thing',
+       'c1000000-0000-0000-0000-000000000004', (day.d) at time zone 'America/Vancouver' + interval '8 hours 10 minutes'
+  from day;
+
+-- Loose blocks with no post, today and yesterday: each renders as an untitled
+-- post of one (H21a). `on_day` counts days back from today (null =
+-- unannotated); `made` is when it was written.
 with day as (select (now() at time zone 'America/Vancouver')::date as d)
 insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, created_at)
 select v.id, '11111111-1111-1111-1111-111111111111', v.category, v.note,

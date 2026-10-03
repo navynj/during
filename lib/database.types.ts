@@ -503,43 +503,100 @@ export type Database = {
           },
         ]
       }
-      splashes: {
+      sessions: {
         Row: {
           created_at: string
           declared_end: string | null
           declared_start: string | null
+          id: string
+          kind: Database["public"]["Enums"]["session_kind"]
+          lane_id: string | null
+          month: string | null
+          owner_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          declared_end?: string | null
+          declared_start?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["session_kind"]
+          lane_id?: string | null
+          month?: string | null
+          owner_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          declared_end?: string | null
+          declared_start?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["session_kind"]
+          lane_id?: string | null
+          month?: string | null
+          owner_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_lane_id_fkey"
+            columns: ["lane_id"]
+            isOneToOne: false
+            referencedRelation: "my_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      splashes: {
+        Row: {
+          created_at: string
+          declared_end: string | null
+          declared_lane_id: string | null
+          declared_start: string | null
           ends_at: string | null
           id: string
-          lane_ids: string[]
           owner_id: string
+          pinned_at: string | null
           pool_id: string | null
           prompt: string | null
+          session_id: string | null
           title: string
           type: Database["public"]["Enums"]["splash_type"]
         }
         Insert: {
           created_at?: string
           declared_end?: string | null
+          declared_lane_id?: string | null
           declared_start?: string | null
           ends_at?: string | null
           id?: string
-          lane_ids?: string[]
           owner_id: string
+          pinned_at?: string | null
           pool_id?: string | null
           prompt?: string | null
+          session_id?: string | null
           title: string
           type?: Database["public"]["Enums"]["splash_type"]
         }
         Update: {
           created_at?: string
           declared_end?: string | null
+          declared_lane_id?: string | null
           declared_start?: string | null
           ends_at?: string | null
           id?: string
-          lane_ids?: string[]
           owner_id?: string
+          pinned_at?: string | null
           pool_id?: string | null
           prompt?: string | null
+          session_id?: string | null
           title?: string
           type?: Database["public"]["Enums"]["splash_type"]
         }
@@ -552,10 +609,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "splashes_declared_lane_id_fkey"
+            columns: ["declared_lane_id"]
+            isOneToOne: false
+            referencedRelation: "my_categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "splashes_pool_id_fkey"
             columns: ["pool_id"]
             isOneToOne: false
             referencedRelation: "pools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "splashes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -578,6 +649,7 @@ export type Database = {
     Enums: {
       audience_target: "list" | "pool" | "lock"
       ripple_mode: "drop" | "timed"
+      session_kind: "monthly" | "custom"
       splash_type: "free" | "prompted"
     }
     CompositeTypes: {
@@ -711,6 +783,7 @@ export const Constants = {
     Enums: {
       audience_target: ["list", "pool", "lock"],
       ripple_mode: ["drop", "timed"],
+      session_kind: ["monthly", "custom"],
       splash_type: ["free", "prompted"],
     },
   },
