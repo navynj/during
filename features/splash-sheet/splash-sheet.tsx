@@ -37,7 +37,7 @@ export type SheetContext = {
 export const SHEET_MAX_HEIGHT = 'max-h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)]';
 
 /**
- * The post sheet (SPEC 6, H21, review): a large bold title field over a
+ * The post sheet (SPEC 6, H21, review): a large bold blue title field over a
  * smaller, lighter body field — the first line is still the title and Enter
  * still moves on to the body — the lane chip row (the declared lane),
  * the date chip preset to today (`+ add time` inside it, × to clear it),
@@ -159,7 +159,7 @@ export function SplashSheet({
             autoFocus
             aria-label="Title"
             data-sheet-title
-            className="text-ink placeholder:text-ink w-full resize-none text-2xl/snug font-semibold outline-none placeholder:opacity-20"
+            className="text-main-900 placeholder:text-main-900 w-full resize-none text-3xl/snug font-semibold outline-none placeholder:opacity-20"
           />
           <textarea
             ref={bodyField}
