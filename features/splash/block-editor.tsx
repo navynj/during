@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useLayoutEffect, useRef, useState, useTransition } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 
 import { AnnotationControl } from '@/features/input-sheet/annotation-control';
@@ -63,6 +63,15 @@ export function BlockEditor({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const attach = useMediaAttach(media, setMedia);
+  const field = useRef<HTMLTextAreaElement>(null);
+
+  // The words grow the field; the field never scrolls inside the page.
+  useLayoutEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    if (el.scrollHeight > 0) el.style.height = `${el.scrollHeight}px`;
+  }, [note]);
 
   const hasContent = note.trim().length > 0 || media.length > 0;
   const annotationOk = !annotation || annotationVerdict(annotation) === 'ok';
@@ -101,13 +110,15 @@ export function BlockEditor({
   return (
     <div data-block-editor={editing?.id ?? 'new'} className="flex flex-col gap-3 py-2">
       <textarea
+        ref={field}
         value={note}
         onChange={(event) => setNote(event.target.value)}
         placeholder="Drop your words here"
         rows={3}
         autoFocus
         aria-label="Block"
-        className="text-ink placeholder:text-ink min-h-20 w-full resize-none text-[15px]/[1.65] outline-none placeholder:opacity-20"
+        data-block-field
+        className="text-ink placeholder:text-ink min-h-20 w-full resize-none overflow-hidden text-[15px]/[1.65] outline-none placeholder:opacity-20"
       />
 
       <LaneChips

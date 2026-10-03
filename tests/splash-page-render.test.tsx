@@ -234,6 +234,14 @@ describe('writing on the page, in place', () => {
     expect(container.querySelector('[data-block="night"]')).not.toBeNull();
   });
 
+  it('grows the field with its words rather than scrolling inside it', () => {
+    const { container } = page();
+    fireEvent.click(container.querySelector('[data-block="night"]')!);
+    const field = container.querySelector<HTMLTextAreaElement>('[data-block-field]')!;
+    expect(field.className).toContain('overflow-hidden');
+    expect(field.className).toContain('resize-none');
+  });
+
   it('saves a block with the lane it took, keeping it in its post', async () => {
     const { container, getByText, getByLabelText } = page();
     fireEvent.click(container.querySelector('[data-block="first"]')!);
