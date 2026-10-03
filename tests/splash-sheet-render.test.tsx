@@ -116,8 +116,9 @@ describe('the first line is the title (SPEC 6)', () => {
     const body = container.querySelector<HTMLTextAreaElement>('[data-sheet-body]')!;
     expect(title.placeholder).toBe('Drop your splash');
     expect(body.placeholder).toBe('Enter the content');
-    expect(title.className).toContain('text-2xl');
+    expect(title.className).toContain('text-3xl');
     expect(title.className).toContain('font-semibold');
+    expect(title.className).toContain('text-main-900');
     expect(body.className).toContain('text-base');
     expect(body.className).toContain('font-light');
     expect(title.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

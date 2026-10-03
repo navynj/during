@@ -180,7 +180,7 @@ describe('the water ground (H21c)', () => {
     expect(mark.style.getPropertyValue('--wave-ink')).toBe('#ffffff');
   });
 
-  it('draws a lone block as the inverse pill: blue, a white/50 border, a bordered blue disc', () => {
+  it('draws a lone block as the inverse pill: blue, a white/50 border, a white/70 disc', () => {
     const lone = summarizeOrphan(block('r-lone', '2026-09-14', 'c-day', 'alone'), TZ, NOW);
     const { container } = ground('2026-09', [...POSTS, lone]);
     const pill = container.querySelector<HTMLElement>('[data-splash-pill="r-lone"]')!;
@@ -189,9 +189,9 @@ describe('the water ground (H21c)', () => {
     expect(pill.className).toContain('border-white/50');
     expect(pill.className).toContain('text-white');
     const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
-    expect(mark.className).toContain('bg-main-900');
-    expect(mark.className).toContain('border-white/50');
-    expect(mark.style.getPropertyValue('--wave-ink')).toBe('#ffffff');
+    expect(mark.className).toContain('bg-white/70');
+    expect(mark.className).not.toContain('border');
+    expect(mark.style.getPropertyValue('--wave-ink')).toBe('var(--color-main-900)');
   });
 
   it('never fills a pill or a lane in blue: ink is selection there', () => {
