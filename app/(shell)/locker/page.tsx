@@ -19,7 +19,7 @@ export default async function LockerPage() {
   const days = groupByDay(ripples, profile.timezone);
 
   return (
-    <main className="mx-auto flex min-h-[calc(100dvh-var(--tab-bar-h))] w-full max-w-xl flex-1 flex-col px-6">
+    <main className="mx-auto flex min-h-[calc(100dvh-var(--tab-bar-h))] w-full max-w-xl flex-1 flex-col px-6 pb-10">
       <Trail days={days} timeZone={profile.timezone} />
     </main>
   );

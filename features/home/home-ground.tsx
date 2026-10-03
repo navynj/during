@@ -80,7 +80,8 @@ export function HomeGround({
 
   return (
     <div data-home-ground className="water-ground flex flex-1 flex-col">
-      <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6">
+      {/* pb-10 clears the tab bar's overlap; the bar cuts its corners into the water. */}
+      <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6 pb-10">
         <div className="no-scrollbar flex flex-1 flex-col overflow-x-auto">
           <LaneHeader
             categories={categories}
