@@ -47,7 +47,9 @@ function timeZoneOffsetMs(instant: Date, timeZone: string): number {
     Number(at.minute),
     Number(at.second),
   );
-  return asUtc - instant.getTime();
+  // The parts carry whole seconds; the instant's milliseconds would
+  // otherwise leak into the offset and shift a sub-second wall clock.
+  return asUtc - (instant.getTime() - instant.getUTCMilliseconds());
 }
 
 /**

@@ -3,6 +3,7 @@ export type { WaveLineProps } from './wave-line';
 export { WaveBundle } from './wave-bundle';
 export type { WaveBundleProps } from './wave-bundle';
 export { CommitRing } from './commit-ring';
+export { WaveMark, WaveStack } from './wave-mark';
 export type { CommitRingProps } from './commit-ring';
 export {
   bundleLineCount,
