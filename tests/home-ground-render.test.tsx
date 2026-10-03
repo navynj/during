@@ -180,17 +180,18 @@ describe('the water ground (H21c)', () => {
     expect(mark.style.getPropertyValue('--wave-ink')).toBe('#ffffff');
   });
 
-  it('draws a lone block as the inverse pill: blue, a white outer border, a white disc', () => {
+  it('draws a lone block as the inverse pill: blue, a white/50 border, a bordered blue disc', () => {
     const lone = summarizeOrphan(block('r-lone', '2026-09-14', 'c-day', 'alone'), TZ, NOW);
     const { container } = ground('2026-09', [...POSTS, lone]);
     const pill = container.querySelector<HTMLElement>('[data-splash-pill="r-lone"]')!;
     expect(pill.hasAttribute('data-lone')).toBe(true);
     expect(pill.className).toContain('bg-main-900');
-    expect(pill.className).toContain('border-white');
+    expect(pill.className).toContain('border-white/50');
     expect(pill.className).toContain('text-white');
     const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
-    expect(mark.className).toContain('bg-white');
-    expect(mark.style.getPropertyValue('--wave-ink')).toBe('var(--color-main-900)');
+    expect(mark.className).toContain('bg-main-900');
+    expect(mark.className).toContain('border-white/50');
+    expect(mark.style.getPropertyValue('--wave-ink')).toBe('#ffffff');
   });
 
   it('never fills a pill or a lane in blue: ink is selection there', () => {
@@ -209,7 +210,9 @@ describe('the post grid (H21d)', () => {
     // Pills are as wide as their titles and no wider: a wrapping row, not columns.
     expect(container.querySelector('[data-splash-grid]')!.className).toContain('flex-wrap');
     expect(container.querySelector('[data-splash-grid]')!.className).not.toMatch(/grid-cols/);
-    expect(container.querySelector('[data-splash-pill]')!.className).not.toMatch(/(^| )w-full|flex-1/);
+    expect(container.querySelector('[data-splash-pill]')!.className).not.toMatch(
+      /(^| )w-full|flex-1/,
+    );
   });
 
   it('opens scrolled to the bottom: the present-and-writing zone', () => {
