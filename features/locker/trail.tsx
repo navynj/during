@@ -1,12 +1,14 @@
 import Link from 'next/link';
 
-import { DailyNoteRow } from '@/features/home-daily/daily-note-row';
-import { RippleRow } from '@/features/home-daily/ripple-row';
+import { DurationChip } from '@/components/ui/chips/duration-chip';
+import { WaveBundle, WaveLine } from '@/components/ui/waves';
+import { monthHref } from '@/features/home/scope';
 import { monthsBack } from '@/features/lanes/matrix';
 import { depthSurface } from '@/lib/depth';
 import { EMPTY } from '@/lib/empty-states';
-import { splitByRegion } from '@/lib/queries/ripples';
+import type { RippleWithCategory } from '@/lib/queries/ripples';
 import type { TrailDay } from '@/lib/queries/trail';
+import { rippleDurationMinutes, rippleKind } from '@/lib/ripple-kind';
 import { formatPagerDate } from '@/lib/time';
 
 /**
@@ -17,13 +19,14 @@ import { formatPagerDate } from '@/lib/time';
  * through it is backwards. Nothing ever arrives at its top.
  *
  * Law 1's sinking applies here because this *is* a continuous scroll — one
- * surface, going deeper as you move back through it. Home Daily is exempt for
- * the opposite reason (H14): it pages, so there are no sections to sink.
+ * surface, going deeper as you move back through it (H14, H21d: the ground
+ * does not sink; the white scrolls still do).
  *
- * Sections are months, which is also what the gutter names. Rows are the same
- * grammar as Home, and tapping one opens the same detail sheet.
+ * Sections are months, which is also what the gutter names. A row is a
+ * block; tapping it opens its post's page at that block (H21), and a day
+ * header opens that day's month on the ground.
  */
-export function Trail({ days, timeZone, now }: { days: TrailDay[]; timeZone: string; now: Date }) {
+export function Trail({ days, timeZone }: { days: TrailDay[]; timeZone: string }) {
   if (days.length === 0) {
     return <p className="text-pool-500 py-16 text-center text-sm">{EMPTY.trail}</p>;
   }
@@ -37,7 +40,6 @@ export function Trail({ days, timeZone, now }: { days: TrailDay[]; timeZone: str
           key={day.date}
           day={day}
           timeZone={timeZone}
-          now={now}
           surface={depthSurface(monthsBack(newest, day.date))}
           opensMonth={day.date.slice(0, 7) !== days[index - 1]?.date.slice(0, 7)}
         />
@@ -49,40 +51,32 @@ export function Trail({ days, timeZone, now }: { days: TrailDay[]; timeZone: str
 function DaySection({
   day,
   timeZone,
-  now,
   surface,
   opensMonth,
 }: {
   day: TrailDay;
   timeZone: string;
-  now: Date;
   surface: string;
   opensMonth: boolean;
 }) {
   const { year, month, day: number, weekday, full } = formatPagerDate(day.date);
-  // The same two regions Home has: a record with no time belongs to the day
-  // without claiming a position on its axis (SPEC 5.3), so it heads the
-  // section rather than being drawn as a row with no clock.
-  const { notes, timeline } = splitByRegion(day.ripples);
 
   return (
-    // The section carries its own ground, and the rows read it back through
-    // --row-surface, so the wave backdrops sit on the section instead of
-    // punching white holes in it.
-    <section
-      data-trail-day={day.date}
-      className="-mx-6 px-6"
-      style={{ background: surface, ['--row-surface' as string]: surface }}
-    >
+    // The section carries its own ground, so the rows sit on the section
+    // instead of punching white holes in it.
+    <section data-trail-day={day.date} className="-mx-6 px-6" style={{ background: surface }}>
       <header className="sticky top-0 z-[1] py-3" style={{ background: surface }}>
         {opensMonth ? (
           <p className="text-main-900 pb-1 text-xs font-medium">
             {year} {month.toUpperCase()}
           </p>
         ) : null}
-        {/* The header is the way back to the day itself: the Trail reads, and
-            Home Daily is where a day is worked on. */}
-        <Link href={`/?d=${day.date}`} className="text-main-900 flex items-baseline gap-2">
+        {/* The header is the way back to the month itself: the Trail reads,
+            and the ground is where a month is seen whole. */}
+        <Link
+          href={monthHref(day.date.slice(0, 7))}
+          className="text-main-900 flex items-baseline gap-2"
+        >
           <span className="sr-only">{full}</span>
           <span aria-hidden className="text-xl/none font-medium">
             {number}
@@ -93,19 +87,60 @@ function DaySection({
         </Link>
       </header>
 
-      {notes.length > 0 ? (
-        <div className="flex flex-col gap-1 pb-2">
-          {notes.map((note) => (
-            <DailyNoteRow key={note.id} note={note} />
-          ))}
-        </div>
-      ) : null}
-
       <ol className="pb-4">
-        {timeline.map((ripple) => (
-          <RippleRow key={ripple.id} ripple={ripple} timeZone={timeZone} now={now} />
+        {day.ripples.map((ripple) => (
+          <TrailRow key={ripple.id} ripple={ripple} timeZone={timeZone} />
         ))}
       </ol>
     </section>
+  );
+}
+
+/**
+ * One block on the Trail: its clock in the gutter when it has one, its wave
+ * on the left, its words and its post's title beside them. Opens its post's
+ * page at the block (H21).
+ */
+function TrailRow({ ripple, timeZone }: { ripple: RippleWithCategory; timeZone: string }) {
+  const kind = rippleKind(ripple, timeZone);
+  const minutes = kind === 'timed' ? rippleDurationMinutes(ripple, timeZone) : 0;
+  const href = `/splash/${ripple.splash_id ?? ripple.id}?from=locker#block-${ripple.id}`;
+
+  return (
+    <li data-trail-row={ripple.id}>
+      <Link href={href} className="grid grid-cols-[2.75rem_2rem_1fr] items-start gap-x-3 py-2">
+        <time className="text-main-900 pt-1 text-xs font-light tabular-nums">
+          {ripple.occurred_time ? ripple.occurred_time.slice(0, 5) : ''}
+        </time>
+        <span className="flex flex-col items-center pt-1">
+          {kind === 'timed' ? (
+            <WaveBundle durationMinutes={minutes} emoji={ripple.category?.icon ?? undefined} />
+          ) : (
+            <>
+              <span
+                aria-hidden
+                className="bg-pool-100 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-sm"
+              >
+                {ripple.category?.icon}
+              </span>
+              <WaveLine />
+            </>
+          )}
+        </span>
+        <span className="flex min-w-0 flex-col gap-1 pt-1">
+          {ripple.splash?.title ? (
+            <span data-trail-splash className="text-main-900 truncate text-[10px] font-medium">
+              {ripple.splash.title}
+            </span>
+          ) : null}
+          {ripple.note ? <span className="text-ink text-sm">{ripple.note}</span> : null}
+          {kind === 'timed' ? (
+            <span>
+              <DurationChip minutes={minutes} />
+            </span>
+          ) : null}
+        </span>
+      </Link>
+    </li>
   );
 }

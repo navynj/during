@@ -1,5 +1,10 @@
 'use client';
 
+// DORMANT (H21): the ripple detail half-sheet. The post's page is where a
+// block is read and edited now, and the lock toggle lives in its block
+// editor. Kept, compiling, for the dormant day rows the focus screen's world
+// renders (H20b). Do not wire it back in; do not delete it.
+
 import { useEffect, useState, useTransition } from 'react';
 import { Lock, Pencil, Trash2, Unlock } from 'lucide-react';
 
