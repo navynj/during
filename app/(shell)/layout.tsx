@@ -1,42 +1,33 @@
-import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import { TabBar } from '@/components/ui/tab-bar';
 import { SheetHost } from '@/features/input-sheet/sheet-host';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
+import { customSessions } from '@/features/sessions/shelves';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
-import { getMySplashes, summarizeSplashes } from '@/lib/queries/splashes';
+import { getMySessions } from '@/lib/queries/sessions';
 import { createClient } from '@/lib/supabase/server';
 import { todayIn } from '@/lib/time';
 
 /**
- * The shell: the page, the tab bar, and the two input sheets. The sheets live
- * here rather than on a page because their entry points do — the FAB and the
- * tab bar's splash button are on every screen, and a board's +Drop is on two.
+ * The shell: the page, the tab bar, and the one sheet. The sheet lives here
+ * rather than on a page because its entry point does — the FAB is on every
+ * screen. Each page lays out its own column, because Home's ground is
+ * full-bleed and the white pages are not.
  */
 export default async function ShellLayout({ children }: LayoutProps<'/'>) {
   const supabase = await createClient();
   const profile = await getMyProfile(supabase);
 
-  // The sheets need the lanes and the boards; a page without a profile
+  // The sheet needs the lanes and the shelves; a page without a profile
   // redirects to sign-in on its own, so the shell just renders around it.
   const context = profile
     ? await (async () => {
-        const [categories, splashes, members] = await Promise.all([
+        const [categories, sessions] = await Promise.all([
           getMyCategories(supabase),
-          getMySplashes(supabase, profile.id),
-          supabase
-            .from('ripples')
-            .select('splash_id, category_id, occurred_on, occurred_time, created_at')
-            .eq('author_id', profile.id)
-            .not('splash_id', 'is', null),
+          getMySessions(supabase, profile.id),
         ]);
         return {
           categories,
-          splashes: summarizeSplashes(
-            splashes,
-            (members.data ?? []) as Parameters<typeof summarizeSplashes>[1],
-            profile.timezone,
-            new Date(),
-          ),
+          sessions: customSessions(sessions),
           timeZone: profile.timezone,
           today: todayIn(profile.timezone),
         };
@@ -46,9 +37,7 @@ export default async function ShellLayout({ children }: LayoutProps<'/'>) {
   return (
     <InputSheetProvider>
       <div className="flex min-h-dvh flex-col">
-        <div className={`mx-auto flex w-full ${COLUMN_MAX_WIDTH} flex-1 flex-col px-6`}>
-          {children}
-        </div>
+        {children}
         <TabBar />
       </div>
       {context ? <SheetHost context={context} /> : null}
