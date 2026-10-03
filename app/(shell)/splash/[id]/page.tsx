@@ -88,7 +88,8 @@ export default async function SplashRoute({ params, searchParams }: PageProps<'/
   const custom = customSessions(sessions);
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6">
+    // Wide: the page takes both halves, the blocks on the right (review).
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6 lg:max-w-5xl">
       <SplashPage
         splash={summary}
         blocks={blocks}

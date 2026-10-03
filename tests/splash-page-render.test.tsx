@@ -212,6 +212,18 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
     expect(container.querySelector('[data-photo-placeholder]')).not.toBeNull();
   });
 
+  it('is two halves on a wide screen: the header left, the blocks right', () => {
+    const { container } = page();
+    const root = container.querySelector('[data-splash-page]')!;
+    expect(root.className).toContain('lg:grid-cols-2');
+    const side = container.querySelector('[data-splash-side]')!;
+    const blocks = container.querySelector('[data-splash-blocks]')!;
+    expect(side.querySelector('[data-splash-header]')).not.toBeNull();
+    expect(blocks.querySelector('[data-blocks]')).not.toBeNull();
+    expect(blocks.querySelector('[data-add-slot]')).not.toBeNull();
+    expect(side.compareDocumentPosition(blocks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('never says thread, never fills a tag', () => {
     const { container } = page();
     expect(container.textContent).not.toMatch(/thread/i);

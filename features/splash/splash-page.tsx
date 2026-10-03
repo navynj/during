@@ -51,6 +51,9 @@ type PageState = { splash: SplashSummary; blocks: RippleWithCategory[]; lockedId
  * (CLAUDE.md, the principle): a saved block reads saved, a deleted one is
  * gone, a pin is pinned, and the page re-reads inside the same transition.
  *
+ * On a wide screen the page is two halves (review): the header stays on the
+ * left, the blocks and the add slot read down the right.
+ *
  * A splashless block renders here too, as an untitled post of one; it gets a
  * row of its own the first time it needs one (H21a) and the page moves to it.
  */
@@ -242,103 +245,110 @@ export function SplashPage({
   }
 
   return (
-    <div data-splash-page className="page-rise flex flex-1 flex-col bg-white pt-3">
-      <Link
-        href={origin.href}
-        data-back-chip
-        className="text-main-900 -ml-1 flex w-fit items-center gap-0.5 pb-5 text-sm font-medium"
-      >
-        <ChevronLeft aria-hidden size={16} />
-        {origin.label}
-      </Link>
+    <div
+      data-splash-page
+      className="page-rise flex flex-1 flex-col bg-white pt-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-16"
+    >
+      <div data-splash-side className="flex flex-col lg:sticky lg:top-0 lg:pt-3">
+        <Link
+          href={origin.href}
+          data-back-chip
+          className="text-main-900 -ml-1 flex w-fit items-center gap-0.5 pb-5 text-sm font-medium"
+        >
+          <ChevronLeft aria-hidden size={16} />
+          {origin.label}
+        </Link>
 
-      <SplashHeader
-        key={page.splash.id}
-        splash={page.splash}
-        categories={categories}
-        sessions={sessions}
-        today={today}
-        onEdit={editHeader}
-        onPin={pin}
-        onSession={shelve}
-        onDelete={async () => {
-          // Gone the moment it is asked for: back where it came from, and
-          // the rows follow.
-          const id = page.splash.orphan ? null : page.splash.id;
-          router.push(origin.href);
-          if (id) await deleteSplash(id);
-          router.refresh();
-        }}
-      />
+        <SplashHeader
+          key={page.splash.id}
+          splash={page.splash}
+          categories={categories}
+          sessions={sessions}
+          today={today}
+          onEdit={editHeader}
+          onPin={pin}
+          onSession={shelve}
+          onDelete={async () => {
+            // Gone the moment it is asked for: back where it came from, and
+            // the rows follow.
+            const id = page.splash.orphan ? null : page.splash.id;
+            router.push(origin.href);
+            if (id) await deleteSplash(id);
+            router.refresh();
+          }}
+        />
 
-      {message ? (
-        <p role="alert" className="text-pool-500 pb-4 text-sm">
-          {message}
-        </p>
-      ) : null}
+        {message ? (
+          <p role="alert" className="text-pool-500 pb-4 text-sm">
+            {message}
+          </p>
+        ) : null}
+      </div>
 
-      <ol data-blocks className="flex flex-col">
-        {page.blocks.map((block, index) => (
-          <li
-            key={block.id}
-            id={`block-${block.id}`}
-            className={index === 0 ? 'py-2' : 'border-pool-100 border-t py-6'}
-          >
-            {editor?.kind === 'edit' && editor.block.id === block.id ? (
-              <BlockEditor
-                target={editor}
-                categories={categories}
-                defaultLaneId={page.splash.declaredLaneId}
-                timeZone={timeZone}
-                today={today}
-                onSubmit={(draft) => saveBlock(editor, draft)}
-                onDelete={() => removeBlock(block)}
-                onLock={(locked) => lockBlock(block, locked)}
-                onCancel={() => setEditor(null)}
-              />
-            ) : (
-              <BlockView
-                block={block}
-                photos={photos[block.id] ?? []}
-                timeZone={timeZone}
-                today={today}
-                onEdit={() =>
-                  setEditor({ kind: 'edit', block, locked: page.lockedIds.includes(block.id) })
-                }
-              />
-            )}
-          </li>
-        ))}
-      </ol>
-
-      {/* The add slot: the seat of the next block, at the bottom where the
-          story continues. The ring ripples as the one invitation (law 3). */}
-      <div data-add-slot className="border-pool-100 mt-2 border-t pt-4 pb-10">
-        {editor?.kind === 'add' ? (
-          <BlockEditor
-            target={editor}
-            categories={categories}
-            defaultLaneId={page.splash.declaredLaneId}
-            timeZone={timeZone}
-            today={today}
-            onSubmit={(draft) => saveBlock(editor, draft)}
-            onDelete={() => setEditor(null)}
-            onLock={() => {}}
-            onCancel={() => setEditor(null)}
-          />
-        ) : (
-          <div className="flex items-center gap-3">
-            <GhostRing label="Write the next block" onClick={startBlock} />
-            <button
-              type="button"
-              onClick={startBlock}
-              className="text-main-900 text-base font-medium"
-              style={{ opacity: 0.3 }}
+      <div data-splash-blocks className="flex flex-col lg:pt-3">
+        <ol data-blocks className="flex flex-col">
+          {page.blocks.map((block, index) => (
+            <li
+              key={block.id}
+              id={`block-${block.id}`}
+              className={index === 0 ? 'py-2' : 'border-pool-100 border-t py-6'}
             >
-              Drop your words here
-            </button>
-          </div>
-        )}
+              {editor?.kind === 'edit' && editor.block.id === block.id ? (
+                <BlockEditor
+                  target={editor}
+                  categories={categories}
+                  defaultLaneId={page.splash.declaredLaneId}
+                  timeZone={timeZone}
+                  today={today}
+                  onSubmit={(draft) => saveBlock(editor, draft)}
+                  onDelete={() => removeBlock(block)}
+                  onLock={(locked) => lockBlock(block, locked)}
+                  onCancel={() => setEditor(null)}
+                />
+              ) : (
+                <BlockView
+                  block={block}
+                  photos={photos[block.id] ?? []}
+                  timeZone={timeZone}
+                  today={today}
+                  onEdit={() =>
+                    setEditor({ kind: 'edit', block, locked: page.lockedIds.includes(block.id) })
+                  }
+                />
+              )}
+            </li>
+          ))}
+        </ol>
+
+        {/* The add slot: the seat of the next block, at the bottom where the
+          story continues. The ring ripples as the one invitation (law 3). */}
+        <div data-add-slot className="border-pool-100 mt-2 border-t pt-4 pb-10">
+          {editor?.kind === 'add' ? (
+            <BlockEditor
+              target={editor}
+              categories={categories}
+              defaultLaneId={page.splash.declaredLaneId}
+              timeZone={timeZone}
+              today={today}
+              onSubmit={(draft) => saveBlock(editor, draft)}
+              onDelete={() => setEditor(null)}
+              onLock={() => {}}
+              onCancel={() => setEditor(null)}
+            />
+          ) : (
+            <div className="flex items-center gap-3">
+              <GhostRing label="Write the next block" onClick={startBlock} />
+              <button
+                type="button"
+                onClick={startBlock}
+                className="text-main-900 text-base font-medium"
+                style={{ opacity: 0.3 }}
+              >
+                Drop your words here
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -9,6 +9,11 @@ vi.mock('@/features/splash/actions', () => ({
     return Promise.resolve({ ok: true, splash: { id: 's-new', title: input.title } });
   },
 }));
+let pathname = '/';
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname,
+  useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {} }),
+}));
 vi.mock('@/lib/downscale', () => ({ downscale: (file: File) => Promise.resolve(file) }));
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
@@ -23,6 +28,8 @@ import {
   type DropHandoff,
 } from '@/features/splash-sheet/splash-sheet';
 import type { SplashSummary } from '@/features/splash/summary';
+import { ComposerPanel } from '@/features/input-sheet/sheet-host';
+import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { composeDrop, splitTitle } from '@/features/splash-sheet/split-title';
 import type { MyCategory } from '@/lib/queries/profile';
 
@@ -251,5 +258,39 @@ describe('the affordances under the text', () => {
     const { getByText, container } = sheet();
     expect(getByText('+ Add Image')).toBeTruthy();
     expect(container.querySelector('[data-media-input]')).not.toBeNull();
+  });
+});
+
+describe('the wide screen’s standing composer (review)', () => {
+  const context = { categories: LANES, timeZone: TZ, today: TODAY };
+  const panel = () =>
+    render(
+      <InputSheetProvider>
+        <ComposerPanel context={context} />
+      </InputSheetProvider>,
+    );
+
+  it('floats on the water on Home, with Drop your splash waiting', () => {
+    pathname = '/';
+    const { container } = panel();
+    const aside = container.querySelector('[data-composer-panel]')!;
+    expect(aside.className).toContain('water-ground');
+    expect(aside.className).toContain('lg:w-1/2');
+    expect(aside.querySelector('[data-splash-composer]')).not.toBeNull();
+    expect(aside.querySelector('[data-sheet-title]')!.getAttribute('placeholder')).toBe(
+      'Drop your splash',
+    );
+  });
+
+  it('sits on the page elsewhere, and is absent on a post’s page: the blocks take the right half', () => {
+    pathname = '/locker';
+    let view = panel();
+    expect(view.container.querySelector('[data-composer-panel]')!.className).toContain('bg-white');
+    cleanup();
+
+    pathname = '/splash/s1';
+    view = panel();
+    expect(view.container.querySelector('[data-composer-panel]')).toBeNull();
+    pathname = '/';
   });
 });

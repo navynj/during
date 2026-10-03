@@ -56,12 +56,14 @@ export function SheetHost({ context }: { context: SheetContext }) {
 /**
  * The wide screen's composer (review): not a sheet but a rounded white card
  * standing in the right half, always there with *Drop your splash* waiting.
- * On Home it floats on the water; elsewhere it sits on the page.
+ * On Home it floats on the water; elsewhere it sits on the page. Not on a
+ * post's page, whose right half holds the post's blocks instead.
  */
 export function ComposerPanel({ context }: { context: SheetContext }) {
   const pathname = usePathname();
   const drop = useDrop();
   const onWater = pathname === '/';
+  if (pathname.startsWith('/splash/')) return null;
 
   return (
     <aside
