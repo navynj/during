@@ -27,14 +27,14 @@ const Edit = z.object({
 export type Edit = z.infer<typeof Edit>;
 
 /**
- * Corrects a Ripple in place (H17). Editable: note, category (subject to the
- * board's inheritance, H20e), media, the annotation, the board. Not editable:
+ * Corrects a block in place (H17). Editable: note, category, media, the
+ * annotation, the post. Not editable:
  * `created_at`, because the occurred/created separation exists so a
  * correction edits when it happened while the diary remembers when you wrote
  * it. Removing the annotation moves the fragment back to where it was posted.
  *
- * Lock state is not here: audience lives in the detail sheet (H20g), see
- * `setRippleLock`.
+ * Lock state is not here: audience lives beside the block where it is
+ * edited (H20g, H21), see `setRippleLock`.
  */
 export async function updateRipple(input: Edit): Promise<CommitResult> {
   const parsed = Edit.safeParse(input);
@@ -71,13 +71,9 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
     .single();
   if (!before) return { ok: false, reason: 'error', message: 'That record is gone.' };
 
-  // While attached to a laned board the lane is the board's to say (H20e).
-  const categoryId = await inheritedCategory(
-    supabase,
-    edit.categoryId ?? before.category_id,
-    edit.splashId,
-  );
-  if (!categoryId) return { ok: false, reason: 'error', message: 'There is no lane to drop into.' };
+  // A block may take any lane (H21f): a declaration is a default for a new
+  // block, never an override of an edited one.
+  const categoryId = edit.categoryId ?? before.category_id;
 
   // A point ends where it starts; a span ends where it says — with a clock,
   // or by dates alone; an unannotated fragment has no instant at all (H20c).
@@ -105,27 +101,10 @@ export async function updateRipple(input: Edit): Promise<CommitResult> {
   return { ok: true, rippleId: edit.id };
 }
 
-async function inheritedCategory(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  chosen: string,
-  splashId: string | null,
-): Promise<string | null> {
-  if (!splashId) return chosen;
-  const { data: splash } = await supabase
-    .from('splashes')
-    .select('lane_ids')
-    .eq('id', splashId)
-    .maybeSingle();
-  const lanes = splash?.lane_ids ?? [];
-  if (lanes.length === 0) return chosen;
-  if (lanes.length === 1) return lanes[0];
-  return lanes.includes(chosen) ? chosen : lanes[0];
-}
-
 /**
- * The lock, toggled where the record is read (H20g). One spectrum with two
- * stops in P1 — Everyone, Only me — and the row is the state: present means
- * locked, absent means everyone (C8).
+ * The lock, toggled where the block is edited (H20g, H21). One spectrum with
+ * two stops in P1 — Everyone, Only me — and the row is the state: present
+ * means locked, absent means everyone (C8).
  */
 export async function setRippleLock(rippleId: string, locked: boolean): Promise<CommitResult> {
   const supabase = await createClient();

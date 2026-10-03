@@ -1,14 +1,12 @@
 import { dayOf, flowInstant, sortNewestFirst } from '@/lib/flow-key';
 import type { DuringClient } from '@/lib/queries/profile';
-import type { RippleWithCategory } from '@/lib/queries/ripples';
+import { WITH_CATEGORY, type RippleWithCategory } from '@/lib/queries/ripples';
 import type { IsoDate } from '@/lib/time';
-
-const WITH_CATEGORY = '*, category:my_categories(name, icon)';
 
 export type TrailDay = { date: IsoDate; ripples: RippleWithCategory[] };
 
 /**
- * My whole archive, newest day first.
+ * My whole archive, newest first: every top-level block, with its post.
  *
  * **This is my own archive, not a feed.** The no-feed hypothesis (A1, A2) is
  * about other people's content arriving unasked — an endless column of records
@@ -16,9 +14,9 @@ export type TrailDay = { date: IsoDate; ripples: RippleWithCategory[] };
  * opposite motion: nothing new arrives at the top, and the only way through it
  * is to go back. Locker is the recall engine (D10), and this is recall.
  *
- * Locked Ripples are included and unmarked, for the same reason they are on
- * Home: the Locker sees everything, and audience state lives in the detail
- * sheet rather than as a marker on my own records.
+ * Locked blocks are included and unmarked: the Locker sees everything, and
+ * audience state lives in the block editor rather than as a marker on my own
+ * records.
  *
  * Unbounded. At P1 this is one person's few months, and a window would be a
  * cut-off the word "Trail" promises is not there; pagination is the answer
@@ -38,7 +36,7 @@ export async function getMyTrail(
 
   if (error) throw error;
   // Ordered here, not in SQL: the key is a coalesce the database does not
-  // store (H20c), and the archive is one person's few months.
+  // store (H20c, H21f), and the archive is one person's few months.
   return sortNewestFirst(data, timeZone);
 }
 
@@ -47,10 +45,8 @@ export async function getMyTrail(
  *
  * The scroll descends through days and each day reads top-to-early, so a day
  * in the Trail is the day as it was lived rather than a reversed one. A day is
- * the coalesced `occurred_on` (H20c): the annotation's date, else the
- * author-local date the fragment was written — so an unannotated fragment
- * lands on the day it was posted, and a late-night one stays on the day its
- * author was living.
+ * the coalesced day (H20c, H21f): the annotation's date, else the post's
+ * declared date, else the author-local date the block was written.
  */
 export function groupByDay(ripples: RippleWithCategory[], timeZone: string): TrailDay[] {
   const byDay = new Map<IsoDate, RippleWithCategory[]>();

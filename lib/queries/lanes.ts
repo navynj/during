@@ -22,9 +22,10 @@ export type LaneSpan = {
  * Locked Ripples are counted too, unmarked. This view is mine alone, and lock
  * state belongs to the detail sheet rather than to a marker on my own archive.
  *
- * A day is the fragment's coalesced `occurred_on` (H20c): its annotation's
- * date, else the author-local date it was written. Future-dated fragments are
- * left out: a cell says what the day held, and that day has not happened.
+ * A day is the block's coalesced day (H20c, H21f): its annotation's date,
+ * else its post's declared date, else the author-local date it was written.
+ * Future-dated blocks are left out: a cell says what the day held, and that
+ * day has not happened.
  */
 export async function getLaneCounts(
   supabase: DuringClient,
@@ -34,7 +35,7 @@ export async function getLaneCounts(
 ): Promise<LaneSpan> {
   const { data, error } = await supabase
     .from('ripples')
-    .select('occurred_on, occurred_time, created_at, category_id')
+    .select('occurred_on, occurred_time, created_at, category_id, splash:splashes(declared_start)')
     .eq('author_id', authorId)
     .eq('planned', false);
 

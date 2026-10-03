@@ -3,8 +3,8 @@
 /**
  * A category chip. Selected is an **ink fill with white text** — ink means
  * selection, blue means action (H20f), so the one blue thing in the sheet is
- * the Drop that commits. Unselected is white with muted text, per
- * `_docs/mockups/sheet-ripple.png`.
+ * the Drop that commits. Unselected is a quiet surface with muted text, so
+ * the row reads on a white page as well as on the old sheet's grey band.
  */
 export function CategoryChip({
   icon,
@@ -25,7 +25,7 @@ export function CategoryChip({
       // Small on purpose: the row is the whole category vocabulary, and a
       // chip the size of a button showed three of them before scrolling.
       className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors ${
-        selected ? 'bg-ink text-white' : 'text-pool-500 hover:bg-pool-100 bg-white'
+        selected ? 'bg-ink text-white' : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
       }`}
     >
       {icon ? <span aria-hidden>{icon}</span> : null}

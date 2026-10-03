@@ -25,55 +25,46 @@ export type Draft = {
   media: string[];
   /** Unset is the default: a plain posted fragment. */
   annotation: Annotation | null;
-  /** The one board this fragment is thrown at, or none (H20d). */
+  /** The post this block composes, or none (H21a). */
   splashId: string | null;
 };
 
 export type Prefill = {
   categoryId?: string;
-  /** Opened from a board's +Drop or its add slot: preset, still removable. */
+  /** Dormant (H20b): the old ripple sheet opened preset to a post. */
   splashId?: string;
-  /**
-   * A board that was created a moment ago and has not reached the page's
-   * data yet (the splash sheet hands over to this one). Carried inline so
-   * the chip can render before the refresh lands.
-   */
+  /** Dormant (H20b): a post carried inline before the page's data had it. */
   splash?: SplashSummary;
 };
 
 /**
- * The lane rule a board imposes (H20e): inheritance, never rejection.
+ * The lane rule a post gives a new block (H21f): a declared lane is a
+ * **default, never an override**. The chip row is always the author's; the
+ * declared lane is merely where the selection starts.
  *
- *   hidden      one declared lane: the choice disappears, the lane is it
- *   restricted  several: the chip row offers only those
- *   free        none: any lane, the board's own chip derived from contents
+ *   default   the post declares a lane: a new block starts there
+ *   free      none declared: the residual lane takes an unchosen block
  */
-export type LaneRule =
-  | { kind: 'hidden'; categoryId: string }
-  | { kind: 'restricted'; allowed: string[] }
-  | { kind: 'free' };
+export type LaneRule = { kind: 'default'; categoryId: string } | { kind: 'free' };
 
-export function laneRule(splash: Pick<SplashSummary, 'laneIds'> | null): LaneRule {
-  if (!splash || splash.laneIds.length === 0) return { kind: 'free' };
-  if (splash.laneIds.length === 1) return { kind: 'hidden', categoryId: splash.laneIds[0] };
-  return { kind: 'restricted', allowed: splash.laneIds };
+export function laneRule(splash: Pick<SplashSummary, 'declaredLaneId'> | null): LaneRule {
+  if (!splash || splash.declaredLaneId === null) return { kind: 'free' };
+  return { kind: 'default', categoryId: splash.declaredLaneId };
 }
 
 /**
- * The category a draft commits with, after the board has had its say. A
- * hidden rule overrides; a restricted rule keeps the choice only if it is one
- * of the allowed lanes, else takes the first; free keeps whatever was chosen.
+ * The category a draft commits with: what was chosen; else the post's
+ * declared lane; else the residual lane (H20i). A choice always wins — a
+ * block may take another lane, and the post then carries both as tags.
  */
 export function resolveCategory(
   chosen: string | null,
   rule: LaneRule,
   categories: MyCategory[],
 ): string | null {
-  if (rule.kind === 'hidden') return rule.categoryId;
-  if (rule.kind === 'restricted') {
-    return chosen && rule.allowed.includes(chosen) ? chosen : (rule.allowed[0] ?? null);
-  }
-  return chosen ?? residualCategory(categories)?.id ?? null;
+  if (chosen) return chosen;
+  if (rule.kind === 'default') return rule.categoryId;
+  return residualCategory(categories)?.id ?? null;
 }
 
 /** Day, if the account still has it; else the first lane, else nothing. */

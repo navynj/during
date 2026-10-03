@@ -14,10 +14,12 @@ export const EMPTY = {
   /** A day ahead: the only one where the absence is of *plans*. */
   futureQuiet: 'Nothing planned yet.',
   lanes: 'Waves gather here as you drop.',
-  /** Home with nothing at all, and the empty Trail: the same first step. */
+  /** The empty Trail: the first step. */
   trail: 'Your trail starts with the first ripple.',
-  /** Splash mode with no boards yet: a story is what recurs (H20d). */
-  splashes: 'Stories gather what keeps happening.',
+  /** A month with nothing on the ground (H21): in white, the FAB the only call. */
+  ground: 'A fresh page of water.',
+  /** A shelf with nothing on it. */
+  shelf: 'Nothing shelved here.',
 } as const;
 
 /**

@@ -20,6 +20,12 @@ export type CommitRingProps = {
    * want different answers.
    */
   ringOpacity?: number;
+  /**
+   * One event, not a loop: the rings travel out once and are gone. The
+   * signature moment at a new post's pill (SPEC 6); the ghost ring, the one
+   * stated exception to law 3, leaves this unset and keeps rippling.
+   */
+  once?: boolean;
   className?: string;
   children?: React.ReactNode;
 };
@@ -46,6 +52,7 @@ export function CommitRing({
   gap = 6,
   rings = 3,
   ringOpacity,
+  once = false,
   className = '',
   children,
 }: CommitRingProps) {
@@ -73,8 +80,10 @@ export function CommitRing({
               // At rest the rings nest outward from the gap to the bound; in
               // motion they all start at the gap and travel the same distance.
               inset: prefersReducedMotion ? inset * (1 - index / rings) : inset,
-              opacity: prefersReducedMotion ? 0.3 - index * 0.09 : undefined,
+              opacity: prefersReducedMotion ? (once ? 0 : 0.3 - index * 0.09) : undefined,
               animationDelay: prefersReducedMotion ? undefined : `${index * STAGGER_MS}ms`,
+              animationIterationCount: once && !prefersReducedMotion ? 1 : undefined,
+              animationFillMode: once && !prefersReducedMotion ? 'forwards' : undefined,
               ['--ring-travel' as string]: travel,
             }}
           />

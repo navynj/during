@@ -4,7 +4,7 @@ import { laneRows, monthsBack, quietLabel, QUIET_RUN } from '@/features/lanes/ma
 import { groupByDay } from '@/lib/queries/trail';
 import { depthSurface, DEPTH_SURFACES } from '@/lib/depth';
 import { impressionLineCount, MAX_IMPRESSION_LINES } from '@/components/ui/waves';
-import type { LaneCounts } from '@/lib/queries/lanes';
+import { tallyLaneCounts, type LaneCounts } from '@/lib/queries/lanes';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 
 const FOCUS = 'c-focus';
@@ -38,6 +38,39 @@ describe('the matrix, newest day first', () => {
     );
 
     expect(rows[0]).toMatchObject({ kind: 'day', date: '2027-07-10' });
+  });
+});
+
+describe('a cell reads the coalesced day (H20c, H21f)', () => {
+  const row = (over: Partial<Parameters<typeof tallyLaneCounts>[0][number]>) => ({
+    occurred_on: null,
+    occurred_time: null,
+    created_at: '2027-07-08T16:00:00.000Z',
+    category_id: PLACE,
+    ...over,
+  });
+
+  it("shelves an unannotated block at its post's declared date", () => {
+    const { counts } = tallyLaneCounts(
+      [row({ splash: { declared_start: '2027-05-02' } })],
+      'America/Vancouver',
+      '2027-07-08',
+    );
+    expect([...counts.keys()]).toEqual(['2027-05-02']);
+  });
+
+  it("lets a block's own annotation win over the declared date", () => {
+    const { counts } = tallyLaneCounts(
+      [row({ occurred_on: '2027-07-01', splash: { declared_start: '2027-05-02' } })],
+      'America/Vancouver',
+      '2027-07-08',
+    );
+    expect([...counts.keys()]).toEqual(['2027-07-01']);
+  });
+
+  it('falls back to the day it was written', () => {
+    const { counts } = tallyLaneCounts([row({})], 'America/Vancouver', '2027-07-08');
+    expect([...counts.keys()]).toEqual(['2027-07-08']);
   });
 });
 

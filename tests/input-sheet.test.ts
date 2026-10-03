@@ -61,24 +61,22 @@ describe('no lane means the residual lane (H20i)', () => {
   });
 });
 
-describe('a board governs by inheritance, never rejection (H20e)', () => {
-  it('one declared lane hides the choice and assigns it', () => {
-    const rule = laneRule({ laneIds: ['c-place'] });
-    expect(rule.kind).toBe('hidden');
-    expect(resolveCategory('c-mood', rule, LANES)).toBe('c-place');
+describe('a declared lane is a default, never an override (H21f)', () => {
+  it('takes the declared lane when nothing is chosen', () => {
+    const rule = laneRule({ declaredLaneId: 'c-place' });
+    expect(rule).toEqual({ kind: 'default', categoryId: 'c-place' });
+    expect(resolveCategory(null, rule, LANES)).toBe('c-place');
   });
 
-  it('several declared lanes restrict the row to those', () => {
-    const rule = laneRule({ laneIds: ['c-place', 'c-mood'] });
-    expect(rule).toEqual({ kind: 'restricted', allowed: ['c-place', 'c-mood'] });
+  it('keeps a chosen lane over the declared one: accumulation, not rejection', () => {
+    const rule = laneRule({ declaredLaneId: 'c-place' });
     expect(resolveCategory('c-mood', rule, LANES)).toBe('c-mood');
-    // A lane outside the set is not refused; the first allowed one takes it.
-    expect(resolveCategory('c-day', rule, LANES)).toBe('c-place');
   });
 
-  it('no declared lanes leaves the choice free', () => {
-    expect(laneRule({ laneIds: [] })).toEqual({ kind: 'free' });
+  it('no declared lane leaves the choice free, the residual lane behind it', () => {
+    expect(laneRule({ declaredLaneId: null })).toEqual({ kind: 'free' });
     expect(laneRule(null)).toEqual({ kind: 'free' });
+    expect(resolveCategory(null, { kind: 'free' }, LANES)).toBe('c-day');
   });
 });
 

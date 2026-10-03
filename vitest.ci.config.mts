@@ -34,6 +34,7 @@ const NEEDS_LOCAL_STACK = [
   'tests/auth-redirect.test.ts',
   'tests/splash-crud.test.ts',
   'tests/date-only-span.test.ts',
+  'tests/sessions.test.ts',
 ];
 
 export default defineConfig({

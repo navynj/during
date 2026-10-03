@@ -36,6 +36,10 @@ const Draft = z.object({
 
 export type Draft = z.infer<typeof Draft>;
 
+/**
+ * Writes one block (H21a): into a post when `splashId` is set, else as a
+ * splashless block that renders as an untitled post of one.
+ */
 export async function commitRipple(input: Draft): Promise<CommitResult> {
   const parsed = Draft.safeParse(input);
   if (!parsed.success) return { ok: false, reason: 'error', message: 'That draft is incomplete.' };
@@ -80,10 +84,9 @@ export async function commitRipple(input: Draft): Promise<CommitResult> {
 }
 
 /**
- * The lane a fragment lands in, with the board's inheritance applied on the
- * server as well as in the sheet (H20e): a hidden rule overrides whatever the
- * client sent, a restricted one narrows it, and no choice at all falls into
- * the residual lane.
+ * The lane a block lands in, with the post's default applied on the server
+ * as well as in the editor (H21f): a choice wins; no choice takes the post's
+ * declared lane; no declaration falls into the residual lane.
  */
 async function categoryFor(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -93,11 +96,11 @@ async function categoryFor(
   const [{ data: categories }, { data: splash }] = await Promise.all([
     supabase.from('my_categories').select('*').order('position'),
     splashId
-      ? supabase.from('splashes').select('lane_ids').eq('id', splashId).maybeSingle()
+      ? supabase.from('splashes').select('declared_lane_id').eq('id', splashId).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 
-  const rule = laneRule(splash ? { laneIds: splash.lane_ids } : null);
+  const rule = laneRule(splash ? { declaredLaneId: splash.declared_lane_id } : null);
   return resolveCategory(chosen, rule, categories ?? []);
 }
 

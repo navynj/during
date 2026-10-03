@@ -5,24 +5,25 @@ import type { IsoDate } from '@/lib/time';
 export type Ripple = Database['public']['Tables']['ripples']['Row'];
 
 /**
- * A Ripple with the category it is displayed as: SPEC 7's format is
- * `category · note`, so the badge and the row arrive together or the row
- * cannot be drawn.
+ * A block with the category it is displayed as — SPEC 7's format is
+ * `category · note`, so the badge and the row arrive together — and the
+ * post it composes, because an unannotated block rests at its post's
+ * declared date (H21f) and the key cannot be computed without it.
  */
 export type RippleWithCategory = Ripple & {
   category: { name: string; icon: string | null } | null;
+  splash?: { declared_start: string | null; title: string } | null;
 };
 
-const WITH_CATEGORY = '*, category:my_categories(name, icon)';
+export const WITH_CATEGORY =
+  '*, category:my_categories(name, icon), splash:splashes(declared_start, title)';
 
 /**
  * One author's day, top level only. Chronological top to bottom (H2), with
  * date-only records first: they belong to the day without claiming a position
  * on its axis and render in the Daily Note area above it (SPEC 5, H5).
  *
- * Inner ripples are excluded here rather than filtered in the view: the parent
- * owns the row on the axis (H10), and their own display arrives with the mini
- * sheet in S5.
+ * Dormant (H20b) with the paged day; kept for P3's Swim.
  *
  * The author filter narrows, it does not protect: RLS decides what a viewer
  * may see. Without it the same call would also return linked friends' rows,
@@ -62,7 +63,7 @@ export async function getMyRipplesForDate(
 /**
  * Splits a day into its two regions. Date-only records belong to the day
  * without claiming a position on its axis, so they stack in the Daily Note
- * area (SPEC 5.3, H5) and never appear on the timeline.
+ * area (SPEC 5.3, H5) and never appear on the timeline. Dormant (H20b).
  */
 export function splitByRegion(ripples: RippleWithCategory[]): {
   notes: RippleWithCategory[];

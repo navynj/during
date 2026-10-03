@@ -3,11 +3,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { asAdmin, asUser, MINA } from './as-user';
 
 /**
- * H20d: a Splash is a personal topic board; a Ripple belongs to at most one;
- * deleting the board DETACHES its fragments and never deletes them. The
- * detach lives in the foreign key (`on delete set null`), so this runs through
- * PostgREST against the real schema, not a mock. Owner-only RLS is checked
- * with a real user token, because the service role bypasses the policy.
+ * H21: a Splash is a post and its Ripples compose it. Deleting the post
+ * DELETES its blocks — the reversal of H20d's detach, held in the foreign key
+ * (`on delete cascade`), so this runs through PostgREST against the real
+ * schema, not a mock. Owner-only RLS is checked with a real user token,
+ * because the service role bypasses the policy.
  *
  * Needs the local stack; excluded from the CI config like every DB test.
  */
@@ -39,7 +39,7 @@ afterEach(async () => {
   await asAdmin().from('ripples').delete().eq('author_id', author);
 });
 
-async function board(over: { lane_ids?: string[]; declared_start?: string } = {}) {
+async function board(over: { declared_lane_id?: string; declared_start?: string } = {}) {
   const { data, error } = await asUser(author)
     .from('splashes')
     .insert({ owner_id: author, title: 'Whistler', ...over })
@@ -66,7 +66,9 @@ describe('a splash belongs to its owner', () => {
     const { data } = await asUser(author).from('splashes').select('*').eq('id', id).single();
     expect(data?.title).toBe('Whistler');
     expect(data?.declared_start).toBe('2027-03-04');
-    expect(data?.lane_ids).toEqual([]);
+    expect(data?.declared_lane_id).toBeNull();
+    expect(data?.pinned_at).toBeNull();
+    expect(data?.session_id).toBeNull();
 
     const { error } = await asUser(author)
       .from('splashes')
@@ -99,8 +101,8 @@ describe('a splash belongs to its owner', () => {
   });
 });
 
-describe('deleting a splash detaches, never deletes', () => {
-  it('leaves every fragment in place with splash_id null', async () => {
+describe('deleting a post deletes its blocks (H21)', () => {
+  it('takes every block with it: the FK cascades', async () => {
     const id = await board();
     const a = await fragment(id);
     const b = await fragment(id);
@@ -108,9 +110,20 @@ describe('deleting a splash detaches, never deletes', () => {
     const { error } = await asUser(author).from('splashes').delete().eq('id', id);
     expect(error).toBeNull();
 
-    const { data } = await asUser(author).from('ripples').select('id, splash_id').in('id', [a, b]);
-    expect(data).toHaveLength(2);
-    expect(data!.every((row) => row.splash_id === null)).toBe(true);
+    const { data } = await asUser(author).from('ripples').select('id').in('id', [a, b]);
+    expect(data).toEqual([]);
+  });
+
+  it('declares one lane, and may be pinned', async () => {
+    const id = await board({ declared_lane_id: PLACE });
+    const { error } = await asUser(author)
+      .from('splashes')
+      .update({ pinned_at: new Date().toISOString() })
+      .eq('id', id);
+    expect(error).toBeNull();
+    const { data } = await asUser(author).from('splashes').select('*').eq('id', id).single();
+    expect(data?.declared_lane_id).toBe(PLACE);
+    expect(data?.pinned_at).not.toBeNull();
   });
 
   it('deleting a fragment leaves the board alone', async () => {
