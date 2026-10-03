@@ -17,7 +17,7 @@ export type PillGround = 'water' | 'page';
  * a white page, the same anatomy.
  *
  * A lone block standing in as a post (H21a) is the inverse: a blue pill with
- * a white outer border, white text, and the mark inverted to a white disc.
+ * a white/50 outer border, white text, and the mark bordered the same way.
  * An untitled post shows its first block's first words as a ghost title.
  */
 export function SplashPill({
@@ -41,7 +41,7 @@ export function SplashPill({
   const title = splash.title.trim();
   const lone = splash.orphan;
   const surface = lone
-    ? 'bg-main-900 text-white border border-white'
+    ? 'bg-main-900 text-white border border-white/50'
     : ground === 'water'
       ? 'bg-white text-ink'
       : 'bg-pool-100 text-ink';
@@ -70,7 +70,7 @@ export function SplashPill({
           )}
         </span>
       </span>
-      <WaveMark count={splash.count} tone={lone ? 'white' : 'blue'} />
+      <WaveMark count={splash.count} tone={lone ? 'lone' : 'blue'} />
     </Link>
   );
 }

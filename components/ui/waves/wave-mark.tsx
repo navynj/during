@@ -10,7 +10,8 @@ const MARK_WAVE = 14;
  * the log scale (law 2), drawn as white waves on a solid #0507C9 disc at the
  * pill's right end. A post with nothing in it yet draws one line so it has a
  * mark at all. On a blue pill — a lone block standing in as a post — the
- * disc inverts: white, with blue waves.
+ * disc keeps its blue and white waves and takes a white/50 border to read
+ * against the pill (review).
  */
 export function WaveMark({
   count,
@@ -18,11 +19,11 @@ export function WaveMark({
   className = '',
 }: {
   count: number;
-  tone?: 'blue' | 'white';
+  tone?: 'blue' | 'lone';
   className?: string;
 }) {
   const lines = Math.max(1, impressionLineCount(count));
-  const surface = tone === 'blue' ? 'bg-main-900' : 'bg-white';
+  const surface = tone === 'blue' ? 'bg-main-900' : 'bg-main-900 border border-white/50';
   return (
     <span
       aria-hidden
@@ -34,7 +35,7 @@ export function WaveMark({
         width: MARK_SIZE,
         height: MARK_SIZE,
         gap: WAVE_GAP,
-        ['--wave-ink' as string]: tone === 'blue' ? '#ffffff' : 'var(--color-main-900)',
+        ['--wave-ink' as string]: '#ffffff',
       }}
     >
       {Array.from({ length: lines }, (_, index) => (
