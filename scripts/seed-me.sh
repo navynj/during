@@ -35,7 +35,7 @@ declare
   tz text;
   today date;
   place uuid; mood uuid; music uuid; media uuid; food uuid; day uuid;
-  whistler uuid; redesign uuid;
+  whistler uuid; redesign uuid; weekend uuid; untitled uuid; trips uuid; last_month uuid;
   row_spec record;
   seeded int := 0;
 begin
@@ -80,6 +80,32 @@ begin
      set title = excluded.title, declared_start = excluded.declared_start,
          declared_end = excluded.declared_end, declared_lane_id = excluded.declared_lane_id;
 
+  -- Shelves (H21e): last month titled (its lazy row), and a custom one with a lane.
+  trips := md5(me::text || ':session-trips')::uuid;
+  last_month := md5(me::text || ':session-last-month')::uuid;
+  insert into public.sessions (id, owner_id, kind, title, month, declared_start, lane_id)
+  values
+    (last_month, me, 'monthly', 'The month the form changed', (date_trunc('month', today) - interval '1 month')::date, null, null),
+    (trips, me, 'custom', 'Trips', null, today - 60, place)
+  on conflict (id) do update set title = excluded.title;
+
+  -- A post spanning the month boundary (on both shelves, H21e), pinned Whistler on
+  -- the Trips shelf, and an untitled one-line post (H21a).
+  weekend := md5(me::text || ':splash-weekend')::uuid;
+  untitled := md5(me::text || ':splash-untitled')::uuid;
+  update public.splashes set session_id = trips where id = whistler;
+  update public.splashes set pinned_at = (today - 1) + time '09:00' where id = redesign;
+  insert into public.splashes (id, owner_id, title, declared_start, declared_end, declared_lane_id, session_id, created_at)
+  values
+    (weekend, me, 'The long weekend that ran over',
+     (date_trunc('month', today) - interval '3 days')::date, (date_trunc('month', today) + interval '2 days')::date,
+     food, trips, (today - 3) + time '09:00'),
+    (untitled, me, '', null, null, null, null, today + time '08:10')
+  on conflict (id) do update
+     set title = excluded.title, declared_start = excluded.declared_start,
+         declared_end = excluded.declared_end, declared_lane_id = excluded.declared_lane_id,
+         session_id = excluded.session_id;
+
   -- `on_day`: days back for the occurred annotation (null = unannotated).
   -- `made`: days back for created_at. Ends are same-day times.
   for row_spec in
@@ -106,7 +132,12 @@ begin
         ('song', music, 'that one song again',                  null, null, null, 1, interval '20 hours 10 minutes', null),
         -- Future-dated: a normal fragment with a future date chip.
         ('plan', food, 'dinner with mina',                     -3, '19:30', null, 0, interval '15 hours', null),
-        ('old',  day,  'further back, deeper water',           null, null, null, 9, interval '18 hours', null)
+        ('old',  day,  'further back, deeper water',           null, null, null, 9, interval '18 hours', null),
+        -- The spanning post: a block in each month it touches (H21e).
+        ('wk1', food, 'the drive down, nothing but radio', (today - (date_trunc('month', today) - interval '3 days')::date), null, null, 3, interval '20 hours', weekend),
+        ('wk2', food, 'home a day late and glad of it',   (today - (date_trunc('month', today) + interval '2 days')::date), null, null, 1, interval '20 hours', weekend),
+        -- The untitled post's one block.
+        ('one', day,  'coffee went cold while I read the whole thing', null, null, null, 0, interval '8 hours 10 minutes', untitled)
       ) as v(slug, category, note, on_day, at_time, end_time, made, wrote, splash)
   loop
     insert into public.ripples (id, author_id, category_id, note, occurred_on, occurred_time, ended_at, splash_id, created_at)
@@ -134,6 +165,6 @@ begin
   values (md5(me::text || ':locked')::uuid, 'lock')
   on conflict do nothing;
 
-  raise notice 'Seeded % fixture ripples and 2 splashes for % (timezone %, today %).', seeded, target_email, tz, today;
+  raise notice 'Seeded % fixture ripples, 4 splashes and 2 sessions for % (timezone %, today %).', seeded, target_email, tz, today;
 end $$;
 SQL
