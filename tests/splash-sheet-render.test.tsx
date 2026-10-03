@@ -135,6 +135,36 @@ describe('the first line is the title (SPEC 6)', () => {
     expect(title.value).toBe('twolines');
   });
 
+  it('stays in the title while an IME is composing: that Enter commits the character', () => {
+    const { container } = sheet();
+    const title = container.querySelector<HTMLTextAreaElement>('[data-sheet-title]')!;
+    title.focus();
+    fireEvent.keyDown(title, { key: 'Enter', isComposing: true });
+    expect(document.activeElement).toBe(title);
+    fireEvent.keyDown(title, { key: 'Enter', keyCode: 229 });
+    expect(document.activeElement).toBe(title);
+  });
+
+  it('walks back to the end of the title on Backspace at the start of the content', () => {
+    const { container } = sheet();
+    const title = container.querySelector<HTMLTextAreaElement>('[data-sheet-title]')!;
+    const body = container.querySelector<HTMLTextAreaElement>('[data-sheet-body]')!;
+    fireEvent.change(title, { target: { value: 'Whistler' } });
+    fireEvent.change(body, { target: { value: 'sea to sky' } });
+    body.focus();
+    body.setSelectionRange(0, 0);
+    fireEvent.keyDown(body, { key: 'Backspace' });
+    expect(document.activeElement).toBe(title);
+    expect(title.selectionStart).toBe('Whistler'.length);
+    expect(body.value).toBe('sea to sky');
+
+    // Anywhere else in the body, Backspace is Backspace.
+    body.focus();
+    body.setSelectionRange(3, 3);
+    fireEvent.keyDown(body, { key: 'Backspace' });
+    expect(document.activeElement).toBe(body);
+  });
+
   it('opens with today in the field, a date and no clock, removable for a plain block', async () => {
     const view = sheet();
     expect((view.getByLabelText('Date') as HTMLInputElement).value).toBe(TODAY);
