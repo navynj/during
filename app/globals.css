@@ -173,3 +173,40 @@ body {
   color: #ffffff;
   --wave-ink: #ffffff;
 }
+
+/*
+ * The water ground (H21c): Home's surface IS the pool, solid #0507C9. On it
+ * the colour channels invert — white carries content and action, ink stays
+ * selection — and the waves drawn as data are white. Not a live session
+ * (that meaning stays with .live-surface, dormant); the water itself.
+ */
+.water-ground {
+  background-color: var(--color-main-900);
+  color: #ffffff;
+  --wave-ink: #ffffff;
+}
+
+/*
+ * A post's page slides up over the ground (H21c): the white page above the
+ * water. Chrome motion, like the sheet rising; still under reduced motion.
+ */
+@keyframes page-rise {
+  from {
+    transform: translateY(6%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.page-rise {
+  animation: page-rise 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-rise {
+    animation: none;
+  }
+}
