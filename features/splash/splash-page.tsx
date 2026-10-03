@@ -166,7 +166,7 @@ export function SplashPage({
               className="text-main-900 text-base font-medium"
               style={{ opacity: 0.3 }}
             >
-              + Write
+              Drop your words here
             </button>
           </div>
         )}

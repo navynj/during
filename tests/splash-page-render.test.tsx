@@ -262,7 +262,7 @@ describe('writing on the page, in place', () => {
 
   it('starts a new block from the add slot at the post’s declared lane and date (H21f)', async () => {
     const { container, getByText, getByLabelText } = page();
-    fireEvent.click(getByText('+ Write'));
+    fireEvent.click(getByText('Drop your words here'));
     await waitFor(() =>
       expect(container.querySelector('[data-block-editor="new"]')).not.toBeNull(),
     );
@@ -372,7 +372,7 @@ describe('a lone block as an untitled post (H21a)', () => {
       splash: summarizeOrphan(lone, TZ, NOW),
       blocks: [lone],
     });
-    fireEvent.click(getByText('+ Write'));
+    fireEvent.click(getByText('Drop your words here'));
     await waitFor(() => expect(calls.some((c) => c.name === 'adoptRipple')).toBe(true));
     expect(calls.find((c) => c.name === 'adoptRipple')!.args).toEqual(['r-lone']);
     expect(router.replace).toHaveBeenCalledWith(expect.stringMatching(/^\/splash\/s-adopted/));
