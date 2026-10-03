@@ -29,7 +29,7 @@ export default async function LanesPage() {
     // A fixed height rather than a minimum: the matrix inside scrolls in both
     // directions, and a box that can grow gives its headers no scrollport to
     // stick to.
-    <main className="flex h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
+    <main className="mx-auto flex h-[calc(100dvh-var(--tab-bar-h))] w-full max-w-xl flex-1 flex-col px-6">
       <LanesMatrix categories={categories} rows={rows} />
     </main>
   );

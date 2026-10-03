@@ -8,6 +8,7 @@ import { impressionLineCount, WAVE_GAP, WaveLine } from '@/components/ui/waves';
 import type { MyCategory } from '@/lib/queries/profile';
 import { depthSurface } from '@/lib/depth';
 import { EMPTY } from '@/lib/empty-states';
+import { monthHref } from '@/features/home/scope';
 import { formatPagerDate, type IsoDate } from '@/lib/time';
 
 import { CategorySheet } from './category-sheet';
@@ -162,7 +163,7 @@ function DayRow({
             {year} {month.toUpperCase()}
           </p>
         ) : null}
-        <Link href={`/?d=${row.date}`} className="text-main-900 flex flex-col">
+        <Link href={monthHref(row.date.slice(0, 7))} className="text-main-900 flex flex-col">
           <span className="sr-only">{full}</span>
           <span aria-hidden className="text-lg/none font-medium">
             {day}
@@ -188,14 +189,14 @@ function DayRow({
 
 /**
  * One cell: an impression of how much that lane held that day (law 2), never
- * a tally. Tapping it opens the day itself, which is where the records are.
+ * a tally. Tapping it opens that day's month on the ground (H21h).
  */
 function Cell({ date, name, count }: { date: IsoDate; name: string; count: number }) {
   const lines = impressionLineCount(count);
 
   return (
     <Link
-      href={`/?d=${date}`}
+      href={monthHref(date.slice(0, 7))}
       aria-label={count === 0 ? `${name}, nothing on ${date}` : `${name}, ${count} on ${date}`}
       data-lane-cell
       data-lines={lines}

@@ -1,5 +1,8 @@
 'use client';
 
+// DORMANT (H21): hosts the retired detail sheet for the dormant day rows.
+// No page mounts it. Do not wire it back in; do not delete it.
+
 import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
