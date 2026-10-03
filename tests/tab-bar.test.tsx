@@ -59,6 +59,14 @@ describe('the tab bar (D3, H21)', () => {
     }
   });
 
+  it('cuts its top corners large and overlaps the page by the radius, as the mockup draws it', () => {
+    const { container } = bar();
+    const nav = container.querySelector('[data-tab-bar]')!;
+    expect(nav.className).toContain('rounded-t-[40px]');
+    expect(nav.className).toContain('-mt-10');
+    expect(nav.className).not.toMatch(/rounded-b/);
+  });
+
   it('fades an inactive tab as one item, in the chrome colour', () => {
     const { getByText } = bar();
     const locker = getByText('Locker').closest('a')!;

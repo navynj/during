@@ -24,8 +24,13 @@ export function TabBar() {
   const pathname = usePathname();
 
   return (
+    // The bar's top corners are cut large and it overlaps the page above it
+    // by that radius (`-mt-10`), so on the ground the blue shows through the
+    // corners as the mockup draws it; pages pad their bottoms by the same
+    // amount so nothing hides under the overlap.
     <nav
-      className="sticky bottom-0 z-20 rounded-t-[40px] bg-white"
+      data-tab-bar
+      className="sticky bottom-0 z-20 -mt-10 rounded-t-[40px] bg-white"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* A fixed height, so anything sitting exactly on top of it can say so. */}
