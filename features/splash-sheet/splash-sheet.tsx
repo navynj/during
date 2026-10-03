@@ -36,6 +36,11 @@ export type SheetContext = {
  */
 export const SHEET_MAX_HEIGHT = 'max-h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)]';
 
+/** An IME is mid-composition: Chrome flags it, Safari reports keyCode 229. */
+function isComposing(event: React.KeyboardEvent): boolean {
+  return event.nativeEvent.isComposing || event.keyCode === 229;
+}
+
 /**
  * The post sheet (SPEC 6, H21, review): a large bold blue title field over a
  * smaller, lighter body field — the first line is still the title and Enter
@@ -143,16 +148,19 @@ export function SplashSheet({
           style={{ paddingBottom: 'calc(1.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {/* The title, large and bold; Enter moves on to the body, so the
-              first line is still the title and the rest still follows it. */}
+              first line is still the title and the rest still follows it.
+              Not while an IME is composing (Korean, say): that Enter commits
+              the character, and moving focus on it would carry the character
+              into the body. */}
           <textarea
             ref={field}
             value={titleText}
             onChange={(event) => setTitleText(event.target.value.replace(/\n/g, ''))}
             onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                bodyField.current?.focus();
-              }
+              if (event.key !== 'Enter') return;
+              event.preventDefault();
+              if (isComposing(event)) return;
+              bodyField.current?.focus();
             }}
             placeholder="Drop your splash"
             rows={1}
@@ -161,10 +169,23 @@ export function SplashSheet({
             data-sheet-title
             className="text-main-900 placeholder:text-main-900 w-full resize-none text-3xl/snug font-semibold outline-none placeholder:opacity-20"
           />
+          {/* Backspace at the very start of the body walks the cursor back up
+              to the end of the title, the way a notes app does. */}
           <textarea
             ref={bodyField}
             value={bodyText}
             onChange={(event) => setBodyText(event.target.value)}
+            onKeyDown={(event) => {
+              const el = event.currentTarget;
+              if (event.key !== 'Backspace' || el.selectionStart !== 0 || el.selectionEnd !== 0)
+                return;
+              if (isComposing(event)) return;
+              event.preventDefault();
+              const title = field.current;
+              if (!title) return;
+              title.focus();
+              title.setSelectionRange(title.value.length, title.value.length);
+            }}
             placeholder="Enter the content"
             rows={2}
             aria-label="Content"
