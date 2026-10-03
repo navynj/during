@@ -81,25 +81,24 @@ export function SessionSchedule({
         </div>
 
         <ol data-month-rows className="flex flex-col gap-1">
-          {monthsOfYear(year, today)
-            .reverse()
-            .map((month) => (
-              <MonthRow
-                key={month}
-                month={month}
-                titled={monthlyTitle(sessions, month)}
-                count={counts[month] ?? 0}
-                current={month === current}
-                onScope={onScope}
-                onTitle={(title) =>
-                  startTransition(async () => {
-                    const result = await titleMonth(month, title);
-                    if (result.ok) router.refresh();
-                    else setMessage(result.message);
-                  })
-                }
-              />
-            ))}
+          {/* January down to the current month: the year read forward (review). */}
+          {monthsOfYear(year, today).map((month) => (
+            <MonthRow
+              key={month}
+              month={month}
+              titled={monthlyTitle(sessions, month)}
+              count={counts[month] ?? 0}
+              current={month === current}
+              onScope={onScope}
+              onTitle={(title) =>
+                startTransition(async () => {
+                  const result = await titleMonth(month, title);
+                  if (result.ok) router.refresh();
+                  else setMessage(result.message);
+                })
+              }
+            />
+          ))}
         </ol>
       </section>
 

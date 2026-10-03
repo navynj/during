@@ -129,13 +129,13 @@ function tab(over: Partial<Parameters<typeof SessionSchedule>[0]> = {}) {
 }
 
 describe('the session schedule (SPEC 5, H21e)', () => {
-  it('pages years, and lists the months of this year up to now, newest first', () => {
+  it('pages years, and lists the months of this year up to now, January first', () => {
     const { container, getByLabelText } = tab();
     expect(container.querySelector('[data-year-pager]')!.textContent).toContain('2026');
     const rows = [...container.querySelectorAll('[data-month-row]')];
     expect(rows).toHaveLength(9);
-    expect(rows[0].getAttribute('data-month-row')).toBe('2026-09');
-    expect(rows[8].getAttribute('data-month-row')).toBe('2026-01');
+    expect(rows[0].getAttribute('data-month-row')).toBe('2026-01');
+    expect(rows[8].getAttribute('data-month-row')).toBe('2026-09');
     expect((getByLabelText('Later year') as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(getByLabelText('Earlier year'));
     expect(container.querySelectorAll('[data-month-row]')).toHaveLength(12);
