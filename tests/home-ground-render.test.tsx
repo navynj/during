@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { useEffect } from 'react';
+import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { act, useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
@@ -25,8 +25,13 @@ vi.mock('@/features/lanes/actions', () => ({
     orders.push(ids);
     return Promise.resolve({ ok: true });
   },
-  deleteLane: () => Promise.resolve({ ok: true }),
+  // Settled by the test, so the optimistic state can be observed in flight.
+  deleteLane: (id: string) =>
+    new Promise((resolve) => {
+      deletes.push({ id, resolve });
+    }),
 }));
+const deletes: { id: string; resolve: (outcome: unknown) => void }[] = [];
 
 import { HomeGround } from '@/features/home/home-ground';
 import { InputSheetProvider, useInputSheet } from '@/features/input-sheet/sheet-provider';
@@ -360,6 +365,60 @@ describe('the lane header', () => {
     fireEvent.click(getByText('Save'));
     await waitFor(() => expect(orders).toHaveLength(1));
     expect(orders[0]).toEqual(['c-day', 'c-food', 'c-place']);
+  });
+
+  it('deletes an empty lane from its row, gone at once, behind a small confirm', async () => {
+    deletes.length = 0;
+    const { getByLabelText, getByRole, getByText } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    fireEvent.click(getByLabelText('Delete Place'));
+    fireEvent.click(getByText('Delete'));
+    // Gone before the server has answered: the optimistic state.
+    await waitFor(() => expect(deletes.map((d) => d.id)).toEqual(['c-place']));
+    await waitFor(() => expect(sheet.querySelector('[data-lane-row="c-place"]')).toBeNull());
+    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(2);
+    await act(async () => deletes[0].resolve({ ok: true }));
+  });
+
+  it('brings a lane with records back with the refusal (H19)', async () => {
+    deletes.length = 0;
+    const { getByLabelText, getByRole, getByText } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    fireEvent.click(getByLabelText('Delete Day'));
+    fireEvent.click(getByText('Delete'));
+    await waitFor(() => expect(sheet.querySelector('[data-lane-row="c-day"]')).toBeNull());
+    await act(async () =>
+      deletes[0].resolve({ ok: false, message: 'This lane holds 2 records, so it stays.' }),
+    );
+    await waitFor(() =>
+      expect(within(sheet).getByText('This lane holds 2 records, so it stays.')).toBeTruthy(),
+    );
+    expect(sheet.querySelector('[data-lane-row="c-day"]')).not.toBeNull();
+    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(3);
+  });
+
+  it('keeps up with a fast drag: every move reads the latest order', () => {
+    const { getByLabelText, getByRole } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    const order = (): (string | null)[] =>
+      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row'));
+    for (const row of sheet.querySelectorAll<HTMLElement>('[data-lane-row]')) {
+      row.getBoundingClientRect = () => {
+        const index = order().indexOf(row.getAttribute('data-lane-row'));
+        return { top: index * 40, height: 40 } as DOMRect;
+      };
+    }
+    const grip = getByLabelText('Move Day');
+    fireEvent.pointerDown(grip, { pointerId: 1, clientY: 100 });
+    // Two moves in a row before anything settles: up to the top, then back
+    // to the middle. A stale order would leave it at the top.
+    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 10 });
+    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 50 });
+    expect(order()).toEqual(['c-food', 'c-day', 'c-place']);
+    fireEvent.pointerUp(grip, { pointerId: 1 });
   });
 
   it('moves a lane with the arrow keys on its grip, for a keyboard', () => {

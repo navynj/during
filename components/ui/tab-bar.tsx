@@ -14,11 +14,13 @@ import { useInputSheet } from '@/features/input-sheet/sheet-provider';
  * lanes view is Home's header, and session management is the sheet the
  * scrubber's `=` opens.
  */
-const TABS: ReadonlyArray<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: '/', label: 'Home', icon: Home },
-  // lucide calls the shelves glyph ShelvingUnit.
-  { href: '/locker', label: 'Locker', icon: ShelvingUnit },
-];
+const TABS: ReadonlyArray<{ href: string; label: string; icon: LucideIcon; phoneOnly?: boolean }> =
+  [
+    { href: '/', label: 'Home', icon: Home },
+    // lucide calls the shelves glyph ShelvingUnit. A wide screen has no Locker
+    // tab: the Trail reads under the standing composer instead (review).
+    { href: '/locker', label: 'Locker', icon: ShelvingUnit, phoneOnly: true },
+  ];
 
 export function TabBar() {
   const pathname = usePathname();
@@ -54,7 +56,7 @@ export function TabBar() {
                 aria-current={active ? 'page' : undefined}
                 className={`flex flex-col items-center gap-1 ${
                   active ? 'text-main-900 font-semibold' : 'text-main-900 font-medium opacity-20'
-                }`}
+                } ${tab.phoneOnly ? 'lg:hidden' : ''}`}
               >
                 {/* The label carries the meaning; the glyph is decoration. */}
                 <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 2} />

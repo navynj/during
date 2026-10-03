@@ -1,39 +1,56 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Trash2 } from 'lucide-react';
 
 import { COLUMN_MAX_WIDTH } from '@/components/ui/column';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { useOptimisticAction } from '@/lib/use-optimistic-action';
 
-import { reorderLanes, saveLane } from './actions';
+import { deleteLane, reorderLanes, saveLane } from './actions';
 
 /**
  * The lanes sheet: every lane in a row, its icon and its name edited in
  * place and its order changed by dragging the grip (arrow keys on the grip
- * for a keyboard), one Save for whatever changed. Opened from the pencil
- * beside the `+` in Home's lane header — the lanes view's own editor now that
- * the Lanes tab has retired (H21 review). Delete stays out: a lane with
- * records refuses it anyway (H19), and an empty one is rare enough to wait.
+ * for a keyboard), a Delete per row behind a small confirm, one Save for
+ * whatever changed. Opened from the pencil beside the `+` in Home's lane
+ * header — the lanes view's own editor now that the Lanes tab has retired
+ * (H21 review). A lane with records refuses deletion and says so (H19).
  *
- * Save shows the lanes as saved at once and runs the actions behind it
- * (CLAUDE.md, the principle): `apply` is Home's optimistic lane state.
+ * Every change shows at once and the action runs behind it (CLAUDE.md, the
+ * principle): `apply` is Home's optimistic lane state, and the rows here
+ * are derived from it, so a refused delete comes back on its own.
  */
 export function LanesSheet({
   categories,
   apply,
+  message,
   onClose,
 }: {
   categories: MyCategory[];
   apply: ReturnType<typeof useOptimisticAction<MyCategory[]>>['run'];
+  /** The last refusal, from Home's optimistic lane state. */
+  message?: string | null;
   onClose: () => void;
 }) {
-  const [rows, setRows] = useState(() =>
-    categories.map((lane) => ({ id: lane.id, name: lane.name, icon: lane.icon ?? '' })),
-  );
+  // The order the hand has given, and the words it has typed, over the lanes
+  // Home holds; a lane that is gone from Home is gone from here too.
+  const [order, setOrder] = useState(() => categories.map((lane) => lane.id));
+  const [edits, setEdits] = useState<Record<string, { name?: string; icon?: string }>>({});
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const list = useRef<HTMLOListElement>(null);
+
+  /** The rows' ids in the hand's order, over the lanes Home holds right now. */
+  const idsOf = (given: string[]): string[] => [
+    ...given.filter((id) => categories.some((c) => c.id === id)),
+    ...categories.filter((c) => !given.includes(c.id)).map((c) => c.id),
+  ];
+  const ids = idsOf(order);
+  const rows = ids.map((id) => {
+    const lane = categories.find((c) => c.id === id)!;
+    return { id, name: edits[id]?.name ?? lane.name, icon: edits[id]?.icon ?? lane.icon ?? '' };
+  });
 
   const changed = rows.filter((row) => {
     const was = categories.find((lane) => lane.id === row.id)!;
@@ -43,19 +60,34 @@ export function LanesSheet({
   const reordered = rows.some((row, index) => row.id !== categories[index]?.id);
 
   function edit(id: string, patch: Partial<{ name: string; icon: string }>): void {
-    setRows((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+    setEdits((current) => ({ ...current, [id]: { ...current[id], ...patch } }));
   }
 
-  /** Puts the row at `to`, shifting the others; the order the drag reads. */
+  /**
+   * Puts the row at `to`, shifting the others; the order the drag reads.
+   * Computed from the latest order, never the one the drag began with: a
+   * fast drag fires moves faster than the sheet re-renders, and a stale
+   * order would drop the ones in between.
+   */
   function moveTo(id: string, to: number): void {
-    setRows((current) => {
-      const from = current.findIndex((row) => row.id === id);
+    setOrder((given) => {
+      const current = idsOf(given);
+      const from = current.indexOf(id);
       if (from === -1 || to < 0 || to >= current.length || to === from) return current;
       const next = [...current];
-      const [row] = next.splice(from, 1);
-      next.splice(to, 0, row);
+      next.splice(from, 1);
+      next.splice(to, 0, id);
       return next;
     });
+  }
+
+  /** Gone at once; a lane with records comes back with the refusal (H19). */
+  function remove(id: string): void {
+    setConfirming(null);
+    apply(
+      (current) => current.filter((lane) => lane.id !== id),
+      () => deleteLane(id),
+    );
   }
 
   /**
@@ -178,9 +210,42 @@ export function LanesSheet({
                   maxLength={24}
                   className="text-ink placeholder:text-pool-500 border-pool-100 min-w-0 flex-1 border-b py-2 text-base outline-none"
                 />
+                {confirming === row.id ? (
+                  <span className="flex shrink-0 items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => remove(row.id)}
+                      className="text-main-900 font-medium"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(null)}
+                      className="text-pool-500"
+                    >
+                      Keep
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    aria-label={`Delete ${row.name || 'this lane'}`}
+                    onClick={() => setConfirming(row.id)}
+                    className="text-pool-500 flex h-8 w-8 shrink-0 items-center justify-center"
+                  >
+                    <Trash2 aria-hidden size={14} />
+                  </button>
+                )}
               </li>
             ))}
           </ol>
+
+          {message ? (
+            <p role="alert" className="text-pool-500 text-sm">
+              {message}
+            </p>
+          ) : null}
 
           <div className="flex items-center justify-end gap-3 pt-2 text-sm">
             <button type="button" onClick={onClose} className="text-pool-500">

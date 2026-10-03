@@ -227,6 +227,17 @@ describe('the Trail is a backward scroll, not a feed', () => {
     );
   });
 
+  it('points a row back to its day’s month when it reads under the wide screen’s composer', () => {
+    const { container } = render(
+      <InputSheetProvider>
+        <Trail days={groupByDay([ripple({ splash_id: 's1' })], TZ)} timeZone={TZ} origin="month" />
+      </InputSheetProvider>,
+    );
+    expect(container.querySelector('[data-trail-row] a')!.getAttribute('href')).toBe(
+      '/splash/s1?from=2027-07#block-r1',
+    );
+  });
+
   it('opens a lone block as an untitled post of one (H21a)', () => {
     const { container } = render(
       <InputSheetProvider>

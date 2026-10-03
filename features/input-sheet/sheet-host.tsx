@@ -1,9 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { RecentBlocks } from '@/features/splash/recent-blocks';
-import type { RecentItem } from '@/features/splash/recent';
+import { PendingDropHead } from '@/features/splash/pending-drop';
 import { SplashComposer } from '@/features/splash-sheet/splash-composer';
 import {
   SplashSheet,
@@ -58,16 +58,18 @@ export function SheetHost({ context }: { context: SheetContext }) {
 /**
  * The wide screen's composer (review): not a sheet but a rounded white card
  * standing in the right half, always there with *Drop your splash* waiting,
- * and beneath it the recent column: my latest blocks under their posts'
- * titles. On Home it floats on the water; elsewhere it sits on the page.
- * Not on a post's page, whose right half holds the post's blocks instead.
+ * and beneath it the Locker's Trail — a wide screen has no Locker tab; the
+ * archive reads here, under the composer. On Home it floats on the water;
+ * elsewhere it sits on the page. Not on a post's page, whose right half holds
+ * the post's blocks instead.
  */
 export function ComposerPanel({
   context,
-  recent = [],
+  trail,
 }: {
   context: SheetContext;
-  recent?: RecentItem[];
+  /** The Trail, rendered by the server layout. */
+  trail?: ReactNode;
 }) {
   const pathname = usePathname();
   const drop = useDrop();
@@ -84,11 +86,10 @@ export function ComposerPanel({
       <div className="w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-8">
         <SplashComposer context={context} onDrop={drop} autoFocus={false} />
       </div>
-      {/* The column reads white on the water; on a page it reads in ink. */}
-      <div
-        className={`flex w-full max-w-xl flex-col ${onWater ? '' : '[&_[data-recent-title]]:text-ink [&_[data-recent-preview]]:text-ink/80 [&_[data-recent-day]]:text-pool-500'}`}
-      >
-        <RecentBlocks items={recent} today={context.today} />
+      {/* The Trail, in its own white card: the Locker on a wide screen. */}
+      <div data-panel-trail className="w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-6">
+        <PendingDropHead today={context.today} />
+        {trail}
       </div>
     </aside>
   );

@@ -2,8 +2,8 @@ import { TabBar } from '@/components/ui/tab-bar';
 import { ComposerPanel, SheetHost } from '@/features/input-sheet/sheet-host';
 import { InputSheetProvider } from '@/features/input-sheet/sheet-provider';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
-import { getMyTrail } from '@/lib/queries/trail';
-import { recentItems } from '@/features/splash/recent';
+import { Trail } from '@/features/locker/trail';
+import { getMyTrail, groupByDay } from '@/lib/queries/trail';
 import { createClient } from '@/lib/supabase/server';
 import { todayIn } from '@/lib/time';
 
@@ -27,18 +27,22 @@ export default async function ShellLayout({ children }: LayoutProps<'/'>) {
         today: todayIn(profile.timezone),
       }
     : null;
-  // The recent column under the wide screen's composer: the Trail's head.
-  const recent =
-    profile && context
-      ? recentItems(await getMyTrail(supabase, profile.id, profile.timezone), profile.timezone)
-      : [];
+  // The Locker's Trail under the wide screen's composer: a wide screen has
+  // no Locker tab, the archive reads beside the writing.
+  const trail = profile ? (
+    <Trail
+      days={groupByDay(await getMyTrail(supabase, profile.id, profile.timezone), profile.timezone)}
+      timeZone={profile.timezone}
+      origin="month"
+    />
+  ) : null;
 
   return (
     <InputSheetProvider>
       <div className="flex min-h-dvh flex-col">
         <div className="flex flex-1 flex-col lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-          {context ? <ComposerPanel context={context} recent={recent} /> : null}
+          {context ? <ComposerPanel context={context} trail={trail} /> : null}
         </div>
         <TabBar />
       </div>

@@ -165,6 +165,7 @@ export function HomeGround({
         <LanesSheet
           categories={lanes.value}
           apply={lanes.run}
+          message={lanes.message}
           onClose={() => setEditingLanes(false)}
         />
       ) : null}

@@ -5,6 +5,7 @@ import { WaveBundle, WaveLine } from '@/components/ui/waves';
 import { monthHref } from '@/features/home/scope';
 import { monthsBack } from '@/features/lanes/matrix';
 import { depthSurface } from '@/lib/depth';
+import { dayOf } from '@/lib/flow-key';
 import { EMPTY } from '@/lib/empty-states';
 import type { RippleWithCategory } from '@/lib/queries/ripples';
 import type { TrailDay } from '@/lib/queries/trail';
@@ -26,7 +27,16 @@ import { formatPagerDate } from '@/lib/time';
  * block; tapping it opens its post's page at that block (H21), and a day
  * header opens that day's month on the ground.
  */
-export function Trail({ days, timeZone }: { days: TrailDay[]; timeZone: string }) {
+export function Trail({
+  days,
+  timeZone,
+  origin = 'locker',
+}: {
+  days: TrailDay[];
+  timeZone: string;
+  /** Where a row's post page points back to: the Locker tab, or the day's month on the ground. */
+  origin?: 'locker' | 'month';
+}) {
   if (days.length === 0) {
     return <p className="text-pool-500 py-16 text-center text-sm">{EMPTY.trail}</p>;
   }
@@ -40,6 +50,7 @@ export function Trail({ days, timeZone }: { days: TrailDay[]; timeZone: string }
           key={day.date}
           day={day}
           timeZone={timeZone}
+          origin={origin}
           surface={depthSurface(monthsBack(newest, day.date))}
           opensMonth={day.date.slice(0, 7) !== days[index - 1]?.date.slice(0, 7)}
         />
@@ -51,11 +62,13 @@ export function Trail({ days, timeZone }: { days: TrailDay[]; timeZone: string }
 function DaySection({
   day,
   timeZone,
+  origin,
   surface,
   opensMonth,
 }: {
   day: TrailDay;
   timeZone: string;
+  origin: 'locker' | 'month';
   surface: string;
   opensMonth: boolean;
 }) {
@@ -89,7 +102,7 @@ function DaySection({
 
       <ol className="pb-4">
         {day.ripples.map((ripple) => (
-          <TrailRow key={ripple.id} ripple={ripple} timeZone={timeZone} />
+          <TrailRow key={ripple.id} ripple={ripple} timeZone={timeZone} origin={origin} />
         ))}
       </ol>
     </section>
@@ -101,10 +114,19 @@ function DaySection({
  * on the left, its words and its post's title beside them. Opens its post's
  * page at the block (H21).
  */
-function TrailRow({ ripple, timeZone }: { ripple: RippleWithCategory; timeZone: string }) {
+function TrailRow({
+  ripple,
+  timeZone,
+  origin,
+}: {
+  ripple: RippleWithCategory;
+  timeZone: string;
+  origin: 'locker' | 'month';
+}) {
   const kind = rippleKind(ripple, timeZone);
   const minutes = kind === 'timed' ? rippleDurationMinutes(ripple, timeZone) : 0;
-  const href = `/splash/${ripple.splash_id ?? ripple.id}?from=locker#block-${ripple.id}`;
+  const from = origin === 'locker' ? 'locker' : dayOf(ripple, timeZone).slice(0, 7);
+  const href = `/splash/${ripple.splash_id ?? ripple.id}?from=${from}#block-${ripple.id}`;
 
   return (
     <li data-trail-row={ripple.id}>

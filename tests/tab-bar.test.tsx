@@ -67,6 +67,12 @@ describe('the tab bar (D3, H21)', () => {
     expect(nav.className).not.toMatch(/rounded-b/);
   });
 
+  it('hides the Locker tab on a wide screen: the Trail reads under the composer there', () => {
+    const { getByText } = bar();
+    expect(getByText('Locker').closest('a')!.className).toContain('lg:hidden');
+    expect(getByText('Home').closest('a')!.className).not.toContain('lg:hidden');
+  });
+
   it('fades an inactive tab as one item, in the chrome colour', () => {
     const { getByText } = bar();
     const locker = getByText('Locker').closest('a')!;
