@@ -25,6 +25,9 @@ type SheetApi = {
   pendingDrop: PendingDrop | null;
   markDropped: (drop: PendingDrop) => void;
   clearDropped: () => void;
+  /** Posts deleted a moment ago, gone from every surface before the re-read lands. */
+  pendingDeletes: string[];
+  markDeleted: (splashId: string) => void;
   /** What the server said when a drop was refused, for the ground to show. */
   dropMessage: string | null;
   dropFailed: (message: string) => void;
@@ -36,6 +39,11 @@ export function InputSheetProvider({ children }: { children: ReactNode }) {
   const [sheet, setSheet] = useState<OpenSheet>(null);
   const [pendingDrop, setPendingDrop] = useState<PendingDrop | null>(null);
   const [dropMessage, setDropMessage] = useState<string | null>(null);
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
+  const markDeleted = useCallback(
+    (splashId: string) => setPendingDeletes((current) => [...current, splashId]),
+    [],
+  );
 
   const openSheet = useCallback(() => setSheet({ kind: 'splash' }), []);
   const closeSheet = useCallback(() => setSheet(null), []);
@@ -59,8 +67,21 @@ export function InputSheetProvider({ children }: { children: ReactNode }) {
       clearDropped,
       dropMessage,
       dropFailed,
+      pendingDeletes,
+      markDeleted,
     }),
-    [sheet, openSheet, closeSheet, pendingDrop, markDropped, clearDropped, dropMessage, dropFailed],
+    [
+      sheet,
+      openSheet,
+      closeSheet,
+      pendingDrop,
+      markDropped,
+      clearDropped,
+      dropMessage,
+      dropFailed,
+      pendingDeletes,
+      markDeleted,
+    ],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

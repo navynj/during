@@ -11,19 +11,11 @@ export function splitTitle(text: string): { title: string; body: string } {
 }
 
 /**
- * The same rule across the sheet's two fields (review): the title field is
- * the first line, the body field is what follows the Enter. A line typed into
- * the title alone, with nothing under it and no photo, is still the dump —
- * an untitled post whose line is its block — rather than a titled post with
- * nothing to read.
+ * The two fields, read plainly (review): the title field is the title and
+ * the content field is the first block. A title alone makes a titled post
+ * with nothing in it yet — not an untitled block; a line in the content
+ * alone is the untitled dump (SPEC 6).
  */
-export function composeDrop(
-  title: string,
-  body: string,
-  hasMedia: boolean,
-): { title: string; body: string } {
-  const t = title.trim();
-  const b = body.trim();
-  if (b.length === 0 && !hasMedia) return { title: '', body: t };
-  return { title: t, body: b };
+export function composeDrop(title: string, body: string): { title: string; body: string } {
+  return { title: title.trim(), body: body.trim() };
 }

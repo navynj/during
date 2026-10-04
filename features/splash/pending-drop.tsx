@@ -15,6 +15,24 @@ import { shortDay } from './block';
 export function PendingDropHead({ today }: { today: IsoDate }) {
   const { pendingDrop } = useInputSheet();
   if (!pendingDrop) return null;
+  return <PendingDropItem today={today} />;
+}
+
+/**
+ * The rows of a post deleted a moment ago, hidden from the Trail beside the
+ * composer before the re-read lands (CLAUDE.md, the principle). The Trail is
+ * server-rendered, so the hiding is a rule over its rows' post ids.
+ */
+export function DeletedRowsHidden() {
+  const { pendingDeletes } = useInputSheet();
+  if (pendingDeletes.length === 0) return null;
+  const rule = pendingDeletes.map((id) => `[data-trail-splash="${id}"]`).join(',');
+  return <style data-deleted-hidden>{`${rule}{display:none}`}</style>;
+}
+
+function PendingDropItem({ today }: { today: IsoDate }) {
+  const { pendingDrop } = useInputSheet();
+  if (!pendingDrop) return null;
   const day = pendingDrop.splash.blocks[0]?.day ?? today;
   return (
     <div data-pending-drop className="flex flex-col gap-1 pb-6">

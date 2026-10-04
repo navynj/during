@@ -7,6 +7,7 @@ import { ChevronLeft } from 'lucide-react';
 
 import { GhostRing } from '@/components/ui/ghost-ring';
 import { commitRipple, type CommitResult } from '@/features/input-sheet/commit';
+import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { deleteRipple, setRippleLock, updateRipple } from '@/features/ripple-sheet/actions';
 import type { Session } from '@/features/sessions/shelves';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -80,6 +81,7 @@ export function SplashPage({
   today: IsoDate;
 }) {
   const router = useRouter();
+  const { markDeleted } = useInputSheet();
   const [editor, setEditor] = useState<EditorTarget | null>(null);
   const {
     value: page,
@@ -269,12 +271,15 @@ export function SplashPage({
           onPin={pin}
           onSession={shelve}
           onDelete={async () => {
-            // Gone the moment it is asked for: back where it came from, and
-            // the rows follow.
-            const id = page.splash.orphan ? null : page.splash.id;
+            // Gone the moment it is asked for, from every surface (CLAUDE.md,
+            // the principle): back where it came from, and the rows follow. A
+            // lone block is its own post, so deleting it deletes the block.
+            markDeleted(page.splash.id);
             router.push(origin.href);
-            if (id) await deleteSplash(id);
-            router.refresh();
+            const result = page.splash.orphan
+              ? await deleteRipple(page.splash.id)
+              : await deleteSplash(page.splash.id);
+            if (result.ok) router.refresh();
           }}
         />
 

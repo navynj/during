@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { PendingDropHead } from '@/features/splash/pending-drop';
+import { DeletedRowsHidden, PendingDropHead } from '@/features/splash/pending-drop';
 import { SplashComposer } from '@/features/splash-sheet/splash-composer';
 import {
   SplashSheet,
@@ -133,6 +133,7 @@ export function ComposerPanel({
       {/* The Trail, in its own white card: the Locker on a wide screen. */}
       <div data-panel-trail className="w-full max-w-xl shrink-0 rounded-[32px] bg-white px-8 py-6">
         <PendingDropHead today={context.today} />
+        <DeletedRowsHidden />
         {trail}
       </div>
     </aside>

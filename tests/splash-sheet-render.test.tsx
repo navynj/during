@@ -86,22 +86,32 @@ describe('the first line is the title (SPEC 6)', () => {
     });
     expect(splitTitle('coffee went cold')).toEqual({ title: '', body: 'coffee went cold' });
     expect(splitTitle('Just a title\n')).toEqual({ title: 'Just a title', body: '' });
-    // Across the two fields: a line in the title alone is still the dump.
-    expect(composeDrop('coffee went cold', '', false)).toEqual({
-      title: '',
-      body: 'coffee went cold',
-    });
-    expect(composeDrop('Whistler', 'sea to sky', false)).toEqual({
+    // Across the two fields: a title alone is a titled post with nothing in
+    // it yet, never an untitled block; the dump is a line in the content alone.
+    expect(composeDrop('Whistler', '')).toEqual({ title: 'Whistler', body: '' });
+    expect(composeDrop('Whistler', 'sea to sky')).toEqual({
       title: 'Whistler',
       body: 'sea to sky',
     });
-    expect(composeDrop('A photo day', '', true)).toEqual({ title: 'A photo day', body: '' });
+    expect(composeDrop('', 'coffee went cold')).toEqual({
+      title: '',
+      body: 'coffee went cold',
+    });
   });
 
-  it('commits a single line with no Enter as an untitled post whose line is its block', async () => {
+  it('commits a title alone as a titled post with nothing in it yet', async () => {
+    const view = sheet();
+    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'Whistler' } });
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ title: 'Whistler', body: '' });
+    expect(handoffs[0].splash).toMatchObject({ title: 'Whistler', count: 0, ghostTitle: null });
+  });
+
+  it('commits a line in the content alone as an untitled post whose line is its block', async () => {
     const view = sheet();
     expect(view.drop().disabled).toBe(true);
-    fireEvent.change(view.getByLabelText('Title'), { target: { value: 'coffee went cold' } });
+    fireEvent.change(view.getByLabelText('Content'), { target: { value: 'coffee went cold' } });
     fireEvent.click(view.drop());
     await waitFor(() => expect(drops).toHaveLength(1));
     expect(drops[0]).toMatchObject({

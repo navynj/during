@@ -129,7 +129,7 @@ function TrailRow({
   const href = `/splash/${ripple.splash_id ?? ripple.id}?from=${from}#block-${ripple.id}`;
 
   return (
-    <li data-trail-row={ripple.id}>
+    <li data-trail-row={ripple.id} data-trail-splash={ripple.splash_id ?? ripple.id}>
       <Link href={href} className="grid grid-cols-[2.75rem_2rem_1fr] items-start gap-x-3 py-2">
         <time className="text-main-900 pt-1 text-xs font-light tabular-nums">
           {ripple.occurred_time ? ripple.occurred_time.slice(0, 5) : ''}

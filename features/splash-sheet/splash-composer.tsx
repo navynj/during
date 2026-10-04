@@ -86,7 +86,7 @@ export function SplashComposer({
     }
   }, [titleText, bodyText]);
 
-  const { title, body } = composeDrop(titleText, bodyText, mediaPaths.length > 0);
+  const { title, body } = composeDrop(titleText, bodyText);
   const hasContent =
     title.length > 0 || body.length > 0 || mediaPaths.length > 0 || laneId !== null;
   const annotationOk = !annotation || annotationVerdict(annotation) === 'ok';

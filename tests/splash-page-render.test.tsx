@@ -41,6 +41,7 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 import type { Session } from '@/features/sessions/shelves';
+import { InputSheetProvider, useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { SplashPage } from '@/features/splash/splash-page';
 import { summarizeOrphan, summarizeSplash, type Splash } from '@/features/splash/summary';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -156,20 +157,28 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+function Deleted() {
+  const { pendingDeletes } = useInputSheet();
+  return <output data-deleted>{pendingDeletes.join(',')}</output>;
+}
+
 function page(over: Partial<Parameters<typeof SplashPage>[0]> = {}) {
   return render(
-    <SplashPage
-      splash={summarizeSplash(board, blocks, TZ, NOW)}
-      blocks={blocks}
-      photos={{ night: [null, 'https://signed/x.jpg'] }}
-      lockedIds={[]}
-      categories={LANES}
-      sessions={[TRIPS]}
-      origin={{ label: 'August', href: '/?m=2026-08' }}
-      timeZone={TZ}
-      today={TODAY}
-      {...over}
-    />,
+    <InputSheetProvider>
+      <Deleted />
+      <SplashPage
+        splash={summarizeSplash(board, blocks, TZ, NOW)}
+        blocks={blocks}
+        photos={{ night: [null, 'https://signed/x.jpg'] }}
+        lockedIds={[]}
+        categories={LANES}
+        sessions={[TRIPS]}
+        origin={{ label: 'August', href: '/?m=2026-08' }}
+        timeZone={TZ}
+        today={TODAY}
+        {...over}
+      />
+    </InputSheetProvider>,
   );
 }
 
@@ -343,6 +352,22 @@ describe('the header menu', () => {
     fireEvent.click(container.querySelector('[role="alertdialog"] .text-main-900')!);
     await waitFor(() => expect(calls.some((c) => c.name === 'deleteSplash')).toBe(true));
     expect(router.push).toHaveBeenCalledWith('/?m=2026-08');
+    // Gone from every surface at once: the provider carries the id.
+    expect(container.querySelector('[data-deleted]')!.textContent).toBe('s1');
+  });
+
+  it('deletes a lone block’s post by deleting the block', async () => {
+    const lone = block({ id: 'r-lone', note: 'alone', splash_id: null });
+    const { getByLabelText, getByText, container } = page({
+      splash: summarizeOrphan(lone, TZ, NOW),
+      blocks: [lone],
+    });
+    fireEvent.click(getByLabelText('More'));
+    fireEvent.click(getByText('Delete'));
+    fireEvent.click(container.querySelector('[role="alertdialog"] .text-main-900')!);
+    await waitFor(() => expect(calls.some((c) => c.name === 'deleteRipple')).toBe(true));
+    expect(calls.find((c) => c.name === 'deleteRipple')!.args).toEqual(['r-lone']);
+    expect(calls.some((c) => c.name === 'deleteSplash')).toBe(false);
   });
 
   it('edits the title in place', async () => {

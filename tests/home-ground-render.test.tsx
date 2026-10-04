@@ -150,10 +150,22 @@ function Dropper({ splash, month }: { splash: SplashSummary; month: string }) {
   return null;
 }
 
-function ground(month = '2026-09', posts = POSTS, dropped: SplashSummary | null = null) {
+function Deleter({ id }: { id: string }) {
+  const { markDeleted } = useInputSheet();
+  useEffect(() => markDeleted(id), [id, markDeleted]);
+  return null;
+}
+
+function ground(
+  month = '2026-09',
+  posts = POSTS,
+  dropped: SplashSummary | null = null,
+  deleted: string | null = null,
+) {
   return render(
     <InputSheetProvider>
       {dropped ? <Dropper splash={dropped} month={month} /> : null}
+      {deleted ? <Deleter id={deleted} /> : null}
       <HomeGround
         month={month}
         months={scrubberMonths(posts, TODAY, TZ)}
@@ -273,6 +285,12 @@ describe('the post grid (H21d)', () => {
     const { container } = ground('2026-09', POSTS, fresh);
     expect(seatIds(container)).toEqual(['early', 'mid', 'late', 'fresh']);
     expect(container.querySelector('[data-seat="fresh"] [data-commit-ripple]')).not.toBeNull();
+  });
+
+  it('takes a deleted post off the ground and the pinned bar at once', () => {
+    const { container } = ground('2026-08', POSTS, null, 'aug');
+    expect(seatIds(container)).toEqual([]);
+    expect(container.querySelector('[data-pinned-bar]')).toBeNull();
   });
 
   it('plays the ripple once at the pill just dropped, and nowhere else', () => {

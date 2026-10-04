@@ -70,17 +70,19 @@ export function HomeGround({
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [newLane, setNewLane] = useState(false);
   const [editingLanes, setEditingLanes] = useState(false);
-  const { pendingDrop, clearDropped, dropMessage } = useInputSheet();
+  const { pendingDrop, clearDropped, dropMessage, pendingDeletes } = useInputSheet();
   const lanes = useOptimisticAction(categories);
 
   // The post just dropped takes its seat before the server has it; once the
   // real row is on the ground the optimistic one steps aside.
   const landed =
     pendingDrop !== null && seats.some(({ splash }) => splash.id === pendingDrop.splash.id);
+  // A post deleted a moment ago is gone from the ground before the re-read.
+  const kept = seats.filter(({ splash }) => !pendingDeletes.includes(splash.id));
   const seated =
     pendingDrop && !landed && pendingDrop.month === month
-      ? [...seats, ...monthSeats([pendingDrop.splash], month, timeZone)]
-      : seats;
+      ? [...kept, ...monthSeats([pendingDrop.splash], month, timeZone)]
+      : kept;
   const ringAt =
     pendingDrop && seated.some(({ splash }) => splash.id === pendingDrop.splash.id)
       ? pendingDrop.splash.id
@@ -143,7 +145,11 @@ export function HomeGround({
           onManage={() => setSessionsOpen(true)}
         />
 
-        <PinnedBar pinned={pinned} categories={lanes.value} month={month} />
+        <PinnedBar
+          pinned={pinned.filter((p) => !pendingDeletes.includes(p.id))}
+          categories={lanes.value}
+          month={month}
+        />
       </div>
 
       {sessionsOpen ? (
