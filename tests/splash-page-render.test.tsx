@@ -352,8 +352,9 @@ describe('the header menu', () => {
     fireEvent.click(container.querySelector('[role="alertdialog"] .text-main-900')!);
     await waitFor(() => expect(calls.some((c) => c.name === 'deleteSplash')).toBe(true));
     expect(router.push).toHaveBeenCalledWith('/?m=2026-08');
-    // Gone from every surface at once: the provider carries the id.
-    expect(container.querySelector('[data-deleted]')!.textContent).toBe('s1');
+    // Gone from every surface at once: the provider carries the id. Waited
+    // for: the state lands a render after the action is called.
+    await waitFor(() => expect(container.querySelector('[data-deleted]')!.textContent).toBe('s1'));
   });
 
   it('deletes a lone block’s post by deleting the block', async () => {
