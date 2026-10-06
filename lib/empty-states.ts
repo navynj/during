@@ -16,8 +16,6 @@ export const EMPTY = {
   lanes: 'Waves gather here as you drop.',
   /** The empty Trail: the first step. */
   trail: 'Your trail starts with the first ripple.',
-  /** A month with nothing on the ground (H21): in white, the FAB the only call. */
-  ground: 'A fresh page of water.',
   /** A shelf with nothing on it. */
   shelf: 'Nothing shelved here.',
 } as const;

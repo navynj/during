@@ -46,7 +46,10 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
     .sort((a, b) => b.pinnedAt!.localeCompare(a.pinnedAt!));
 
   return (
-    <main className="water-ground flex min-h-[calc(100dvh-var(--tab-bar-h))] flex-1 flex-col">
+    // Exactly the viewport above the tab bar (dynamic, so a phone's browser
+    // chrome never clips the fixed stack), plus the bar's 2.5rem overlap: the
+    // rows scroll inside it, the scrubber and the bar stay put.
+    <main className="water-ground flex h-[calc(100dvh-var(--tab-bar-h)-env(safe-area-inset-bottom,0px)+2.5rem)] min-h-0 flex-col">
       <HomeGround
         month={month}
         months={scrubberMonths(summaries, today, profile.timezone)}

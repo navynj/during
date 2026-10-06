@@ -34,7 +34,7 @@ export function MonthScrubber({
   onManage: () => void;
 }) {
   return (
-    <nav aria-label="Month" data-month-scrubber className="no-scrollbar overflow-x-auto pt-5 pb-3">
+    <nav aria-label="Month" data-month-scrubber className="no-scrollbar overflow-x-auto pt-4 pb-2">
       <ol className="flex items-end gap-5">
         <li className="flex shrink-0">
           <button

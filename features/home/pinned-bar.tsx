@@ -22,12 +22,7 @@ export function PinnedBar({
 }) {
   if (pinned.length === 0) return null;
   return (
-    <nav
-      aria-label="Pinned"
-      data-pinned-bar
-      className="bg-ink sticky z-10 -mx-6 px-6 py-2 text-white"
-      style={{ bottom: 'calc(var(--tab-bar-h) + env(safe-area-inset-bottom, 0px))' }}
-    >
+    <nav aria-label="Pinned" data-pinned-bar className="bg-ink -mx-6 px-6 py-2 text-white">
       <ol className="no-scrollbar flex gap-2 overflow-x-auto">
         {pinned.map((splash) => {
           const lane = categories.find((c) => c.id === splash.laneIds[0]) ?? null;

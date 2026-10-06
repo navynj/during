@@ -1,44 +1,37 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { CategorySheet } from '@/features/lanes/category-sheet';
 import { LanesSheet } from '@/features/lanes/lanes-sheet';
 import { SessionsSheet } from '@/features/sessions/sessions-sheet';
-import {
-  filterByLane,
-  laneCounts,
-  monthSeats,
-  type Seat,
-  type Session,
-} from '@/features/sessions/shelves';
+import { monthSeats, seatsByLane, type Seat, type Session } from '@/features/sessions/shelves';
 import type { SplashSummary } from '@/features/splash/summary';
-import { EMPTY } from '@/lib/empty-states';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
 import { useOptimisticAction } from '@/lib/use-optimistic-action';
 
-import { LaneHeader, LaneRopes } from './lane-header';
+import { LaneIcon } from './lane-icon';
+import { LaneRows } from './lane-rows';
 import { MonthScrubber } from './month-scrubber';
 import { PinnedBar } from './pinned-bar';
-import { SplashGrid } from './splash-grid';
 
 /** How long the commit ripple is given at a new post's pill once the real one has landed. */
 const RING_MS = 1800;
 
 /**
- * Home, the water ground (SPEC 5, H21c, H21d; `_docs/mockups/home-ground.png`):
- * one solid #0507C9 surface scoped to one month. The lane header across the
- * top (the lanes view, with the seat of a new lane and the lanes sheet's pencil
- * at its end), ropes through the empty water, the post grid oldest-at-top, the
- * month scrubber beneath it with the `=` that opens the sessions sheet, and the
- * pinned bar above the tab bar. The view opens scrolled to the bottom — the
- * present-and-writing zone.
+ * Home, the water ground (SPEC 5, H21c; the lane-rows mockup): one solid
+ * #0507C9 surface scoped to one month. Lane rows fill it — one row per lane,
+ * its month's posts as pills on a rope, newest at the left — and scroll on
+ * their own; beneath them the fixed stack: the month scrubber with the `=`
+ * that opens the sessions sheet, the lane-icon row that opens the lanes
+ * sheet, and the pinned bar above the tab bar. A month with nothing is every
+ * row with an empty rope.
  *
  * A post just dropped is seated at once, before the server has it, with the
  * ripple playing at its pill (CLAUDE.md, the principle); lanes edited in the
- * lanes sheet read edited at once too.
+ * lanes sheet read edited at once too; a post deleted a moment ago is gone.
  */
 export function HomeGround({
   month,
@@ -66,7 +59,6 @@ export function HomeGround({
   today: IsoDate;
   timeZone: string;
 }) {
-  const [laneId, setLaneId] = useState<string | null>(null);
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [newLane, setNewLane] = useState(false);
   const [editingLanes, setEditingLanes] = useState(false);
@@ -74,10 +66,10 @@ export function HomeGround({
   const lanes = useOptimisticAction(categories);
 
   // The post just dropped takes its seat before the server has it; once the
-  // real row is on the ground the optimistic one steps aside.
+  // real row is on the ground the optimistic one steps aside. A post deleted
+  // a moment ago is gone from the ground before the re-read.
   const landed =
     pendingDrop !== null && seats.some(({ splash }) => splash.id === pendingDrop.splash.id);
-  // A post deleted a moment ago is gone from the ground before the re-read.
   const kept = seats.filter(({ splash }) => !pendingDeletes.includes(splash.id));
   const seated =
     pendingDrop && !landed && pendingDrop.month === month
@@ -88,16 +80,6 @@ export function HomeGround({
       ? pendingDrop.splash.id
       : null;
 
-  // The present is at the bottom (H21d), so that is where the ground opens.
-  useLayoutEffect(() => {
-    if (typeof window.scrollTo !== 'function') return;
-    try {
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
-    } catch {
-      // A test window may not scroll; the ground still reads correctly.
-    }
-  }, [month, seated.length]);
-
   // The signature moment (SPEC 6): the ripple plays from the optimistic
   // seat until a moment after the real one lands, then the memory clears.
   useEffect(() => {
@@ -106,50 +88,66 @@ export function HomeGround({
     return () => window.clearTimeout(timer);
   }, [landed, clearDropped]);
 
-  const shown = filterByLane(seated, laneId);
+  const { rows, orphans } = seatsByLane(seated, lanes.value);
+  useEffect(() => {
+    if (orphans.length > 0) {
+      console.warn(
+        `[during] ${orphans.length} post(s) this month sit on no lane of yours; shown on an unlabelled row.`,
+      );
+    }
+  }, [orphans.length]);
 
   return (
-    <div data-home-ground className="water-ground flex flex-1 flex-col">
-      {/* pb-10 clears the tab bar's overlap; the bar cuts its corners into the water. */}
-      <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6 pb-10">
-        <div className="no-scrollbar flex flex-1 flex-col overflow-x-auto">
-          <LaneHeader
+    <div data-home-ground className="water-ground flex min-h-0 flex-1 flex-col">
+      <div
+        className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      >
+        {/* The rows scroll on their own; everything beneath stays put. */}
+        <div
+          data-lane-area
+          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-6 pt-4"
+        >
+          {dropMessage || lanes.message ? (
+            <p role="alert" className="pb-4 text-sm text-white/80">
+              {dropMessage ?? lanes.message}
+            </p>
+          ) : null}
+          <LaneRows
+            rows={rows}
+            orphans={orphans}
+            month={month}
             categories={lanes.value}
-            counts={laneCounts(seated)}
-            selectedId={laneId}
-            onSelect={setLaneId}
-            onCreate={() => setNewLane(true)}
-            onEdit={() => setEditingLanes(true)}
+            ringAt={ringAt}
+            onCreateLane={() => setNewLane(true)}
           />
-          <LaneRopes lanes={lanes.value.length} />
         </div>
 
-        {dropMessage || lanes.message ? (
-          <p role="alert" className="pb-4 text-sm text-white/80">
-            {dropMessage ?? lanes.message}
-          </p>
-        ) : null}
-
-        {seated.length === 0 ? (
-          <p data-empty-month className="pb-8 text-center text-base text-white">
-            {EMPTY.ground}
-          </p>
-        ) : (
-          <SplashGrid seats={shown} month={month} categories={lanes.value} ringAt={ringAt} />
-        )}
-
-        <MonthScrubber
-          months={months}
-          counts={counts}
-          scoped={month}
-          onManage={() => setSessionsOpen(true)}
-        />
-
-        <PinnedBar
-          pinned={pinned.filter((p) => !pendingDeletes.includes(p.id))}
-          categories={lanes.value}
-          month={month}
-        />
+        {/* pb-10 clears the tab bar's overlap; the bar cuts its corners into the water. */}
+        <div data-fixed-stack className="shrink-0 px-6 pb-10">
+          <MonthScrubber
+            months={months}
+            counts={counts}
+            scoped={month}
+            onManage={() => setSessionsOpen(true)}
+          />
+          <div data-lane-icon-row className="flex items-center pb-2">
+            <button
+              type="button"
+              aria-label="Edit lanes"
+              data-edit-lanes
+              onClick={() => setEditingLanes(true)}
+              className="-ml-1 flex h-9 w-9 items-center justify-center text-white"
+            >
+              <LaneIcon size={20} />
+            </button>
+          </div>
+          <PinnedBar
+            pinned={pinned.filter((p) => !pendingDeletes.includes(p.id))}
+            categories={lanes.value}
+            month={month}
+          />
+        </div>
       </div>
 
       {sessionsOpen ? (

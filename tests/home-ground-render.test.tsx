@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
-import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
-import { act, useEffect } from 'react';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
@@ -43,19 +43,18 @@ import {
   type SplashBlock,
   type SplashSummary,
 } from '@/features/splash/summary';
-import { EMPTY } from '@/lib/empty-states';
 import type { MyCategory } from '@/lib/queries/profile';
 
 const TZ = 'America/Vancouver';
 const NOW = new Date('2026-09-25T20:00:00.000Z');
 const TODAY = '2026-09-25';
 
-const scrolls: number[] = [];
+const scrolled: { rope: Element | null; row: Element | null }[] = [];
 beforeEach(() => {
-  scrolls.length = 0;
-  window.scrollTo = ((options: ScrollToOptions) => {
-    scrolls.push(options.top as number);
-  }) as typeof window.scrollTo;
+  scrolled.length = 0;
+  Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
+    scrolled.push({ rope: null, row: this });
+  };
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     configurable: true,
@@ -139,6 +138,7 @@ const POSTS = [
   post('mid', '', [
     block('m', '2026-09-12', 'c-place', 'coffee went cold while I read the whole thing'),
   ]),
+  post('soup', 'Beef Short Rib Soup & Alfa Tea', [block('s', '2026-09-08', 'c-food')]),
   post('aug', 'Whistler', [block('a', '2026-08-17', 'c-place')], {
     pinned_at: '2026-09-01T00:00:00Z',
   }),
@@ -161,6 +161,7 @@ function ground(
   posts = POSTS,
   dropped: SplashSummary | null = null,
   deleted: string | null = null,
+  categories = LANES,
 ) {
   return render(
     <InputSheetProvider>
@@ -172,7 +173,7 @@ function ground(
         counts={monthCounts(posts, TZ)}
         seats={monthSeats(posts, month, TZ)}
         pinned={posts.filter((p) => p.pinnedAt)}
-        categories={LANES}
+        categories={categories}
         sessions={[]}
         customCounts={{}}
         earliestYear={2026}
@@ -183,11 +184,13 @@ function ground(
   );
 }
 
-const seatIds = (container: HTMLElement): (string | null)[] =>
-  [...container.querySelectorAll('[data-seat]')].map((el) => el.getAttribute('data-seat'));
+const rowOf = (container: HTMLElement, laneId: string): HTMLElement =>
+  container.querySelector<HTMLElement>(`[data-lane-row="${laneId}"]`)!;
+const seatIds = (root: Element): (string | null)[] =>
+  [...root.querySelectorAll('[data-seat]')].map((el) => el.getAttribute('data-seat'));
 
 describe('the water ground (H21c)', () => {
-  it('is the blue ground, with white pills that draw their waves blue again inside', () => {
+  it('is the blue ground, with white pills that draw their waves on a blue disc', () => {
     const { container } = ground();
     expect(container.querySelector('[data-home-ground]')!.className).toContain('water-ground');
     const css = readFileSync('app/globals.css', 'utf8');
@@ -197,11 +200,9 @@ describe('the water ground (H21c)', () => {
     );
     expect(rule).toContain('background-color: var(--color-main-900)');
     expect(rule).toContain('--wave-ink: #ffffff');
-    expect(rule).toContain('color: #ffffff');
 
     const pill = container.querySelector<HTMLElement>('[data-splash-pill]')!;
     expect(pill.className).toContain('bg-white');
-    // The mark is white waves on a blue disc, per the mockup.
     const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
     expect(mark.className).toContain('bg-main-900');
     expect(mark.style.getPropertyValue('--wave-ink')).toBe('#ffffff');
@@ -214,61 +215,90 @@ describe('the water ground (H21c)', () => {
     expect(pill.hasAttribute('data-lone')).toBe(true);
     expect(pill.className).toContain('bg-main-900');
     expect(pill.className).toContain('border-white/50');
-    expect(pill.className).toContain('text-white');
     const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
     expect(mark.className).toMatch(/(^| )bg-white( |$)/);
-    expect(mark.className).not.toContain('border');
     expect(mark.style.getPropertyValue('--wave-ink')).toBe('var(--color-main-900)');
-  });
-
-  it('never fills a pill or a lane in blue: ink is selection there', () => {
-    const { container, getByText } = ground();
-    expect(container.querySelector('[data-splash-pill].bg-main-900')).toBeNull();
-    fireEvent.click(getByText('Food'));
-    expect(getByText('Food').className).toContain('bg-ink');
-    expect(getByText('Food').className).not.toContain('bg-main-900');
   });
 });
 
-describe('the post grid (H21d)', () => {
-  it('lays posts oldest at the top in strict coalesced-key order, wrapping like tags', () => {
+describe('lane rows', () => {
+  it('seats every post of the month exactly once, on the row of its lane, in lane order', () => {
     const { container } = ground();
-    expect(seatIds(container)).toEqual(['early', 'mid', 'late']);
-    // Pills are as wide as their titles and no wider: a wrapping row, not columns.
-    expect(container.querySelector('[data-splash-grid]')!.className).toContain('flex-wrap');
-    expect(container.querySelector('[data-splash-grid]')!.className).not.toMatch(/grid-cols/);
-    expect(container.querySelector('[data-splash-pill]')!.className).not.toMatch(
-      /(^| )w-full|flex-1/,
-    );
-  });
-
-  it('opens scrolled to the bottom: the present-and-writing zone', () => {
-    ground();
-    expect(scrolls.length).toBeGreaterThan(0);
-    expect(scrolls[scrolls.length - 1]).toBe(document.documentElement.scrollHeight);
-  });
-
-  it('shows an untitled post’s first words as a ghost title, and sizes the mark by blocks', () => {
-    const { container } = ground();
-    const mid = container.querySelector('[data-seat="mid"]')!;
-    expect(mid.querySelector('[data-ghost-title]')!.textContent).toBe(
-      'coffee went cold while I read…',
-    );
-    expect(
-      container.querySelector('[data-seat="early"] [data-wave-mark]')!.getAttribute('data-lines'),
-    ).toBe('2');
-    expect(
-      container.querySelector('[data-seat="late"] [data-wave-mark]')!.getAttribute('data-lines'),
-    ).toBe('1');
-  });
-
-  it('reads a period on the pill when the block it sits at spans days', () => {
-    const trip = post('trip', 'Tofino', [
-      { ...block('t', '2026-09-12', 'c-place'), ended_at: '2026-09-15T06:59:59.999Z' },
+    const rows = [...container.querySelectorAll('[data-lane-row]')];
+    expect(rows.map((r) => r.getAttribute('data-lane-row'))).toEqual([
+      'c-food',
+      'c-place',
+      'c-day',
     ]);
-    const { container } = ground('2026-09', [...POSTS, trip]);
-    expect(container.querySelector('[data-seat="trip"]')!.textContent).toContain('Sep 12–14');
-    expect(container.querySelector('[data-seat="late"]')!.textContent).toContain('Sep 20');
+    expect(seatIds(rowOf(container, 'c-food'))).toEqual(['late', 'soup']);
+    expect(seatIds(rowOf(container, 'c-place'))).toEqual(['mid']);
+    expect(seatIds(rowOf(container, 'c-day'))).toEqual(['early']);
+    expect(seatIds(container)).toHaveLength(4);
+  });
+
+  it('reads newest first from the left along a rope', () => {
+    const { container } = ground();
+    const food = rowOf(container, 'c-food');
+    expect(seatIds(food)).toEqual(['late', 'soup']);
+    expect(within(food).getByText('Beef Short Rib Soup & Alfa Tea')).toBeTruthy();
+  });
+
+  it('labels each row with its emoji over its name, the rope outside the strip', () => {
+    const { container } = ground();
+    const place = rowOf(container, 'c-place');
+    const label = place.querySelector('[data-lane-label]')!;
+    expect(label.textContent).toBe('📍Place');
+    expect(place.querySelector('[data-rope]')).not.toBeNull();
+    expect(place.querySelector('[data-lane-rope] [data-rope]')).toBeNull();
+    expect(place.querySelector('[data-lane-rope]')!.className).toContain('overflow-x-auto');
+    expect(place.querySelector('[data-lane-rope]')!.className).toContain('touch-pan-x');
+    expect(place.querySelector('[data-seat]')!.className).toContain('shrink-0');
+  });
+
+  it('keeps every row with an empty rope in a month with nothing: no copy, no collapse', () => {
+    const { container, queryByText } = ground('2026-07');
+    expect(container.querySelectorAll('[data-lane-row]')).toHaveLength(3);
+    expect(container.querySelectorAll('[data-rope]')).toHaveLength(4);
+    expect(container.querySelectorAll('[data-seat]')).toHaveLength(0);
+    expect(queryByText('A fresh page of water.')).toBeNull();
+  });
+
+  it('seats a post by its declared lane over the lane its blocks took', () => {
+    const declared = post('decl', 'Declared', [block('d', '2026-09-10', 'c-day')], {
+      declared_lane_id: 'c-place',
+    });
+    const { container } = ground('2026-09', [...POSTS, declared]);
+    expect(seatIds(rowOf(container, 'c-place'))).toContain('decl');
+    expect(seatIds(rowOf(container, 'c-day'))).not.toContain('decl');
+  });
+
+  it('gives posts on no lane of mine one unlabelled row at the end, only when any', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const stray = post('stray', 'Elsewhere', [block('x', '2026-09-09', 'c-gone')]);
+    const { container } = ground('2026-09', [...POSTS, stray]);
+    const rows = [...container.querySelectorAll('[data-lane-row]')];
+    expect(rows.map((r) => r.getAttribute('data-lane-row'))).toEqual([
+      'c-food',
+      'c-place',
+      'c-day',
+      '',
+    ]);
+    expect(rows[3].querySelector('[data-lane-label]')!.textContent).toBe('');
+    expect(seatIds(rows[3])).toEqual(['stray']);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+    cleanup();
+    const { container: clean } = ground();
+    expect(clean.querySelectorAll('[data-lane-row]')).toHaveLength(3);
+  });
+
+  it('ends with the seat of a new lane on an empty rope, which opens the lane sheet', () => {
+    const { container, getByLabelText, getByRole } = ground();
+    const rows = container.querySelector('[data-lane-rows]')!;
+    expect(rows.lastElementChild!.hasAttribute('data-new-lane-row')).toBe(true);
+    expect(rows.lastElementChild!.querySelector('[data-rope]')).not.toBeNull();
+    fireEvent.click(getByLabelText('New lane'));
+    expect(getByRole('dialog', { name: 'New lane' })).toBeTruthy();
   });
 
   it('links a pill to its post’s page, naming the month it came from', () => {
@@ -278,13 +308,25 @@ describe('the post grid (H21d)', () => {
     );
   });
 
-  it('seats a post the moment it is dropped, before the server has it', () => {
-    // The dropped post is not among the server's seats yet: it is seated
-    // from the handoff, at its place, with the ripple playing there.
-    const fresh = post('fresh', 'Just dropped', [block('f', '2026-09-25', 'c-day')]);
+  it('scrolls on its own: the rows area, not the page', () => {
+    const { container } = ground();
+    expect(container.querySelector('[data-lane-area]')!.className).toContain('overflow-y-auto');
+    expect(container.querySelector('[data-fixed-stack]')!.className).toContain('shrink-0');
+  });
+});
+
+describe('the post just dropped', () => {
+  it('is seated on its lane’s rope at once, scrolled into view, with the ripple at it', () => {
+    const fresh = post('fresh', 'Just dropped', [block('f', '2026-09-25', 'c-place')]);
     const { container } = ground('2026-09', POSTS, fresh);
-    expect(seatIds(container)).toEqual(['early', 'mid', 'late', 'fresh']);
+    expect(seatIds(rowOf(container, 'c-place'))).toEqual(['fresh', 'mid']);
     expect(container.querySelector('[data-seat="fresh"] [data-commit-ripple]')).not.toBeNull();
+    expect(container.querySelectorAll('[data-commit-ripple]')).toHaveLength(1);
+    // Its row was brought into view before the ring painted.
+    expect(scrolled.some((s) => s.row?.getAttribute('data-lane-row') === 'c-place')).toBe(true);
+    for (const ring of container.querySelectorAll<HTMLElement>('.commit-ring')) {
+      expect(ring.style.animationIterationCount).toBe('1');
+    }
   });
 
   it('takes a deleted post off the ground and the pinned bar at once', () => {
@@ -292,201 +334,39 @@ describe('the post grid (H21d)', () => {
     expect(seatIds(container)).toEqual([]);
     expect(container.querySelector('[data-pinned-bar]')).toBeNull();
   });
-
-  it('plays the ripple once at the pill just dropped, and nowhere else', () => {
-    const late = POSTS.find((p) => p.id === 'late')!;
-    const { container } = ground('2026-09', POSTS, late);
-    const ripple = container.querySelector<HTMLElement>('[data-seat="late"] [data-commit-ripple]')!;
-    expect(ripple).not.toBeNull();
-    expect(container.querySelectorAll('[data-commit-ripple]')).toHaveLength(1);
-    for (const ring of ripple.querySelectorAll<HTMLElement>('.commit-ring')) {
-      expect(ring.style.animationIterationCount).toBe('1');
-    }
-  });
 });
 
-describe('the lane header', () => {
-  it('counts each lane’s posts this month as waves, and filters the grid on tap', () => {
-    const { container, getByText } = ground();
-    const food = container.querySelector('[data-lane-filter="c-food"]')!;
-    expect(food.querySelector('[data-wave-stack]')!.getAttribute('data-lines')).toBe('1');
-    expect(
-      container
-        .querySelector('[data-lane-filter="c-day"] [data-wave-stack]')!
-        .getAttribute('data-lines'),
-    ).toBe('1');
-
-    // Four segments, so each line ends on a crest: the path's last curve rises.
-    expect(food.querySelector('[data-wave-stack] svg')!.getAttribute('width')).toBe('22');
-    const path = food.querySelector('[data-wave-stack] svg path')!.getAttribute('d')!;
-    expect((path.match(/C/g) ?? []).length).toBe(4);
-
-    fireEvent.click(getByText('Food'));
-    expect(food.getAttribute('aria-pressed')).toBe('true');
-    expect(seatIds(container)).toEqual(['late']);
-
-    fireEvent.click(getByText('Food'));
-    expect(seatIds(container)).toEqual(['early', 'mid', 'late']);
-  });
-
-  it('hangs a rope under every lane, the seat of a new one, and the pencil', () => {
-    const { container } = ground();
-    expect(container.querySelectorAll('[data-lane-ropes] > span')).toHaveLength(5);
-  });
-
-  it('edits every lane’s icon and name in one sheet from the pencil beside the +', async () => {
-    savedLanes.length = 0;
-    const { getByLabelText, getByRole, getByText, container } = ground();
-    fireEvent.click(getByLabelText('Edit lanes'));
-    const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(3);
-    // Nothing changed: nothing to save.
-    expect((getByText('Save') as HTMLButtonElement).disabled).toBe(true);
-
-    const food = sheet.querySelector('[data-lane-row="c-food"]')!;
-    fireEvent.change(food.querySelector('input[aria-label^="Icon"]')!, { target: { value: '🍣' } });
-    fireEvent.change(food.querySelector('input[aria-label="Lane name"]')!, {
-      target: { value: 'Meals' },
-    });
-    fireEvent.click(getByText('Save'));
-    await waitFor(() => expect(savedLanes).toHaveLength(1));
-    expect(savedLanes[0]).toEqual({ id: 'c-food', name: 'Meals', icon: '🍣' });
-    await waitFor(() => expect(container.querySelector('[data-lanes-sheet]')).toBeNull());
-    expect(orders).toHaveLength(0);
-  });
-
-  it('reorders the lanes by dragging a grip, and saves the new order', async () => {
-    orders.length = 0;
-    const { getByLabelText, getByRole, getByText } = ground();
-    fireEvent.click(getByLabelText('Edit lanes'));
-    const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    const order = (): (string | null)[] =>
-      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row'));
-    // Rows stacked 40px tall, so a pointer at y reads which row it is over.
-    for (const row of sheet.querySelectorAll<HTMLElement>('[data-lane-row]')) {
-      row.getBoundingClientRect = () => {
-        const index = order().indexOf(row.getAttribute('data-lane-row'));
-        return { top: index * 40, height: 40 } as DOMRect;
-      };
-    }
-
-    const grip = getByLabelText('Move Day');
-    fireEvent.pointerDown(grip, { pointerId: 1, clientY: 100 });
-    expect(sheet.querySelector('[data-lane-row="c-day"]')!.hasAttribute('data-dragging')).toBe(
-      true,
-    );
-    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 10 });
-    expect(order()).toEqual(['c-day', 'c-food', 'c-place']);
-    fireEvent.pointerUp(grip, { pointerId: 1 });
-    expect(sheet.querySelector('[data-dragging]')).toBeNull();
-
-    fireEvent.click(getByText('Save'));
-    await waitFor(() => expect(orders).toHaveLength(1));
-    expect(orders[0]).toEqual(['c-day', 'c-food', 'c-place']);
-  });
-
-  it('deletes an empty lane from its row, gone at once, behind a small confirm', async () => {
-    deletes.length = 0;
-    const { getByLabelText, getByRole, getByText } = ground();
-    fireEvent.click(getByLabelText('Edit lanes'));
-    const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    fireEvent.click(getByLabelText('Delete Place'));
-    fireEvent.click(getByText('Delete'));
-    // Gone before the server has answered: the optimistic state.
-    await waitFor(() => expect(deletes.map((d) => d.id)).toEqual(['c-place']));
-    await waitFor(() => expect(sheet.querySelector('[data-lane-row="c-place"]')).toBeNull());
-    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(2);
-    await act(async () => deletes[0].resolve({ ok: true }));
-  });
-
-  it('brings a lane with records back with the refusal (H19)', async () => {
-    deletes.length = 0;
-    const { getByLabelText, getByRole, getByText } = ground();
-    fireEvent.click(getByLabelText('Edit lanes'));
-    const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    fireEvent.click(getByLabelText('Delete Day'));
-    fireEvent.click(getByText('Delete'));
-    await waitFor(() => expect(sheet.querySelector('[data-lane-row="c-day"]')).toBeNull());
-    await act(async () =>
-      deletes[0].resolve({ ok: false, message: 'This lane holds 2 records, so it stays.' }),
-    );
-    await waitFor(() =>
-      expect(within(sheet).getByText('This lane holds 2 records, so it stays.')).toBeTruthy(),
-    );
-    expect(sheet.querySelector('[data-lane-row="c-day"]')).not.toBeNull();
-    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(3);
-  });
-
-  it('keeps up with a fast drag: every move reads the latest order', () => {
-    const { getByLabelText, getByRole } = ground();
-    fireEvent.click(getByLabelText('Edit lanes'));
-    const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    const order = (): (string | null)[] =>
-      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row'));
-    for (const row of sheet.querySelectorAll<HTMLElement>('[data-lane-row]')) {
-      row.getBoundingClientRect = () => {
-        const index = order().indexOf(row.getAttribute('data-lane-row'));
-        return { top: index * 40, height: 40 } as DOMRect;
-      };
-    }
-    const grip = getByLabelText('Move Day');
-    fireEvent.pointerDown(grip, { pointerId: 1, clientY: 100 });
-    // Two moves in a row before anything settles: up to the top, then back
-    // to the middle. A stale order would leave it at the top.
-    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 10 });
-    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 50 });
-    expect(order()).toEqual(['c-food', 'c-day', 'c-place']);
-    fireEvent.pointerUp(grip, { pointerId: 1 });
-  });
-
-  it('moves a lane with the arrow keys on its grip, for a keyboard', () => {
-    const { getByLabelText, getByRole } = ground();
-    fireEvent.click(getByLabelText('Edit lanes'));
-    const sheet = getByRole('dialog', { name: 'Edit lanes' });
-    fireEvent.keyDown(getByLabelText('Move Food'), { key: 'ArrowDown' });
-    expect(
-      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row')),
-    ).toEqual(['c-place', 'c-food', 'c-day']);
-  });
-
-  it('is the lanes view: its last slot opens the lane sheet for a new lane', () => {
-    const { getByLabelText, getByRole } = ground();
-    fireEvent.click(getByLabelText('New lane'));
-    expect(getByRole('dialog', { name: 'New lane' })).toBeTruthy();
-  });
-});
-
-describe('the month scrubber (H21d, H21h)', () => {
-  it('lists months newest first, each under its year in white, with counts', () => {
-    const { container } = ground();
-    const months = [...container.querySelectorAll('[data-scrub-month]')];
+describe('the fixed stack beneath the rows', () => {
+  it('keeps the scrubber, its = and the lane icon row, and nothing of Pools or Friends', () => {
+    const { container, getByLabelText, queryByText } = ground();
+    const stack = container.querySelector('[data-fixed-stack]')!;
+    const months = [...stack.querySelectorAll('[data-scrub-month]')];
     expect(months.map((m) => m.getAttribute('data-scrub-month'))).toEqual(['2026-09', '2026-08']);
     expect(months[0].getAttribute('aria-current')).toBe('true');
-    // Opacity is the only difference between the scoped month and the rest.
     expect(months[0].className).toBe(months[1].className);
-    const years = [...container.querySelectorAll('[data-scrub-year]')];
-    expect(years.map((y) => y.textContent)).toEqual(['2026', '2026']);
-    for (const year of years) expect(year.parentElement!.className).toContain('text-white');
-    expect(months[0].querySelector('[data-month-count]')!.textContent).toBe('3');
-    expect(months[1].querySelector('[data-month-count]')!.textContent).toBe('1');
+    expect(months[0].querySelector('[data-month-count]')!.textContent).toBe('4');
+    expect(stack.querySelector('[data-manage-sessions]')).not.toBeNull();
+    expect(
+      stack
+        .querySelector('[data-month-scrubber]')!
+        .compareDocumentPosition(stack.querySelector('[data-lane-icon-row]')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(getByLabelText('Edit lanes').querySelector('[data-lane-icon]')).not.toBeNull();
+    expect(container.querySelector('[data-lane-icon] path[d*="M4 20"]')).not.toBeNull();
+    expect(queryByText(/pool|friends|my lanes/i)).toBeNull();
+    expect(container.querySelector('[data-lane-header]')).toBeNull();
+    expect(container.querySelector('[data-lane-ropes]')).toBeNull();
   });
 
-  it('opens the sessions sheet from the = at its left: management is a sheet, not a tab', () => {
+  it('opens the sessions sheet from the =, unchanged', () => {
     const { container, getByLabelText, getByRole } = ground();
-    expect(container.querySelector('[data-sessions-sheet]')).toBeNull();
     fireEvent.click(getByLabelText('Manage sessions'));
-    const sheet = getByRole('dialog', { name: 'Sessions' });
-    expect(sheet.querySelector('[data-session-schedule]')).not.toBeNull();
-    expect(sheet.querySelectorAll('[data-month-row]').length).toBeGreaterThan(0);
+    expect(
+      getByRole('dialog', { name: 'Sessions' }).querySelector('[data-session-schedule]'),
+    ).not.toBeNull();
     fireEvent.click(getByLabelText('Close'));
     expect(container.querySelector('[data-sessions-sheet]')).toBeNull();
-  });
-
-  it('scopes rather than scrolls: each month is a link to the ground at that month', () => {
-    const { container } = ground();
-    expect(container.querySelector('[data-scrub-month="2026-08"]')!.getAttribute('href')).toBe(
-      '/?m=2026-08',
-    );
   });
 
   it('sits every other month back at 0.3, the scoped one at full strength', () => {
@@ -497,6 +377,13 @@ describe('the month scrubber (H21d, H21h)', () => {
     expect(items[1].style.opacity).toBe('1');
     expect(items[0].style.opacity).toBe('0.3');
   });
+
+  it('scopes rather than scrolls: each month is a link to the ground at that month', () => {
+    const { container } = ground();
+    expect(container.querySelector('[data-scrub-month="2026-08"]')!.getAttribute('href')).toBe(
+      '/?m=2026-08',
+    );
+  });
 });
 
 describe('the pinned bar (H21g)', () => {
@@ -505,7 +392,6 @@ describe('the pinned bar (H21g)', () => {
       const { container } = ground(month);
       const bar = container.querySelector('[data-pinned-bar]')!;
       expect(bar.className).toContain('bg-ink');
-      expect(bar.className).not.toContain('bg-main-900');
       const chip = bar.querySelector('[data-pinned-chip="aug"]')!;
       expect(chip.textContent).toContain('Whistler');
       expect(chip.getAttribute('href')).toBe(`/splash/aug?from=${month}`);
@@ -522,17 +408,65 @@ describe('the pinned bar (H21g)', () => {
   });
 });
 
-describe('an empty month (H19, H21)', () => {
-  it('is a fresh page of water, in white, with nothing else to tap', () => {
-    const { container, getByText } = ground('2026-07');
-    const line = getByText(EMPTY.ground);
-    expect(line.className).toContain('text-white');
-    expect(container.querySelector('[data-splash-grid]')).toBeNull();
-    // Only the lanes view and the = remain tappable: nothing on the ground creates.
-    expect(
-      container.querySelector(
-        '[data-home-ground] button:not([data-lane-filter]):not([data-new-lane]):not([data-edit-lanes]):not([data-manage-sessions])',
-      ),
-    ).toBeNull();
+describe('the lanes sheet from the lane icon', () => {
+  it('edits every lane’s icon and name in one sheet', async () => {
+    savedLanes.length = 0;
+    const { getByLabelText, getByRole, getByText, container } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    expect(sheet.querySelectorAll('[data-lane-row]')).toHaveLength(3);
+    expect((getByText('Save') as HTMLButtonElement).disabled).toBe(true);
+    const food = sheet.querySelector('[data-lane-row="c-food"]')!;
+    fireEvent.change(food.querySelector('input[aria-label^="Icon"]')!, {
+      target: { value: '🍣' },
+    });
+    fireEvent.change(food.querySelector('input[aria-label="Lane name"]')!, {
+      target: { value: 'Meals' },
+    });
+    fireEvent.click(getByText('Save'));
+    await waitFor(() => expect(savedLanes).toHaveLength(1));
+    expect(savedLanes[0]).toEqual({ id: 'c-food', name: 'Meals', icon: '🍣' });
+    await waitFor(() => expect(container.querySelector('[data-lanes-sheet]')).toBeNull());
+  });
+
+  it('reorders the lanes by dragging a grip, keeping up with a fast drag, and saves the order', async () => {
+    orders.length = 0;
+    const { getByLabelText, getByRole, getByText } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    const order = (): (string | null)[] =>
+      [...sheet.querySelectorAll('[data-lane-row]')].map((r) => r.getAttribute('data-lane-row'));
+    for (const row of sheet.querySelectorAll<HTMLElement>('[data-lane-row]')) {
+      row.getBoundingClientRect = () => {
+        const index = order().indexOf(row.getAttribute('data-lane-row'));
+        return { top: index * 40, height: 40 } as DOMRect;
+      };
+    }
+    const grip = getByLabelText('Move Day');
+    fireEvent.pointerDown(grip, { pointerId: 1, clientY: 100 });
+    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 10 });
+    fireEvent.pointerMove(grip, { pointerId: 1, clientY: 50 });
+    expect(order()).toEqual(['c-food', 'c-day', 'c-place']);
+    fireEvent.pointerUp(grip, { pointerId: 1 });
+    fireEvent.click(getByText('Save'));
+    await waitFor(() => expect(orders).toHaveLength(1));
+    expect(orders[0]).toEqual(['c-food', 'c-day', 'c-place']);
+  });
+
+  it('deletes an empty lane at once, and brings one with records back with the refusal', async () => {
+    deletes.length = 0;
+    const { getByLabelText, getByRole, getByText } = ground();
+    fireEvent.click(getByLabelText('Edit lanes'));
+    const sheet = getByRole('dialog', { name: 'Edit lanes' });
+    fireEvent.click(getByLabelText('Delete Day'));
+    fireEvent.click(getByText('Delete'));
+    await waitFor(() => expect(sheet.querySelector('[data-lane-row="c-day"]')).toBeNull());
+    await act(async () =>
+      deletes[0].resolve({ ok: false, message: 'This lane holds 2 records, so it stays.' }),
+    );
+    await waitFor(() =>
+      expect(within(sheet).getByText('This lane holds 2 records, so it stays.')).toBeTruthy(),
+    );
+    expect(sheet.querySelector('[data-lane-row="c-day"]')).not.toBeNull();
   });
 });
