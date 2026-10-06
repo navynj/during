@@ -16,8 +16,10 @@ export type PillGround = 'water' | 'page';
  * where it carries content in the inverted channel (H21c); a quiet surface on
  * a white page, the same anatomy.
  *
- * A lone block standing in as a post (H21a) is the inverse: a blue pill with
- * a white/50 outer border, white text, and the mark a white disc with blue waves.
+ * A post of one — a lone block standing in as a post (H21a), or a post that
+ * is only a title with no block yet — is the inverse: a blue pill with a
+ * white/50 outer border, white text, and the mark a white disc with blue
+ * waves. Both are the same weight on the rope: a single thing, not a bundle.
  * An untitled post shows its first block's first words as a ghost title.
  */
 export function SplashPill({
@@ -39,7 +41,7 @@ export function SplashPill({
 }) {
   const lane = categories.find((c) => c.id === representativeLane(splash)) ?? null;
   const title = splash.title.trim();
-  const lone = splash.orphan;
+  const lone = splash.orphan || splash.count === 0;
   const surface = lone
     ? 'bg-main-900 text-white border border-white/50'
     : ground === 'water'

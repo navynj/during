@@ -219,6 +219,20 @@ describe('the water ground (H21c)', () => {
     expect(mark.className).toMatch(/(^| )bg-white( |$)/);
     expect(mark.style.getPropertyValue('--wave-ink')).toBe('var(--color-main-900)');
   });
+
+  it('draws a post that is only a title, with no block yet, as the inverse pill too', () => {
+    const bare = post('s-bare', 'Just a title', [], {
+      declared_start: '2026-09-16',
+      declared_lane_id: 'c-day',
+    });
+    const { container } = ground('2026-09', [...POSTS, bare]);
+    const pill = container.querySelector<HTMLElement>('[data-splash-pill="s-bare"]')!;
+    expect(pill.hasAttribute('data-lone')).toBe(true);
+    expect(pill.className).toContain('bg-main-900');
+    expect(pill.className).toContain('border-white/50');
+    const mark = pill.querySelector<HTMLElement>('[data-wave-mark]')!;
+    expect(mark.className).toMatch(/(^| )bg-white( |$)/);
+  });
 });
 
 describe('lane rows', () => {
