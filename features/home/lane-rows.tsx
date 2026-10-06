@@ -106,7 +106,12 @@ export function LaneRows({
             <Plus aria-hidden size={16} />
           </button>
         </div>
-        <Rope />
+        {/* Positioned like a lane's rope: in its own column, to the screen's
+            edge — never against the rows area, where it would read as one
+            line across the water at half its height. */}
+        <div className="relative -mr-6 h-2 min-w-0">
+          <Rope />
+        </div>
       </div>
     </div>
   );
