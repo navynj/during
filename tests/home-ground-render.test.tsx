@@ -251,7 +251,6 @@ describe('lane rows', () => {
     expect(place.querySelector('[data-rope]')).not.toBeNull();
     expect(place.querySelector('[data-lane-rope] [data-rope]')).toBeNull();
     expect(place.querySelector('[data-lane-rope]')!.className).toContain('overflow-x-auto');
-    expect(place.querySelector('[data-lane-rope]')!.className).toContain('touch-pan-x');
     expect(place.querySelector('[data-seat]')!.className).toContain('shrink-0');
   });
 
@@ -308,10 +307,46 @@ describe('lane rows', () => {
     );
   });
 
-  it('scrolls on its own: the rows area, not the page', () => {
-    const { container } = ground();
-    expect(container.querySelector('[data-lane-area]')!.className).toContain('overflow-y-auto');
+  it('scrolls on its own with twelve lanes: the rows area is the scroll container, the + inside it', () => {
+    const twelve = Array.from({ length: 12 }, (_, i) => lane(`c-${i}`, `Lane ${i}`, '🌊', i));
+    const { container } = ground('2026-09', [], null, null, twelve);
+    const area = container.querySelector<HTMLElement>('[data-lane-area]')!;
+    expect(area.className).toContain('overflow-y-auto');
+    expect(area.className).toContain('min-h-0');
+    expect(area.className).toContain('flex-1');
+    // Every flex ancestor up to the ground lets it shrink, so the overflow lands here.
+    for (
+      let el = area.parentElement;
+      el && !el.hasAttribute('data-home-ground');
+      el = el.parentElement
+    ) {
+      expect(el.className).toContain('min-h-0');
+    }
+    expect(container.querySelector('[data-home-ground]')!.className).toContain('min-h-0');
+    expect(container.querySelectorAll('[data-lane-row]')).toHaveLength(12);
+    expect(area.querySelector('[data-new-lane-row]')).not.toBeNull();
+    expect(area.className).toMatch(/\bpb-/);
     expect(container.querySelector('[data-fixed-stack]')!.className).toContain('shrink-0');
+    // A vertical drag from a rope scrolls the rows: the rope claims no touch axis.
+    for (const rope of container.querySelectorAll('[data-lane-rope]')) {
+      expect(rope.className).not.toMatch(/touch-pan/);
+      expect(rope.className).toContain('overscroll-x-contain');
+    }
+  });
+
+  it('fades its bottom edge into the water while there is more below, and not at the end', async () => {
+    const { container } = ground();
+    const area = container.querySelector<HTMLElement>('[data-lane-area]')!;
+    const fade = container.querySelector<HTMLElement>('[data-lane-fade]')!;
+    expect(fade.className).toContain('h-8');
+    Object.defineProperty(area, 'scrollHeight', { configurable: true, value: 1200 });
+    Object.defineProperty(area, 'clientHeight', { configurable: true, value: 500 });
+    area.scrollTop = 0;
+    fireEvent.scroll(area);
+    await waitFor(() => expect(fade.className).toContain('opacity-100'));
+    area.scrollTop = 700;
+    fireEvent.scroll(area);
+    await waitFor(() => expect(fade.className).toContain('opacity-0'));
   });
 });
 

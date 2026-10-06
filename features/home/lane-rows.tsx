@@ -141,9 +141,11 @@ function LaneRow({
           scrolls, sideways and on its own. */}
       <div className="relative -mr-6 min-w-0">
         <Rope />
+        {/* Default touch-action: a vertical drag that begins on a pill or a
+            rope scrolls the rows area; a horizontal one scrolls this rope only. */}
         <ol
           data-lane-rope
-          className="no-scrollbar relative flex w-full touch-pan-x gap-3 overflow-x-auto overscroll-x-contain py-1 pr-6 pl-1"
+          className="no-scrollbar relative flex w-full gap-3 overflow-x-auto overscroll-x-contain py-1 pr-6 pl-1"
         >
           {seats.map(({ splash, span }) => {
             const ring = ringAt === splash.id;

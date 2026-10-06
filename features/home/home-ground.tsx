@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { CategorySheet } from '@/features/lanes/category-sheet';
@@ -104,10 +104,7 @@ export function HomeGround({
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
         {/* The rows scroll on their own; everything beneath stays put. */}
-        <div
-          data-lane-area
-          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-6 pt-4"
-        >
+        <LaneArea>
           {dropMessage || lanes.message ? (
             <p role="alert" className="pb-4 text-sm text-white/80">
               {dropMessage ?? lanes.message}
@@ -121,7 +118,7 @@ export function HomeGround({
             ringAt={ringAt}
             onCreateLane={() => setNewLane(true)}
           />
-        </div>
+        </LaneArea>
 
         {/* pb-10 clears the tab bar's overlap; the bar cuts its corners into the water. */}
         <div data-fixed-stack className="shrink-0 px-6 pb-10">
@@ -173,6 +170,62 @@ export function HomeGround({
           onClose={() => setEditingLanes(false)}
         />
       ) : null}
+    </div>
+  );
+}
+
+/** The depth fade at the rows area's bottom edge. */
+const FADE_HEIGHT = 'h-8';
+
+/**
+ * The rows' scroll container (min-h-0 and flex-1 all the way down from the
+ * ground's fixed height, so this is where the overflow lands), with a fade
+ * into the water at its bottom edge while there is more below — the cut-off
+ * row reads as depth, not clipping — gone once scrolled to the end.
+ */
+function LaneArea({ children }: { children: ReactNode }) {
+  const area = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+
+  const measure = (): void => {
+    const el = area.current;
+    if (!el) return;
+    setMore(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  };
+
+  // Measured once laid out, and again whenever the area or its rows resize.
+  useEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    const frame = window.requestAnimationFrame(measure);
+    if (typeof ResizeObserver === 'undefined') return () => window.cancelAnimationFrame(frame);
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    for (const child of el.children) observer.observe(child);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div
+        ref={area}
+        data-lane-area
+        data-more={more ? '' : undefined}
+        onScroll={measure}
+        className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-6 pt-4 pb-6"
+      >
+        {children}
+      </div>
+      <div
+        aria-hidden
+        data-lane-fade
+        className={`pointer-events-none absolute inset-x-0 bottom-0 ${FADE_HEIGHT} bg-gradient-to-b from-transparent to-[#0507c9] transition-opacity duration-200 motion-reduce:transition-none ${
+          more ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
     </div>
   );
 }
