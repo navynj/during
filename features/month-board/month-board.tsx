@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, PencilRuler, Share } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Move, Share } from 'lucide-react';
 
 import { AXIS_LOCK_PX } from '@/components/ui/use-axis-lock';
 import { usePrefersReducedMotion } from '@/components/ui/waves/use-reduced-motion';
@@ -493,7 +493,7 @@ export function MonthBoard({
             onClick={onEditMode}
             className={`flex h-8 w-8 items-center justify-center rounded-full lg:hidden ${editMode ? 'text-main-900 bg-white' : ''}`}
           >
-            <PencilRuler aria-hidden size={16} />
+            <Move aria-hidden size={16} />
           </button>
         ) : null}
         <div
