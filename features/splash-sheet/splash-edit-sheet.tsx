@@ -22,8 +22,8 @@ const SETTLE_MS = 2500;
 /**
  * The compose sheet in edit mode (review), from the pencil on the top card
  * or a splash's page: title, icon, dates, lane and Audience for my own
- * record; title, icon and dates for my pool record (its pool fixed); title and
- * icon for a joint splash. Ripples are edited on the splash's page, not
+ * record; title, icon and dates for my pool record (its pool fixed) and for a
+ * joint splash (H74). Ripples are edited on the splash's page, not
  * here. Opened from a pool, its lanes are that pool's with Together; from
  * Home, mine (0022, edit-lanes.tsx). Save shows the change at once
  * everywhere the splash is drawn — a conversion included — and the save runs
@@ -190,14 +190,14 @@ function EditForm({
   const changed =
     title.trim() !== initial.title ||
     (icon || null) !== initial.icon ||
-    (!joint && !sameAnnotation(annotation, initial.annotation)) ||
+    !sameAnnotation(annotation, initial.annotation) ||
     lanes.changed;
   const rangeOk = !annotation || annotationVerdict(annotation) === 'ok';
 
   /** The splash's days as edited; unchanged, or removed, they stay as they were. */
   function dates(): Pick<Edit, 'declaredStart' | 'declaredEnd'> {
     const a = annotation;
-    if (joint || !a || sameAnnotation(a, initial.annotation)) {
+    if (!a || sameAnnotation(a, initial.annotation)) {
       return { declaredStart: initial.declaredStart, declaredEnd: initial.declaredEnd };
     }
     return {
@@ -245,22 +245,23 @@ function EditForm({
 
       {/* No description here (H48): it is written on the splash's page, from its `…`. */}
 
+      <div data-edit-date>
+        <AnnotationControl
+          annotation={annotation}
+          today={today}
+          onChange={setAnnotation}
+          // A splash's own days have no clock (H24).
+          clock={false}
+          label="+ Add Date"
+        />
+      </div>
+
       {joint ? (
         <p className="text-pool-500 text-xs">
-          A joint splash belongs to {poolName}: its title and icon are everyone&apos;s to edit.
+          A joint splash belongs to {poolName}: its title, icon and dates are everyone&apos;s to
+          edit.
         </p>
-      ) : (
-        <div data-edit-date>
-          <AnnotationControl
-            annotation={annotation}
-            today={today}
-            onChange={setAnnotation}
-            // A splash's own days have no clock (H24).
-            clock={false}
-            label="+ Add Date"
-          />
-        </div>
-      )}
+      ) : null}
 
       {lanes.node}
 

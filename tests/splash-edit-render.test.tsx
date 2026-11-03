@@ -132,7 +132,7 @@ function Probe() {
 }
 
 describe('editing a joint record (review)', () => {
-  it('offers title and icon only, saves them, and shows them at once', async () => {
+  it('offers title, icon and dates (H74), saves them, and shows them at once', async () => {
     const view = render(
       <InputSheetProvider>
         <SplashEditSheet
@@ -152,8 +152,8 @@ describe('editing a joint record (review)', () => {
     await waitFor(() =>
       expect(view.container.querySelector('[data-edit-form="joint"]')).not.toBeNull(),
     );
-    // No dates, no lane, no audience on a joint splash.
-    expect(view.container.querySelector('[data-edit-date]')).toBeNull();
+    // Its dates are any member's (H74); no lane of mine, no audience.
+    expect(view.container.querySelector('[data-edit-date]')).not.toBeNull();
     expect(view.container.querySelector('[data-audience-chip]')).toBeNull();
     const save = view.container.querySelector('[data-edit-save]') as HTMLButtonElement;
     expect(save.disabled).toBe(true);

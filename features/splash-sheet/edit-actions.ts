@@ -8,7 +8,7 @@ import type { Annotation } from '@/features/input-sheet/draft';
 import { signPoolPhotos } from '@/lib/avatars';
 import { setPlacement, setPlacementTogether } from '@/features/pool/actions';
 import { getJointInvitees, getPlacementPicks } from '@/lib/queries/pools';
-import { saveHeader } from '@/features/splash/header';
+import { refuseRange, saveHeader } from '@/features/splash/header';
 import { createClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/queries/profile';
 import { isCutOff, writeRefusal } from '@/lib/supabase/fetch';
@@ -23,7 +23,7 @@ export type SplashEditState =
       id: string;
       /**
        * mine: everything; own: my pool record (title, icon, dates; its pool
-       * fixed); joint: title and icon; theirs: someone's record I wrote on in
+       * fixed); joint: title, icon and dates; theirs: someone's record I wrote on in
        * a pool, only where it shows on my Home (H45).
        */
       kind: 'mine' | 'own' | 'joint' | 'theirs';
@@ -314,9 +314,9 @@ const Edit = z.object({
 /**
  * Saves the edit sheet. Mine: the header as the page edits it, then each
  * pool switch that changed. Just mine: title, icon and dates; its lane stays
- * none and its pool stays its own (0014). Joint: title and icon, by any
- * current member — RLS holds that, and the rest of a joint splash is the
- * pool's (H23).
+ * none and its pool stays its own (0014). Joint: title, icon and dates, by
+ * any current member — RLS holds that, and the rest of a joint splash is the
+ * pool's (H23, H74).
  */
 export async function saveSplashEdit(
   input: z.input<typeof Edit>,
@@ -333,12 +333,19 @@ async function saveSplashEditWork(
   const edit = parsed.data;
 
   if (edit.kind === 'joint') {
+    const refusedRange = refuseRange(edit);
+    if (refusedRange) return { ok: false, message: refusedRange };
     const supabase = await createClient();
     const { error } = await supabase
       .from('splashes')
       .update({
         title: edit.title,
         icon: edit.icon || null,
+        // Its days are any member's to move, as its title is (H74); none
+        // sent leaves them as they are (H24).
+        ...(edit.declaredStart
+          ? { declared_start: edit.declaredStart, declared_end: edit.declaredEnd }
+          : {}),
         ...(edit.description !== undefined ? { description: edit.description || null } : {}),
       })
       .eq('id', edit.id);

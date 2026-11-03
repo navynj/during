@@ -185,10 +185,10 @@ describe('a pool’s splash on Home’s page (review)', () => {
     expect(container.querySelector('[data-back-chip]')).toBeNull();
   });
 
-  it('lets a member edit a joint splash’s title, not its dates or lane, and hides delete while others wrote in it', () => {
+  it('lets a member edit a joint splash’s title and dates (H74), not its lane, and hides delete while others wrote in it', () => {
     const { container, queryByLabelText, getByLabelText } = page();
     expect(getByLabelText('Edit the title')).toBeTruthy();
-    expect(queryByLabelText('Edit the declared date')).toBeNull();
+    expect(queryByLabelText('Edit the declared date')).not.toBeNull();
     expect(queryByLabelText('Edit the declared lane')).toBeNull();
     fireEvent.click(getByLabelText('More'));
     expect(container.querySelector('[data-header-menu]')!.textContent).not.toContain('Delete');

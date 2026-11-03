@@ -59,8 +59,8 @@ export function SplashHeader({
   audience?: ReactNode;
   /**
    * What may be edited in place (review): all of it on my own splash; the
-   * title and icon on a joint splash (any current member); nothing on
-   * someone else's.
+   * title, icon and dates on a joint splash (any current member, H74);
+   * nothing on someone else's.
    */
   editLevel?: 'all' | 'title' | 'none';
   canPin?: boolean;
@@ -330,7 +330,7 @@ export function SplashHeader({
       </span>
 
       {/* The range: declared (its own to edit), else derived from the blocks. */}
-      {editLevel !== 'all' ? (
+      {editLevel === 'none' ? (
         displayRange ? (
           <span data-range className="text-pool-500 text-xs tabular-nums">
             {formatRange(displayRange)}
