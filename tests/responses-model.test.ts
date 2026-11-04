@@ -113,7 +113,7 @@ describe('the unseen dot (H25)', () => {
 });
 
 describe('one pool’s thread (0053)', () => {
-  it('keeps that pool’s responses and the owner’s from no pool, never another pool’s', () => {
+  it('keeps that pool’s replies only — the owner’s from no pool are to the owner alone (H) — and its reactions with the owner’s', () => {
     const value = {
       reactions: [
         { ...reaction('r1', 'u-a', '❤️', '01'), thread_pool_id: 'p-a' },
@@ -128,7 +128,7 @@ describe('one pool’s thread (0053)', () => {
     };
     const a = inThread(value, 'p-a');
     expect(a.reactions.map((r) => r.user_id)).toEqual(['u-a', ME]);
-    expect(a.replies.map((r) => r.id)).toEqual(['in-a', 'owner']);
+    expect(a.replies.map((r) => r.id)).toEqual(['in-a']);
     expect(inThread(value, null)).toBe(value);
   });
 });

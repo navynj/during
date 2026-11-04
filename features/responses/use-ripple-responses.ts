@@ -53,7 +53,7 @@ export function useRippleResponses(
 
   function handlers(rippleId: string): ReplyHandlers {
     return {
-      reply: (body) => {
+      reply: (body, to = pool) => {
         if (!me) return;
         // Minted here, so the reply on screen is the row that lands.
         const id = crypto.randomUUID();
@@ -66,11 +66,11 @@ export function useRippleResponses(
           edited_at: null,
           hidden: false,
           former: false,
-          thread_pool_id: pool,
+          thread_pool_id: to,
         };
         change(
           (current) => replies(current, (rows) => [...rows, row]),
-          () => addReply({ id, rippleId, body, poolId: pool }),
+          () => addReply({ id, rippleId, body, poolId: to }),
         );
       },
       edit: (id, body) =>

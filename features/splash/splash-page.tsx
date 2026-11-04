@@ -18,7 +18,7 @@ import { offerInstall } from '@/features/install/install-state';
 import { usePeople } from '@/features/people/people-provider';
 import { SplashAuthors } from './splash-authors';
 import { inThread, latestFromOthers, type RippleResponsesValue } from '@/features/responses/model';
-import { RippleResponses } from '@/features/responses/ripple-responses';
+import { RippleResponses, type ResponsesMode } from '@/features/responses/ripple-responses';
 import { ThreadLabel } from '@/features/responses/thread-label';
 import { isUnseen, rememberSeen, useSeenBefore } from '@/features/responses/seen';
 import { useOpenedAt, useRippleResponses } from '@/features/responses/use-ripple-responses';
@@ -463,6 +463,20 @@ export function SplashPage({
     !answeredSeen.includes(block.id) &&
     isUnseen(fromOthers[block.id], seenBefore);
 
+  // Where each Reply writes and opens (H): a pool's view writes in that
+  // pool; my record's All tab writes to me alone above, and to each pool
+  // at the end of its run; a record with no tabs, as it always has.
+  const responsesMode: ResponsesMode =
+    shownPool !== null
+      ? { kind: 'pool' }
+      : threads.length > 0 && owner
+        ? {
+            kind: 'all',
+            owner,
+            pools: Object.fromEntries(threads.map((t) => [t.poolId, t.label])),
+          }
+        : { kind: 'plain' };
+
   /** A block's body, the same in both layouts: read, edited, deleted alike. */
   function entryBody(block: RippleWithSplash): ReactNode {
     // On All, someone else's ripple says which pool it was written in (H75).
@@ -499,7 +513,7 @@ export function SplashPage({
               canRespond={false}
               onReact={(emoji) => answered.react(block.id, emoji)}
               on={answered.handlers(block.id)}
-              labelOf={labelOf}
+              mode={responsesMode}
             />
           </>
         ) : (
@@ -538,7 +552,7 @@ export function SplashPage({
                 canRespond={respondable && !page.lockedIds.includes(block.id)}
                 onReact={(emoji) => answered.react(block.id, emoji)}
                 on={answered.handlers(block.id)}
-                labelOf={labelOf}
+                mode={responsesMode}
               />
             </div>
           </>

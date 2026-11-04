@@ -40,15 +40,20 @@ export type ReplyRow = {
 };
 
 /**
- * One pool's thread (0053): its responses and the owner's from no pool. A
- * pool shows only its own; the owner reads another pool's only in that
- * pool's tab. Null: no pool to narrow to, everything readable shows.
+ * One pool's thread (0053): its replies only — the owner's from no pool are
+ * to the owner alone and never show in a pool (H) — and its reactions with
+ * the owner's from no pool, as before (reactions are not part of H). The
+ * owner reads another pool's only in that pool's tab. Null: no pool to
+ * narrow to, everything readable shows.
  */
 export function inThread(value: RippleResponsesValue, pool: string | null): RippleResponsesValue {
   if (pool === null) return value;
   const ours = (row: { thread_pool_id: string | null }): boolean =>
     row.thread_pool_id === null || row.thread_pool_id === pool;
-  return { reactions: value.reactions.filter(ours), replies: value.replies.filter(ours) };
+  return {
+    reactions: value.reactions.filter(ours),
+    replies: value.replies.filter((row) => row.thread_pool_id === pool),
+  };
 }
 
 /** On the owner's own Home card: whose record it is, and each pool's name. */

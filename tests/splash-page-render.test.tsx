@@ -798,42 +798,154 @@ describe('the pool tabs and All’s labels (H75)', () => {
     expect(view({ threads: [] }).container.querySelector('[data-origin-tags]')).not.toBeNull();
   });
 
-  it('on All, labels someone else’s ripple and each run of a pool’s replies, once per run', () => {
-    const { container } = view();
+  /** The page as its owner reads it (a1), so its All tab knows whose words are whose. */
+  const asOwner = (over: Partial<Parameters<typeof SplashPage>[0]> = {}) => {
+    const rendered = view(over);
+    rendered.rerender(
+      <PeopleProvider me="a1" people={{ a1: { name: 'Yoonji', photo: null } }}>
+        <InputSheetProvider>
+          <Deleted />
+          <SplashPage
+            splash={summarizeSplash(board, [...blocks, ...theirs], TZ, NOW)}
+            blocks={[...blocks, ...theirs]}
+            photos={{}}
+            lockedIds={[]}
+            categories={LANES}
+            timeZone={TZ}
+            today={TODAY}
+            threads={threads}
+            initialsOf={{ 'u-mina': 'MI' }}
+            respondable
+            responses={{
+              reactions: [],
+              replies: [
+                reply('r1', 'first', 'p-pan', 1),
+                reply('r2', 'first', 'p-pan', 2),
+                reply('r3', 'first', 'p-crew', 3),
+                reply('r4', 'first', null, 4),
+                reply('r5', 'first', 'p-pan', 5),
+              ],
+            }}
+            {...over}
+          />
+        </InputSheetProvider>
+      </PeopleProvider>,
+    );
+    return rendered;
+  };
+  const under = (container: HTMLElement, ripple: string) =>
+    container.querySelector(`[data-ripple-responses="${ripple}"]`) as HTMLElement;
+  const write = (root: HTMLElement, text: string) => {
+    const field = root.querySelector('[data-reply-field] textarea') as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: text } });
+    fireEvent.click(
+      within(root.querySelector('[data-reply-field]') as HTMLElement).getByText('Save'),
+    );
+  };
+
+  it('on All, labels someone else’s ripple; mine to me alone first under Only me, then each pool’s run (H)', () => {
+    const { container } = asOwner();
     expect(
       container.querySelector('[data-block-entry="side-a"] [data-ripple-thread-label]')!
         .textContent,
     ).toBe('in Crew');
-    // The author's own ripples carry none.
     expect(
       container.querySelector('[data-block-entry="first"] [data-ripple-thread-label]'),
     ).toBeNull();
-    const list = container.querySelector('[data-ripple-responses="first"] ol')!;
-    const read = [...list.children].map((li) =>
-      li.hasAttribute('data-reply-thread-label')
-        ? `[${li.textContent}]`
-        : li.getAttribute('data-reply'),
+    const groups = [...under(container, 'first').querySelectorAll('[data-reply-group]')].map(
+      (g) =>
+        `${g.querySelector('[data-reply-thread-label]')!.textContent}: ${[
+          ...g.querySelectorAll('[data-reply]'),
+        ]
+          .map((r) => r.getAttribute('data-reply'))
+          .join(',')}`,
     );
-    // Pancake's two under one label; the owner's from no pool unlabelled.
-    expect(read).toEqual([
-      '[in Pancake]',
-      'r1',
-      'r2',
-      '[in Crew]',
-      'r3',
-      'r4',
-      '[in Pancake]',
-      'r5',
-    ]);
+    expect(groups).toEqual(['Only me: r4', 'in Pancake: r1,r2,r5', 'in Crew: r3']);
     // The card stack's own text style.
-    expect(list.querySelector('[data-card-thread-label]')!.className).toBe(
+    expect(under(container, 'first').querySelector('[data-card-thread-label]')!.className).toBe(
       'text-pool-500 text-[10px] font-medium',
     );
+    // Each pool's run ends in its own Reply; Only me's does not.
+    expect(
+      [...under(container, 'first').querySelectorAll('[data-reply-again]')].map((b) =>
+        b.getAttribute('data-reply-again'),
+      ),
+    ).toEqual(['p-pan', 'p-crew']);
   });
 
-  it('hides the labels in a pool’s own tab', () => {
-    const { container, getByRole } = view();
+  it('on All, the Reply under the ripple writes to me alone and opens above every run (H)', async () => {
+    const { container } = asOwner();
+    const root = under(container, 'first');
+    fireEvent.click(root.querySelector('[data-reply-toggle="direct"]')!);
+    const field = root.querySelector('[data-reply-field]')!;
+    expect(
+      field.compareDocumentPosition(root.querySelector('[data-reply-group]')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    write(root, 'just for me');
+    await waitFor(() => expect(calls.some((c) => c.name === 'addReply')).toBe(true));
+    expect(calls.find((c) => c.name === 'addReply')!.args[0]).toMatchObject({
+      rippleId: 'first',
+      body: 'just for me',
+      poolId: null,
+    });
+  });
+
+  it('on All, a pool’s Reply writes to that pool and opens at the end of its run (H)', async () => {
+    const { container } = asOwner();
+    const group = under(container, 'first').querySelector('[data-reply-group="p-crew"]')!;
+    fireEvent.click(group.querySelector('[data-reply-again="p-crew"]')!);
+    const field = group.querySelector('[data-reply-field]')!;
+    expect(group.lastElementChild).toBe(field);
+    write(group as HTMLElement, 'to Crew');
+    await waitFor(() => expect(calls.some((c) => c.name === 'addReply')).toBe(true));
+    expect(calls.find((c) => c.name === 'addReply')!.args[0]).toMatchObject({
+      body: 'to Crew',
+      poolId: 'p-crew',
+    });
+  });
+
+  it('in a pool’s tab with its replies, the Reply under the ripple is gone; the one at the end writes there (H)', async () => {
+    const { container, getByRole } = asOwner();
     fireEvent.click(getByRole('tab', { name: 'Pancake · 2' }));
+    const root = under(container, 'first');
+    expect(root.querySelector('[data-reply-toggle]')).toBeNull();
+    // The chips keep the row's right end.
+    expect(root.querySelector('[data-reactions] > span.ml-auto')).not.toBeNull();
+    fireEvent.click(root.querySelector('[data-reply-again]')!);
+    expect(root.lastElementChild!.hasAttribute('data-reply-field')).toBe(true);
+    write(root, 'to Pancake');
+    await waitFor(() => expect(calls.some((c) => c.name === 'addReply')).toBe(true));
+    expect(calls.find((c) => c.name === 'addReply')!.args[0]).toMatchObject({
+      poolId: 'p-pan',
+    });
+  });
+
+  it('in a pool’s tab with none of its replies, the Reply under the ripple writes to it, opening just below (H)', async () => {
+    const { container, getByRole } = asOwner();
+    fireEvent.click(getByRole('tab', { name: 'Crew · 1' }));
+    // Crew has no reply on `night`.
+    const root = under(container, 'night');
+    expect(root.querySelector('[data-reply]')).toBeNull();
+    fireEvent.click(root.querySelector('[data-reply-toggle]')!);
+    expect(
+      root.querySelector('[data-reactions]')!.nextElementSibling!.hasAttribute('data-reply-field'),
+    ).toBe(true);
+    write(root, 'first in Crew');
+    await waitFor(() => expect(calls.some((c) => c.name === 'addReply')).toBe(true));
+    expect(calls.find((c) => c.name === 'addReply')!.args[0]).toMatchObject({
+      rippleId: 'night',
+      poolId: 'p-crew',
+    });
+  });
+
+  it('never shows mine to me alone in a pool’s tab, nor any label (H)', () => {
+    const { container, getByRole } = asOwner();
+    fireEvent.click(getByRole('tab', { name: 'Pancake · 2' }));
+    const ids = [...under(container, 'first').querySelectorAll('[data-reply]')].map((r) =>
+      r.getAttribute('data-reply'),
+    );
+    expect(ids).toEqual(['r1', 'r2', 'r5']);
     expect(container.querySelector('[data-reply-thread-label]')).toBeNull();
     expect(container.querySelector('[data-ripple-thread-label]')).toBeNull();
   });
