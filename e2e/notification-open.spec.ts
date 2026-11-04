@@ -244,14 +244,23 @@ async function sheetBox(page: Page) {
   return page.evaluate(() => {
     const box = document.querySelector('[data-splash-modal] [data-splash-sheet]')!;
     const r = box.getBoundingClientRect();
-    return { top: r.top, height: r.height, window: window.innerHeight, wide: innerWidth >= 1024 };
+    return {
+      top: r.top,
+      right: r.right,
+      height: r.height,
+      window: window.innerHeight,
+      width: window.innerWidth,
+      wide: innerWidth >= 1024,
+    };
   });
 }
 
-/** Wide, 90vh whatever the length; on a phone, never above the 56px band (review). */
+/** Wide, a full-height panel at the right edge (H75); on a phone, never above the 56px band (review). */
 function expectSheetHeight(box: Awaited<ReturnType<typeof sheetBox>>): void {
-  if (box.wide) expect(Math.abs(box.height - box.window * 0.9)).toBeLessThanOrEqual(1);
-  else expect(box.top).toBeGreaterThanOrEqual(56);
+  if (box.wide) {
+    expect(Math.abs(box.height - box.window)).toBeLessThanOrEqual(1);
+    expect(Math.abs(box.right - box.width)).toBeLessThanOrEqual(1);
+  } else expect(box.top).toBeGreaterThanOrEqual(56);
 }
 
 test('a notification opens its sheet at once, and its page lands in place at the reply', async ({
