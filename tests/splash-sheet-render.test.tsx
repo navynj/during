@@ -128,7 +128,7 @@ afterEach(() => {
 /** The handoffs the sheet made: the post as the ground should show it, and its month. */
 const handoffs: { splash: SplashSummary; month: string }[] = [];
 
-function sheet() {
+function sheet({ pools = POOLS }: { pools?: AudiencePool[] } = {}) {
   const onDrop = vi.fn((drop: DropHandoff) => {
     handoffs.push({ splash: drop.splash, month: drop.month });
     void drop.commit();
@@ -139,7 +139,7 @@ function sheet() {
         categories: LANES,
         timeZone: TZ,
         today: TODAY,
-        pools: POOLS,
+        pools,
         initials: 'YL',
       }}
       onClose={() => {}}
@@ -406,8 +406,9 @@ describe('the sheet’s shape', () => {
   it('has no Timer, no per-ripple audience, no mode toggle, no Add to Splash', () => {
     const { queryByText, queryByRole, container } = sheet();
     expect(queryByText('Timer')).toBeNull();
-    // The post's Audience chip is the one audience here (H23); ripples have none.
-    expect(container.querySelectorAll('[data-audience-chip]')).toHaveLength(1);
+    // The post's Share to row is the one audience here (H75); ripples have none.
+    expect(container.querySelectorAll('[data-share-to]')).toHaveLength(1);
+    expect(container.querySelector('[data-audience-chip]')).toBeNull();
     expect(queryByText(/everyone/i)).toBeNull();
     expect(queryByRole('group', { name: 'View' })).toBeNull();
     expect(queryByText('+ Add to Splash')).toBeNull();
@@ -460,83 +461,91 @@ describe('the affordances under the text', () => {
   });
 });
 
-describe('the Audience chip (H23, 0033)', () => {
-  const chip = (view: ReturnType<typeof sheet>) =>
-    view.container.querySelector('[data-audience-chip]') as HTMLButtonElement;
-  const crewSwitch = (view: ReturnType<typeof sheet>) =>
-    view.getByRole('switch', { name: 'Shared to Crew' });
-  const laneChip = (view: ReturnType<typeof sheet>, id: string) =>
-    view.container.querySelector(`[data-audience-lane="${id}"]`) as HTMLButtonElement | null;
+describe('the Share to row (H75, revising H45(b))', () => {
+  const chip = (view: ReturnType<typeof sheet>, id: string) =>
+    view.container.querySelector(`[data-share-pool="${id}"]`) as HTMLElement;
+  const on = (view: ReturnType<typeof sheet>, id: string) => chip(view, id).hasAttribute('data-on');
+  const turn = (view: ReturnType<typeof sheet>, id: string) =>
+    fireEvent.click(
+      chip(view, id).matches('button') ? chip(view, id) : chip(view, id).querySelector('button')!,
+    );
+  const lane = (view: ReturnType<typeof sheet>, id: string) =>
+    chip(view, id).querySelector('[data-share-lane]')?.textContent;
 
-  it('is Only me for every lane: Audience is per record (H45)', () => {
+  it('starts with every pool off and says only you can see it, for every lane (H45)', () => {
+    store({ 'c-place:p-crew': 'cr-chat' });
     const view = sheet();
-    expect(chip(view).textContent).toBe('Only me');
-    for (const lane of ['Place', 'Mood', 'Day']) {
-      fireEvent.click(view.getAllByText(lane)[0]);
-      expect(chip(view).textContent).toBe('Only me');
+    for (const name of ['Place', 'Mood', 'Day']) {
+      fireEvent.click(view.getAllByText(name)[0]);
+      expect(on(view, 'p-ours')).toBe(false);
+      expect(on(view, 'p-crew')).toBe(false);
+      expect(view.container.querySelector('[data-share-private]')!.textContent).toBe(
+        'Only you can see this',
+      );
     }
   });
 
-  it('never turns a pool on by itself, a last pick included', () => {
-    store({ 'c-place:p-crew': 'cr-chat' });
-    const view = sheet();
-    fireEvent.click(view.getByText('Place'));
-    fireEvent.click(chip(view));
-    expect(crewSwitch(view).getAttribute('aria-checked')).toBe('false');
-    expect(view.container.querySelector('[data-audience-lanes="p-crew"]')).toBeNull();
-    expect(
-      view.getByRole('switch', { name: 'Shared to Our Pool' }).getAttribute('aria-checked'),
-    ).toBe('false');
-  });
-
-  it('turns a pool on at the pool lane last picked for that lane and pool', () => {
+  it('turns a pool on at the lane last picked for that lane and pool', () => {
     store({ 'c-day:p-crew': 'cr-chat', 'c-mood:p-crew': 'cr-out' });
     const view = sheet();
     fireEvent.click(view.getByText('Day'));
-    fireEvent.click(chip(view));
-    fireEvent.click(crewSwitch(view));
-    expect(laneChip(view, 'cr-chat')!.getAttribute('aria-pressed')).toBe('true');
-    expect(chip(view).textContent).toBe('Crew · 💬 Chat');
+    turn(view, 'p-crew');
+    expect(on(view, 'p-crew')).toBe(true);
+    expect(lane(view, 'p-crew')).toBe('·💬 Chat');
+    expect(view.container.querySelector('[data-share-private]')).toBeNull();
   });
 
-  it('with nothing to start on, shows the lanes and shares nothing until one is picked, then remembers it', () => {
+  it('else on the pool lane named as my lane, else the pool’s first: never waits on a lane', () => {
+    const named: AudiencePool[] = [
+      {
+        id: 'p-pan',
+        name: 'Pancake',
+        lanes: [
+          { id: 'pk-food', name: 'Food', icon: '🍳' },
+          { id: 'pk-day', name: 'day', icon: '🖋' },
+        ],
+      },
+      ...POOLS,
+    ];
+    const view = sheet({ pools: named });
+    fireEvent.click(view.getByText('Day'));
+    turn(view, 'p-pan');
+    expect(lane(view, 'p-pan')).toBe('·🖋 day');
+    turn(view, 'p-crew');
+    expect(lane(view, 'p-crew')).toBe('·🚲 Outings');
+    // Nothing is remembered for a lane the hand did not pick.
+    expect(stored()).toBeNull();
+  });
+
+  it('changes a pool’s lane from the chip’s lane part, and remembers that pick', () => {
     const view = sheet();
     fireEvent.click(view.getByText('Day'));
-    fireEvent.click(chip(view));
-    fireEvent.click(crewSwitch(view));
-    expect(crewSwitch(view).getAttribute('aria-checked')).toBe('true');
-    expect(view.container.querySelector('[data-audience-lanes="p-crew"]')).not.toBeNull();
-    expect(laneChip(view, 'cr-out')!.getAttribute('aria-pressed')).toBe('false');
-    expect(laneChip(view, 'cr-chat')!.getAttribute('aria-pressed')).toBe('false');
-    expect(chip(view).textContent).toBe('Only me');
-    fireEvent.click(laneChip(view, 'cr-out')!);
-    expect(chip(view).textContent).toBe('Crew · 🚲 Outings');
-    expect(stored()).toEqual({ 'c-day:p-crew': 'cr-out' });
-    // Off again: the row folds and nothing is shared.
-    fireEvent.click(crewSwitch(view));
-    expect(view.container.querySelector('[data-audience-lanes="p-crew"]')).toBeNull();
-    expect(chip(view).textContent).toBe('Only me');
+    turn(view, 'p-crew');
+    fireEvent.click(chip(view, 'p-crew').querySelector('[data-share-lane]')!);
+    fireEvent.click(
+      view.container.querySelector('[data-share-lanes="p-crew"]')!.querySelectorAll('button')[1],
+    );
+    expect(lane(view, 'p-crew')).toBe('·💬 Chat');
+    expect(stored()).toEqual({ 'c-day:p-crew': 'cr-chat' });
+    // Off again: nothing is shared.
+    turn(view, 'p-crew');
+    expect(on(view, 'p-crew')).toBe(false);
+    expect(view.container.querySelector('[data-share-private]')).not.toBeNull();
   });
 
-  it('keeps an audience edited by hand when the lane changes', () => {
+  it('keeps a pool on its lane when my lane changes', () => {
     const view = sheet();
     fireEvent.click(view.getByText('Place'));
-    fireEvent.click(chip(view));
-    fireEvent.click(view.getByRole('switch', { name: 'Shared to Our Pool' }));
-    fireEvent.click(laneChip(view, 'pl-trips')!);
-    // The sheet stays open over the composer; the chip already reads the edit.
-    expect(chip(view).textContent).toBe('Our Pool · 🏕 Trips');
+    turn(view, 'p-ours');
     fireEvent.click(view.getAllByText('Day')[0]);
-    expect(chip(view).textContent).toBe('Our Pool · 🏕 Trips');
+    expect(lane(view, 'p-ours')).toBe('·🏕 Trips');
   });
 
-  it('places the dropped record where the chip says, on its pool lane', async () => {
+  it('places the dropped record where the row says, on its pool lane', async () => {
     const view = sheet();
     fireEvent.change(view.getByLabelText('Content'), { target: { value: 'Twin Falls' } });
     fireEvent.click(view.getByText('Place'));
-    fireEvent.click(chip(view));
-    fireEvent.click(view.getByRole('switch', { name: 'Shared to Our Pool' }));
-    fireEvent.click(laneChip(view, 'pl-trips')!);
+    turn(view, 'p-ours');
     fireEvent.click(view.drop());
     await waitFor(() => expect(placed).toHaveLength(1));
     expect(placed[0].picks).toEqual([{ poolId: 'p-ours', poolLaneId: 'pl-trips' }]);
@@ -549,6 +558,11 @@ describe('the Audience chip (H23, 0033)', () => {
     fireEvent.click(view.drop());
     await waitFor(() => expect(drops).toHaveLength(1));
     expect(placed).toEqual([]);
+  });
+
+  it('is not there for someone in no pool', () => {
+    const view = sheet({ pools: [] });
+    expect(view.container.querySelector('[data-share-to]')).toBeNull();
   });
 });
 
@@ -608,6 +622,7 @@ describe('compose from a pool (H23, 0033)', () => {
 
   it('shows the pool’s lanes alone, with no My lanes tab, no Audience and no Just mine', () => {
     const view = poolSheet();
+    expect(view.container.querySelector('[data-share-to]')).toBeNull();
     expect(view.queryByRole('tab', { name: 'My lanes' })).toBeNull();
     expect(view.container.querySelectorAll('[data-pick-pool-lane]')).toHaveLength(2);
     expect(view.container.querySelector('[data-audience-chip]')).toBeNull();

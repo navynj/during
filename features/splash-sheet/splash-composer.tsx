@@ -14,8 +14,8 @@ import {
 } from '@/features/input-sheet/media-field';
 import { placeCard, type Card, ownPoolColumn } from '@/features/home/grid';
 import { createJointSplash, dropOwnPoolSplash, placeNewSplash } from '@/features/pool/actions';
-import { preselectLane, withPick, withTogether, type AudiencePick } from '@/features/pool/audience';
-import { AudienceChip, type AudiencePool } from '@/features/pool/audience-sheet';
+import { fallbackLane, withPick, type AudiencePick } from '@/features/pool/audience';
+import type { AudiencePool } from '@/features/pool/audience-sheet';
 import { lastPicked, rememberPick } from '@/features/pool/last-pick';
 import type { PoolScope } from '@/features/pool/compose-scope';
 import { poolSplashHref } from '@/features/pool/pool-cards';
@@ -31,6 +31,7 @@ import { usePeople } from '@/features/people/people-provider';
 import type { PendingDrop } from '@/features/input-sheet/sheet-provider';
 
 import { ComposeTop } from './compose-top';
+import { ShareToRow } from './share-to-row';
 import { SheetFooter } from './sheet-frame';
 import { composeDrop } from './split-title';
 
@@ -488,36 +489,31 @@ export function SplashComposer({
           onTogether={setTogether}
         />
       ) : (
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <LaneChips
-              categories={categories}
-              selectedId={laneId}
-              onSelect={setLaneId}
-              surface="white"
-            />
-          </div>
-          {/* Where it is shared (H23): only from Home. */}
-          {pools.length > 0 ? (
-            <AudienceChip
-              shared={audience}
-              pools={pools}
-              preselect={(poolId) =>
-                preselectLane(
-                  lastPicked(laneId, poolId),
-                  pools.find((p) => p.id === poolId)?.lanes.map((l) => l.id) ?? [],
-                )
-              }
-              onChange={(poolId, poolLaneId) => {
-                if (poolLaneId) rememberPick(laneId, poolId, poolLaneId);
-                setAudienceEdited(withPick(audienceEdited ?? [], poolId, poolLaneId));
-              }}
-              onTogether={(poolId, together) =>
-                setAudienceEdited(withTogether(audienceEdited ?? [], poolId, together))
-              }
-            />
-          ) : null}
-        </div>
+        <LaneChips
+          categories={categories}
+          selectedId={laneId}
+          onSelect={setLaneId}
+          surface="white"
+        />
+      )}
+
+      {/* Where it is shared, said while it is written (H75): only from Home. */}
+      {pool ? null : (
+        <ShareToRow
+          pools={pools}
+          shared={audience}
+          startLane={(poolId) =>
+            fallbackLane(
+              lastPicked(laneId, poolId),
+              categories.find((c) => c.id === laneId)?.name ?? null,
+              pools.find((p) => p.id === poolId)?.lanes ?? [],
+            )
+          }
+          onChange={(poolId, poolLaneId, picked) => {
+            if (poolLaneId && picked) rememberPick(laneId, poolId, poolLaneId);
+            setAudienceEdited(withPick(audienceEdited ?? [], poolId, poolLaneId));
+          }}
+        />
       )}
 
       {/* Blue means action: the one filled thing here commits (H20f).

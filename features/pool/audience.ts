@@ -30,6 +30,23 @@ export function preselectLane(lastPicked: string | null, poolLaneIds: string[]):
   return lastPicked && poolLaneIds.includes(lastPicked) ? lastPicked : null;
 }
 
+/**
+ * The pool lane a pool starts on when turned on in the composer's Share to
+ * row (H75, revising H45(b)): sharing is never held up by a lane. The one I
+ * last picked for it on this device; else the pool lane named as my lane;
+ * else the pool's first. None only when the pool has no lanes at all.
+ */
+export function fallbackLane(
+  lastPicked: string | null,
+  myLaneName: string | null,
+  poolLanes: { id: string; name: string }[],
+): string | null {
+  if (lastPicked && poolLanes.some((l) => l.id === lastPicked)) return lastPicked;
+  const named = myLaneName?.trim().toLowerCase();
+  const same = named ? poolLanes.find((l) => l.name.trim().toLowerCase() === named) : undefined;
+  return same?.id ?? poolLanes[0]?.id ?? null;
+}
+
 /** The audience with one pool switched: on a pool lane, or off (null). */
 export function withPick(
   audience: AudiencePick[],
