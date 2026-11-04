@@ -392,10 +392,22 @@ describe('replies', () => {
     expect((await inbox(ben, record)).filter((n) => n.reply_id === second)).toHaveLength(1);
     expect((await inbox(cal, record)).filter((n) => n.type === 'reply')).toEqual([]);
 
-    // Ana replying on her own ripple notifies the others, never herself.
-    const third = await reply(ana, rid);
-    expect((await inbox(ana, record)).filter((n) => n.reply_id === third)).toEqual([]);
-    expect((await inbox(ben, record)).filter((n) => n.reply_id === third)).toHaveLength(1);
+    // Ana replying on her own ripple, in its pool, notifies the others, never herself.
+    const thirdId = crypto.randomUUID();
+    const third = await asUser(ana).rpc('add_reply', {
+      p_ripple: rid,
+      p_body: 'hi',
+      p_id: thirdId,
+      p_pool: crew,
+    });
+    expect(third.error).toBeNull();
+    expect((await inbox(ana, record)).filter((n) => n.reply_id === thirdId)).toEqual([]);
+    expect((await inbox(ben, record)).filter((n) => n.reply_id === thirdId)).toHaveLength(1);
+
+    // From no pool it is hers alone (H77): it tells no one.
+    const mine = await reply(ana, rid);
+    for (const who of [ana, ben, cal])
+      expect((await inbox(who, record)).filter((n) => n.reply_id === mine)).toEqual([]);
   });
 
   it('reaches everyone who wrote a side of a joint record', async () => {

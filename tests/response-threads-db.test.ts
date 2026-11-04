@@ -190,7 +190,14 @@ describe('a reply belongs to the pool it was written in (0053)', () => {
     expect((await replies(cal)).map((r) => r.id)).not.toContain(bensReply);
   });
 
-  it('by the owner from no pool, reaches every pool', async () => {
+  it('by the owner from no pool, is the owner’s alone: read by no pool, notified to no one (H77)', async () => {
+    // Someone has replied before: a reply in a pool would tell them.
+    await asUser(ben).rpc('add_reply', {
+      p_ripple: ripple,
+      p_body: 'first',
+      p_id: crypto.randomUUID(),
+      p_pool: alpha,
+    });
     const id = crypto.randomUUID();
     const { error } = await asUser(ana).rpc('add_reply', {
       p_ripple: ripple,
@@ -199,7 +206,20 @@ describe('a reply belongs to the pool it was written in (0053)', () => {
       p_pool: null as unknown as string,
     });
     expect(error).toBeNull();
-    for (const who of [ben, cal]) expect((await replies(who)).map((r) => r.id)).toContain(id);
+    const row = await asAdmin()
+      .from('ripple_replies')
+      .select('thread_pool_id')
+      .eq('id', id)
+      .single();
+    expect(row.data!.thread_pool_id).toBeNull();
+    expect((await replies(ana)).map((r) => r.id)).toContain(id);
+    for (const who of [ben, cal]) {
+      expect((await replies(who)).map((r) => r.id)).not.toContain(id);
+      const older = await asUser(who).rpc('ripple_replies_for', { p_ripples: [ripple] });
+      expect(((older.data ?? []) as { id: string }[]).map((r) => r.id)).not.toContain(id);
+    }
+    const sent = await asAdmin().from('notifications').select('id').eq('reply_id', id);
+    expect(sent.data).toEqual([]);
   });
 
   it('stays in its pool', async () => {
