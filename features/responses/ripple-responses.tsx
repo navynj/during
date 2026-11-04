@@ -68,6 +68,7 @@ export function RippleResponses({
         on={on}
         composing={composing}
         onDoneComposing={() => setComposing(false)}
+        onCompose={() => setComposing(true)}
       />
     </div>
   );

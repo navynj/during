@@ -141,6 +141,63 @@ describe('replies under a block', () => {
     expect(container.querySelector('[data-replies-more]')).toBeNull();
   });
 
+  it('offers a second Reply under the last reply, at the replies’ indent (H75)', () => {
+    const { container } = view({
+      reactions: [],
+      replies: [reply('a', MINA, 1), reply('b', ME, 2)],
+    });
+    const again = container.querySelector<HTMLElement>('[data-reply-again]')!;
+    expect(again.textContent).toBe('Reply');
+    // Right after the last reply.
+    const last = container.querySelector('[data-reply="b"]')!;
+    expect(last.compareDocumentPosition(again) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(again.style.marginLeft).toBe('24px');
+  });
+
+  it('opens the same field in the same place from either Reply, at the foot of the replies', () => {
+    const replies = [reply('a', MINA, 1), reply('b', ME, 2)];
+    for (const from of ['[data-reply-toggle]', '[data-reply-again]']) {
+      const { container, unmount } = view({ reactions: [], replies });
+      const scrolled = vi.fn();
+      Element.prototype.scrollIntoView = scrolled;
+      fireEvent.click(container.querySelector(from)!);
+      const field = container.querySelector('[data-reply-field]')!;
+      expect(
+        container.querySelector('[data-reply="b"]')!.compareDocumentPosition(field) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      // Brought into view where the new reply will appear.
+      expect(scrolled).toHaveBeenCalled();
+      // While it is open, no second Reply.
+      expect(container.querySelector('[data-reply-again]')).toBeNull();
+      unmount();
+    }
+  });
+
+  it('has no second Reply with no replies, with the rest behind "+n more", or where none may reply', () => {
+    expect(
+      view({ reactions: [], replies: [] }).container.querySelector('[data-reply-again]'),
+    ).toBeNull();
+    cleanup();
+    const many = [1, 2, 3, 4].map((n) => reply(`r${n}`, MINA, n));
+    expect(
+      view({ reactions: [], replies: many }).container.querySelector('[data-reply-again]'),
+    ).toBeNull();
+    cleanup();
+    expect(
+      view({ reactions: [], replies: many }, { expanded: true }).container.querySelector(
+        '[data-reply-again]',
+      ),
+    ).not.toBeNull();
+    cleanup();
+    expect(
+      view(
+        { reactions: [], replies: [reply('a', MINA, 1)] },
+        { canRespond: false },
+      ).container.querySelector('[data-reply-again]'),
+    ).toBeNull();
+  });
+
   it('sends on Enter, keeps a line break on Shift+Enter, and closes once sent', () => {
     const { container, on } = view({ reactions: [], replies: [] });
     fireEvent.click(container.querySelector('[data-reply-toggle]')!);

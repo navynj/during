@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Avatar, PersonName } from '@/features/people/avatar';
 import { usePeople } from '@/features/people/people-provider';
@@ -25,7 +25,10 @@ export type ReplyHandlers = {
  * edited, "Hidden by the author" once hidden. Mine I edit and delete; on my
  * ripple I hide anyone's. The one-line input opens from the reactions
  * row's "Reply" (Yoonji, in the session), at the bottom, with Cancel and
- * Save, and grows to four lines.
+ * Save, and grows to four lines. Read down to the last reply, a second
+ * "Reply" sits under it, at the replies' indent, opening the same input in
+ * the same place; not while "+n more" hides the rest (H75). Opened from the
+ * top, the input is scrolled into view.
  */
 export function ReplyList({
   replies,
@@ -36,6 +39,7 @@ export function ReplyList({
   on,
   composing = false,
   onDoneComposing = () => {},
+  onCompose,
 }: {
   replies: ReplyRow[];
   more: number;
@@ -46,9 +50,16 @@ export function ReplyList({
   /** The reply field is open, asked for by the reactions row's "Reply". */
   composing?: boolean;
   onDoneComposing?: () => void;
+  /** Opens the reply field from under the last reply (H75); absent, no second Reply. */
+  onCompose?: () => void;
 }) {
   const { me } = usePeople();
   const [editing, setEditing] = useState<string | null>(null);
+  const field = useRef<HTMLDivElement>(null);
+  // Where the new reply will appear, brought into view as it opens.
+  useEffect(() => {
+    if (composing) field.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [composing]);
   if (replies.length === 0 && !(canReply && composing)) return null;
   return (
     <div data-replies className="flex flex-col gap-2">
@@ -122,15 +133,28 @@ export function ReplyList({
         </button>
       ) : null}
       {canReply && composing ? (
-        <ReplyInput
-          label="Reply"
-          autoFocus
-          onSubmit={(body) => {
-            on.reply(body);
-            onDoneComposing();
-          }}
-          onCancel={onDoneComposing}
-        />
+        <div ref={field} data-reply-field>
+          <ReplyInput
+            label="Reply"
+            autoFocus
+            onSubmit={(body) => {
+              on.reply(body);
+              onDoneComposing();
+            }}
+            onCancel={onDoneComposing}
+          />
+        </div>
+      ) : canReply && onCompose && replies.length > 0 && more === 0 ? (
+        // Read to the end, answered from there (H75): the replies' own indent.
+        <button
+          type="button"
+          data-reply-again
+          onClick={onCompose}
+          className="text-pool-500 self-start text-xs font-medium"
+          style={{ marginLeft: FACE_PX + 8 }}
+        >
+          Reply
+        </button>
       ) : null}
     </div>
   );
