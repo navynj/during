@@ -40,7 +40,7 @@ export function AudienceChip({
   shared: AudiencePick[];
   /** Every pool I am in: a row each. */
   pools: AudiencePool[];
-  /** The chip a pool starts on when turned on (a link's default, my last pick), or none. */
+  /** The lane a pool starts on when turned on (fallbackLane, H75); none only for a pool with no lanes. */
   preselect: (poolId: string) => string | null;
   /** A pool on a pool lane, or off (null). */
   onChange: (poolId: string, poolLaneId: string | null) => void;
@@ -121,9 +121,9 @@ export function chipLabel(shared: AudiencePick[], pools: AudiencePool[]): string
 
 /**
  * Where a record is shared (0033): a row per pool I am in, each with a
- * switch. Turned on, the row shows that pool's lane chips, and one must be
- * picked: the switch starts on the preselected chip, or waits for a pick
- * with nothing shared yet. Sections, so a *Followers* row can join *Pools*
+ * switch. Turned on, it is shared at once on the lane it starts on, and the
+ * row shows that pool's lane chips to change it (H75); only a pool with no
+ * lanes waits for one, with nothing shared yet. Sections, so a *Followers* row can join *Pools*
  * later without reshaping this; only Pools is built.
  */
 function AudienceSheet({

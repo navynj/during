@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { FilingChips } from '@/features/home/filing-chips';
 import { LaneChips } from '@/features/input-sheet/lane-chips';
 import { usePeople } from '@/features/people/people-provider';
-import { preselectLane, withPick, withTogether, type AudiencePick } from '@/features/pool/audience';
+import { fallbackLane, withPick, withTogether, type AudiencePick } from '@/features/pool/audience';
 import { AudienceChip } from '@/features/pool/audience-sheet';
 import type { PoolScope } from '@/features/pool/compose-scope';
 import { lastPicked, rememberPick } from '@/features/pool/last-pick';
@@ -256,9 +256,10 @@ export function useEditLanes(
               shared={shared}
               pools={pools}
               preselect={(poolId) =>
-                preselectLane(
+                fallbackLane(
                   lastPicked(laneId, poolId),
-                  pools.find((p) => p.id === poolId)?.lanes.map((l) => l.id) ?? [],
+                  categories.find((c) => c.id === laneId)?.name ?? null,
+                  pools.find((p) => p.id === poolId)?.lanes ?? [],
                 )
               }
               onChange={(poolId, chip) => {

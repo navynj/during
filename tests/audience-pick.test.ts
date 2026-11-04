@@ -1,25 +1,34 @@
 import { describe, expect, it } from 'vitest';
 
-import { preselectLane, withPick } from '@/features/pool/audience';
+import { fallbackLane, withPick } from '@/features/pool/audience';
 import { landingHint, resolvePick } from '@/features/pool/pool-pick';
 
 /**
- * Audience, record by record (H45): no lane links, so no defaults — a pool
- * turned on starts on the lane last picked on this device, or none.
+ * Audience, record by record (H45), revised by H75: a pool turned on is on
+ * a lane at once, so lane choice never blocks sharing.
  */
-describe('the chip a pool starts on in Audience (H45)', () => {
-  const lanes = ['pl-games', 'pl-notes'];
+describe('the lane a pool starts on when turned on (H75)', () => {
+  const lanes = [
+    { id: 'pl-games', name: 'Games' },
+    { id: 'pl-food', name: 'Food' },
+  ];
 
   it('is the lane last picked on this device', () => {
-    expect(preselectLane('pl-notes', lanes)).toBe('pl-notes');
+    expect(fallbackLane('pl-food', 'Games', lanes)).toBe('pl-food');
   });
 
-  it('then none: one must be picked', () => {
-    expect(preselectLane(null, lanes)).toBeNull();
+  it('then the pool lane named as my lane, whatever its case', () => {
+    expect(fallbackLane(null, ' food', lanes)).toBe('pl-food');
   });
 
-  it('only ever a lane of that pool', () => {
-    expect(preselectLane('ql', lanes)).toBeNull();
+  it('then the pool’s first lane', () => {
+    expect(fallbackLane(null, 'Swim', lanes)).toBe('pl-games');
+    expect(fallbackLane(null, null, lanes)).toBe('pl-games');
+  });
+
+  it('never a lane of another pool, and none only when the pool has no lanes', () => {
+    expect(fallbackLane('ql', null, lanes)).toBe('pl-games');
+    expect(fallbackLane(null, 'Food', [])).toBeNull();
   });
 });
 

@@ -556,9 +556,7 @@ describe('converting from the edit sheet (0022, 0033)', () => {
     fireEvent.click(view.container.querySelector('[data-audience-chip]')!);
     expect(view.container.querySelector('[data-audience-with]')).toBeNull();
     fireEvent.click(view.getByRole('switch', { name: 'Shared to Our Pool' }));
-    // No default lane (H45): With shows once one is picked.
-    expect(view.container.querySelector('[data-audience-with="p-ours"]')).toBeNull();
-    fireEvent.click(view.container.querySelector('[data-audience-lane="l-games"]')!);
+    // On a lane at once (H75): its With shows with it.
     const line = view.container.querySelector('[data-audience-with="p-ours"]')!;
     expect(line.textContent).toContain('With');
     expect(line.querySelector('[role="switch"]')!.getAttribute('aria-checked')).toBe('false');
@@ -576,15 +574,18 @@ describe('converting from the edit sheet (0022, 0033)', () => {
     });
   });
 
-  it('from Home: turning a pool on in Audience starts on no lane: one is picked (H45)', async () => {
+  it('from Home: turning a pool on in Audience shares it at once on a lane, still changeable (H75)', async () => {
     const view = await sheet({ ...MINE_SHARED, shared: [], sharedIn: [] }, null);
     const chip = view.container.querySelector('[data-audience-chip]') as HTMLButtonElement;
     fireEvent.click(chip);
     fireEvent.click(view.getByRole('switch', { name: 'Shared to Our Pool' }));
+    // No lane of mine named as one of the pool's: its first.
     expect(
       view.container.querySelector('[data-audience-lane="l-games"]')!.getAttribute('aria-pressed'),
-    ).toBe('false');
-    expect(chip.textContent).toBe('Only me');
+    ).toBe('true');
+    expect(chip.textContent).toBe('Our Pool · 🎲 Games');
+    fireEvent.click(view.container.querySelector('[data-audience-lane="l-media"]')!);
+    expect(chip.textContent).toBe('Our Pool · 🎬 Media');
   });
 
   it('from Home: turning a pool off in Audience saves it off', async () => {

@@ -6,7 +6,9 @@ import { useToast } from '@/components/ui/toast';
 import { useOptimisticAction } from '@/lib/use-optimistic-action';
 
 import { moveToHome, setPlacement, setPlacementTogether } from './actions';
-import { preselectLane, withPick, withTogether, type AudiencePick } from './audience';
+import { useShellData } from '@/features/home/shell-data';
+
+import { fallbackLane, withPick, withTogether, type AudiencePick } from './audience';
 import { AudienceChip, type AudiencePool } from './audience-sheet';
 import type { MoveHome } from './move-to-home';
 import { lastPicked, rememberPick } from './last-pick';
@@ -44,6 +46,7 @@ export function SplashAudience({
   invite?: boolean;
 }) {
   const audience = useOptimisticAction(shared);
+  const { categories } = useShellData();
   const toast = useToast();
   const [message, setMessage] = useState<string | null>(null);
   // Moved to Home (H45): the origin unlocks at once; every pool stays as it is.
@@ -74,10 +77,12 @@ export function SplashAudience({
               }
             : null
         }
+        // Shared the moment a pool is turned on, on a lane it names (H75).
         preselect={(poolId) =>
-          preselectLane(
+          fallbackLane(
             lastPicked(myLaneId, poolId),
-            pools.find((p) => p.id === poolId)?.lanes.map((l) => l.id) ?? [],
+            categories.find((c) => c.id === myLaneId)?.name ?? null,
+            pools.find((p) => p.id === poolId)?.lanes ?? [],
           )
         }
         onChange={(poolId, poolLaneId) => {

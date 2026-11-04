@@ -22,19 +22,12 @@ export function audienceLabel(poolNames: string[]): string {
 }
 
 /**
- * The chip a pool's row starts on when it is turned on: the one I last
- * picked for this (my lane, pool) on this device, else none — one must then
- * be picked. It only fills the chip; it never turns sharing on.
- */
-export function preselectLane(lastPicked: string | null, poolLaneIds: string[]): string | null {
-  return lastPicked && poolLaneIds.includes(lastPicked) ? lastPicked : null;
-}
-
-/**
- * The pool lane a pool starts on when turned on in the composer's Share to
- * row (H75, revising H45(b)): sharing is never held up by a lane. The one I
- * last picked for it on this device; else the pool lane named as my lane;
- * else the pool's first. None only when the pool has no lanes at all.
+ * The pool lane a pool starts on when it is turned on — in the composer's
+ * Share to row and in every Audience sheet (H75, revising H45(b)): sharing
+ * is never held up by a lane. The one I last picked for it on this device;
+ * else the pool lane named as my lane; else the pool's first. It only fills
+ * the lane once I turn a pool on; it never turns sharing on by itself.
+ * None only when the pool has no lanes at all.
  */
 export function fallbackLane(
   lastPicked: string | null,

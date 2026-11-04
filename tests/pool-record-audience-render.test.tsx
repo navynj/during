@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -26,6 +26,7 @@ vi.mock('@/features/lanes/actions', () => ({
 
 import { ToastProvider } from '@/components/ui/toast';
 import { PeopleProvider } from '@/features/people/people-provider';
+import { ShellDataProvider } from '@/features/home/shell-data';
 import { SplashAudience } from '@/features/pool/splash-audience';
 
 afterEach(() => {
@@ -159,6 +160,9 @@ describe('my record written in a pool: its Audience (0056, H45)', () => {
 });
 
 describe('my record shared nowhere, on its header (H75)', () => {
+  // A pick remembered by an earlier test would start a pool on it.
+  beforeEach(() => window.localStorage.clear());
+
   function header(shared: { poolId: string; poolLaneId: string }[]) {
     return render(
       <ToastProvider>
@@ -169,15 +173,50 @@ describe('my record shared nowhere, on its header (H75)', () => {
     );
   }
 
-  it('reads Only me with a Share that opens the pools', () => {
+  it('reads Only me with a Share that opens the pools, and shares the moment one is on (H75)', () => {
     const view = header([]);
     const quiet = view.container.querySelector('[data-audience-private]')!;
     expect(quiet.textContent).toBe('Only meShare');
     fireEvent.click(view.getByText('Share'));
     expect(toggle('p-alpha').getAttribute('aria-checked')).toBe('false');
-    fireEvent.click(toggle('p-beta'));
-    fireEvent.click(document.querySelector('[data-audience-lane="b1"]')!);
-    expect(placed).toEqual([['s1', 'p-beta', true, 'b1']]);
+    // No lane to pick first: the pool's first lane, shared at once.
+    fireEvent.click(toggle('p-alpha'));
+    expect(placed).toEqual([['s1', 'p-alpha', true, 'a1']]);
+    expect(document.querySelector('[data-audience-lane="a1"]')!.getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    // Changed afterward, in the same sheet.
+    fireEvent.click(document.querySelector('[data-audience-lane="a2"]')!);
+    expect(placed.at(-1)).toEqual(['s1', 'p-alpha', true, 'a2']);
+  });
+
+  it('starts a pool on the lane named as mine', () => {
+    render(
+      <ToastProvider>
+        <PeopleProvider me="u-me" people={{}}>
+          <ShellDataProvider
+            value={{
+              categories: [
+                {
+                  id: 'c-trips',
+                  user_id: 'u-me',
+                  name: 'trips',
+                  icon: '🏕',
+                  default_mode: 'drop',
+                  position: 0,
+                  created_at: '2026-01-01T00:00:00Z',
+                },
+              ],
+            }}
+          >
+            <SplashAudience splashId="s1" myLaneId="c-trips" shared={[]} pools={POOLS} invite />
+          </ShellDataProvider>
+        </PeopleProvider>
+      </ToastProvider>,
+    );
+    fireEvent.click(document.querySelector('[data-audience-chip]')!);
+    fireEvent.click(toggle('p-alpha'));
+    expect(placed).toEqual([['s1', 'p-alpha', true, 'a2']]);
   });
 
   it('keeps the pools chip once it is shared anywhere', () => {
