@@ -1,33 +1,42 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
+import { CategoryChip } from '@/components/ui/chips/category-chip';
 import { Monogram } from '@/components/ui/monogram';
 import type { AudiencePick } from '@/features/pool/audience';
 import type { AudiencePool } from '@/features/pool/audience-sheet';
 import { useStripPools } from '@/features/pool/activity';
 
+import { ShareLanePicker } from './share-lane-picker';
+
 /**
  * Where a record from Home goes, said while it is written (H75, revising
  * H45(b)): a toggle chip per pool I am in, every one off, so *Only you can
  * see this* reads under the row until one is turned on. A pool turned on is
- * on a lane at once — sharing never waits on a lane — and its chip names
- * it; tapping that part changes it. Selection is the ink fill (H20f).
+ * on a lane at once — sharing never waits on a lane — and carries that lane
+ * as the lane row's own chip with a chevron: its name and face toggle the
+ * pool, the lane chip only opens that pool's lanes. Selection is the ink
+ * fill (H20f).
  */
 export function ShareToRow({
   pools,
   shared,
   startLane,
-  onChange,
+  onTurn,
+  onPick,
 }: {
   pools: AudiencePool[];
   shared: AudiencePick[];
   /** The lane a pool starts on when turned on (fallbackLane), or none. */
   startLane: (poolId: string) => string | null;
-  /** A pool on a pool lane, or off (null); `picked` when the lane was chosen by hand. */
-  onChange: (poolId: string, poolLaneId: string | null, picked: boolean) => void;
+  /** A pool turned on, on its starting lane, or off (null). */
+  onTurn: (poolId: string, poolLaneId: string | null) => void;
+  /** A lane picked by hand in the pool's lane picker. */
+  onPick: (poolId: string, poolLaneId: string) => void;
 }) {
-  // The pool whose lanes are open under the row, to change its lane.
+  // The pool whose lanes are open, to change its lane.
   const [choosing, setChoosing] = useState<string | null>(null);
   const photos = useStripPools();
   if (pools.length === 0) return null;
@@ -35,7 +44,7 @@ export function ShareToRow({
     shared.find((pick) => pick.poolId === poolId)?.poolLaneId ?? null;
   const open = pools.find((p) => p.id === choosing && laneOf(p.id));
   return (
-    <div data-share-to className="flex flex-col gap-2">
+    <div data-share-to className="relative flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-pool-500 text-xs">Share to</span>
         {pools.map((pool) => {
@@ -52,7 +61,7 @@ export function ShareToRow({
                 data-share-pool={pool.id}
                 aria-pressed={false}
                 disabled={!start}
-                onClick={() => onChange(pool.id, start, false)}
+                onClick={() => onTurn(pool.id, start)}
                 className="border-pool-200 text-ink inline-flex h-8 max-w-[14rem] items-center gap-1.5 rounded-full border px-3 text-sm disabled:opacity-40"
               >
                 {face}
@@ -65,7 +74,7 @@ export function ShareToRow({
               key={pool.id}
               data-share-pool={pool.id}
               data-on=""
-              className="bg-ink inline-flex h-8 max-w-[16rem] items-center rounded-full text-sm text-white"
+              className="bg-ink inline-flex h-8 max-w-[18rem] items-center gap-1.5 rounded-full pr-1 text-sm text-white"
             >
               <button
                 type="button"
@@ -73,55 +82,37 @@ export function ShareToRow({
                 aria-label={`Stop sharing to ${pool.name}`}
                 onClick={() => {
                   setChoosing(null);
-                  onChange(pool.id, null, false);
+                  onTurn(pool.id, null);
                 }}
                 className="inline-flex min-w-0 items-center gap-1.5 py-1 pl-3"
               >
                 {face}
                 <span className="truncate">{pool.name}</span>
               </button>
-              <button
-                type="button"
+              <CategoryChip
+                icon={lane.icon}
+                name={lane.name}
+                selected
+                onInk
                 data-share-lane={lane.id}
+                aria-haspopup="dialog"
                 aria-expanded={choosing === pool.id}
                 aria-label={`Lane in ${pool.name}: ${lane.name}. Change it`}
-                onClick={() => setChoosing(choosing === pool.id ? null : pool.id)}
-                className="inline-flex min-w-0 items-center gap-1 py-1 pr-3 pl-1 opacity-80"
-              >
-                <span aria-hidden>·</span>
-                <span className="truncate">
-                  {lane.icon ? `${lane.icon} ` : ''}
-                  {lane.name}
-                </span>
-              </button>
+                onSelect={() => setChoosing(choosing === pool.id ? null : pool.id)}
+                trailing={<ChevronDown aria-hidden size={12} className="-mr-0.5 opacity-80" />}
+                className="min-w-0"
+              />
             </span>
           );
         })}
       </div>
       {open ? (
-        // The open pool's lanes, to move it to another (H75).
-        <div data-share-lanes={open.id} className="flex flex-wrap gap-1.5">
-          {open.lanes.map((lane) => {
-            const on = lane.id === laneOf(open.id);
-            return (
-              <button
-                key={lane.id}
-                type="button"
-                aria-pressed={on}
-                onClick={() => {
-                  setChoosing(null);
-                  onChange(open.id, lane.id, true);
-                }}
-                className={`inline-flex h-7 items-center rounded-full px-2.5 text-xs ${
-                  on ? 'bg-ink text-white' : 'border-pool-200 text-ink border'
-                }`}
-              >
-                {lane.icon ? `${lane.icon} ` : ''}
-                {lane.name}
-              </button>
-            );
-          })}
-        </div>
+        <ShareLanePicker
+          pool={open}
+          current={laneOf(open.id)}
+          onPick={(laneId) => onPick(open.id, laneId)}
+          onClose={() => setChoosing(null)}
+        />
       ) : null}
       {shared.length === 0 ? (
         <p data-share-private className="text-pool-500 text-xs">

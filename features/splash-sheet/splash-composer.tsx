@@ -14,9 +14,17 @@ import {
 } from '@/features/input-sheet/media-field';
 import { placeCard, type Card, ownPoolColumn } from '@/features/home/grid';
 import { createJointSplash, dropOwnPoolSplash, placeNewSplash } from '@/features/pool/actions';
-import { fallbackLane, withPick, type AudiencePick } from '@/features/pool/audience';
+import { fallbackLane, type AudiencePick } from '@/features/pool/audience';
 import type { AudiencePool } from '@/features/pool/audience-sheet';
 import { lastPicked, rememberPick } from '@/features/pool/last-pick';
+import {
+  followHomeLane,
+  NO_SHARE,
+  shareLane,
+  shareOff,
+  shareOn,
+  type ShareDraft,
+} from '@/features/pool/share-draft';
 import type { PoolScope } from '@/features/pool/compose-scope';
 import { poolSplashHref } from '@/features/pool/pool-cards';
 import { PoolLanePicker, type PoolPick } from '@/features/pool/pool-lane-picker';
@@ -108,14 +116,14 @@ export function SplashComposer({
     picked: [],
   });
   const [together, setTogether] = useState<Together>(noOne);
-  // Edited by hand, the audience stays as set; untouched, it follows the lane.
-  const [audienceEdited, setAudienceEdited] = useState<AudiencePick[] | null>(null);
+  // Where it is shared from Home, each pool's lane auto or picked by hand (H75).
+  const [share, setShare] = useState<ShareDraft>(NO_SHARE);
   const joint = pick?.kind === 'joint';
   // My pool record (0033): mine, on the pool lane, with no lane of mine.
   const own = pick?.kind === 'own';
   // From a pool there is no audience to choose: what is written there is in
   // that pool, and only there. From Home, Only me until set (H45).
-  const audience: AudiencePick[] = pool ? [] : (audienceEdited ?? []);
+  const audience: AudiencePick[] = pool ? [] : share.picks;
   // A pool or joint record shows in the pool's column on my Home until I
   // file it (H45).
   const poolLane = pool && pick ? pool.lanes.find((l) => l.id === pick.poolLaneId) : undefined;
@@ -367,7 +375,7 @@ export function SplashComposer({
     setLaneId(null);
     setPick(null);
     setTogether(noOne());
-    setAudienceEdited(null);
+    setShare(NO_SHARE);
     setAnnotation(fresh());
     setChosenDay(null);
     setMediaPaths([]);
@@ -494,7 +502,12 @@ export function SplashComposer({
         <LaneChips
           categories={categories}
           selectedId={laneId}
-          onSelect={setLaneId}
+          onSelect={(id) => {
+            setLaneId(id);
+            // Auto pools follow to a lane of the same name, else stay (H75).
+            const name = categories.find((c) => c.id === id)?.name ?? null;
+            setShare((draft) => followHomeLane(draft, name, pools));
+          }}
           surface="white"
         />
       )}
@@ -506,14 +519,20 @@ export function SplashComposer({
           shared={audience}
           startLane={(poolId) =>
             fallbackLane(
-              lastPicked(laneId, poolId),
+              lastPicked(poolId),
               categories.find((c) => c.id === laneId)?.name ?? null,
               pools.find((p) => p.id === poolId)?.lanes ?? [],
             )
           }
-          onChange={(poolId, poolLaneId, picked) => {
-            if (poolLaneId && picked) rememberPick(laneId, poolId, poolLaneId);
-            setAudienceEdited(withPick(audienceEdited ?? [], poolId, poolLaneId));
+          onTurn={(poolId, poolLaneId) =>
+            setShare((draft) =>
+              poolLaneId ? shareOn(draft, poolId, poolLaneId) : shareOff(draft, poolId),
+            )
+          }
+          onPick={(poolId, poolLaneId) => {
+            // Only a lane picked by hand is remembered for the pool.
+            rememberPick(poolId, poolLaneId);
+            setShare((draft) => shareLane(draft, poolId, poolLaneId));
           }}
         />
       )}

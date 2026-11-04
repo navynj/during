@@ -257,13 +257,13 @@ export function useEditLanes(
               pools={pools}
               preselect={(poolId) =>
                 fallbackLane(
-                  lastPicked(laneId, poolId),
+                  lastPicked(poolId),
                   categories.find((c) => c.id === laneId)?.name ?? null,
                   pools.find((p) => p.id === poolId)?.lanes ?? [],
                 )
               }
-              onChange={(poolId, chip) => {
-                if (chip) rememberPick(laneId, poolId, chip);
+              onChange={(poolId, chip, picked) => {
+                if (chip && picked) rememberPick(poolId, chip);
                 setShared((list) => withPick(list, poolId, chip));
               }}
               onTogether={(poolId, next) => setShared((list) => withTogether(list, poolId, next))}

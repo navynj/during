@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Lock, MoreHorizontal, Users } from 'lucide-react';
 
+import { CategoryChip } from '@/components/ui/chips/category-chip';
 import { usePeople } from '@/features/people/people-provider';
 import type { PoolFace, PoolLaneChip } from '@/lib/queries/pools';
 
@@ -42,8 +43,8 @@ export function AudienceChip({
   pools: AudiencePool[];
   /** The lane a pool starts on when turned on (fallbackLane, H75); none only for a pool with no lanes. */
   preselect: (poolId: string) => string | null;
-  /** A pool on a pool lane, or off (null). */
-  onChange: (poolId: string, poolLaneId: string | null) => void;
+  /** A pool on a pool lane, or off (null); `picked` when the lane was chosen by hand. */
+  onChange: (poolId: string, poolLaneId: string | null, picked: boolean) => void;
   /** With, per pool that is on (0035); absent, no With line. */
   onTogether?: (poolId: string, together: PickTogether) => void;
   /** My record written in a pool (0056): its pool, always on, its lane still picked. */
@@ -139,7 +140,7 @@ function AudienceSheet({
   pools: AudiencePool[];
   shared: AudiencePick[];
   preselect: (poolId: string) => string | null;
-  onChange: (poolId: string, poolLaneId: string | null) => void;
+  onChange: (poolId: string, poolLaneId: string | null, picked: boolean) => void;
   onTogether?: (poolId: string, together: PickTogether) => void;
   locked: string | null;
   moveHome: MoveHome | null;
@@ -238,11 +239,11 @@ function AudienceSheet({
                     onChange={(next) => {
                       if (!next) {
                         setWaiting((list) => list.filter((id) => id !== pool.id));
-                        onChange(pool.id, null);
+                        onChange(pool.id, null, false);
                         return;
                       }
                       const start = preselect(pool.id);
-                      if (start) onChange(pool.id, start);
+                      if (start) onChange(pool.id, start, false);
                       else setWaiting((list) => [...list, pool.id]);
                     }}
                   />
@@ -250,30 +251,22 @@ function AudienceSheet({
                 {on ? (
                   <span
                     data-audience-lanes={pool.id}
-                    className="no-scrollbar flex gap-2 overflow-x-auto"
+                    className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1"
                   >
-                    {pool.lanes.map((chip) => {
-                      const selected = chip.id === lane;
-                      return (
-                        <button
-                          key={chip.id}
-                          type="button"
-                          aria-pressed={selected}
-                          data-audience-lane={chip.id}
-                          onClick={() => {
-                            setWaiting((list) => list.filter((id) => id !== pool.id));
-                            onChange(pool.id, chip.id);
-                          }}
-                          className={`h-9 shrink-0 rounded-full px-3 text-sm font-semibold ${
-                            // Selection is ink (H20f).
-                            selected ? 'bg-ink text-white' : 'border-pool-200 text-ink border'
-                          }`}
-                        >
-                          {chip.icon ? `${chip.icon} ` : ''}
-                          {chip.name}
-                        </button>
-                      );
-                    })}
+                    {/* The lane row's own chips, as in Share to (H75). */}
+                    {pool.lanes.map((chip) => (
+                      <CategoryChip
+                        key={chip.id}
+                        icon={chip.icon}
+                        name={chip.name}
+                        selected={chip.id === lane}
+                        data-audience-lane={chip.id}
+                        onSelect={() => {
+                          setWaiting((list) => list.filter((id) => id !== pool.id));
+                          onChange(pool.id, chip.id, true);
+                        }}
+                      />
+                    ))}
                   </span>
                 ) : null}
                 {/* With, in this pool (0035): once it sits on a pool lane. */}

@@ -105,8 +105,8 @@ const POOLS: AudiencePool[] = [
     ],
   },
 ];
-/** The last Audience picks on this device (0033), kept clean between tests. */
-const LAST_PICK = 'weming.audience.lastPick';
+/** The last lane picked by hand per pool on this device (0033, H75), kept clean between tests. */
+const LAST_PICK = 'weming.audience.lastPickByPool';
 const store = (picks: Record<string, string>) =>
   window.localStorage.setItem(LAST_PICK, JSON.stringify(picks));
 const stored = (): unknown => JSON.parse(window.localStorage.getItem(LAST_PICK) ?? 'null');
@@ -470,6 +470,20 @@ describe('the affordances under the text', () => {
 });
 
 describe('the Share to row (H75, revising H45(b))', () => {
+  /** A phone (the lane picker a bottom sheet) or a wide screen (a popover). */
+  const media = (wide: boolean): void => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: (query: string) => ({
+        matches: wide && query.includes('min-width'),
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }),
+    });
+  };
+  beforeEach(() => media(false));
   const chip = (view: ReturnType<typeof sheet>, id: string) =>
     view.container.querySelector(`[data-share-pool="${id}"]`) as HTMLElement;
   const on = (view: ReturnType<typeof sheet>, id: string) => chip(view, id).hasAttribute('data-on');
@@ -481,7 +495,7 @@ describe('the Share to row (H75, revising H45(b))', () => {
     chip(view, id).querySelector('[data-share-lane]')?.textContent;
 
   it('starts with every pool off and says only you can see it, for every lane (H45)', () => {
-    store({ 'c-place:p-crew': 'cr-chat' });
+    store({ 'p-crew': 'cr-chat' });
     const view = sheet();
     for (const name of ['Place', 'Mood', 'Day']) {
       fireEvent.click(view.getAllByText(name)[0]);
@@ -493,13 +507,18 @@ describe('the Share to row (H75, revising H45(b))', () => {
     }
   });
 
-  it('turns a pool on at the lane last picked for that lane and pool', () => {
-    store({ 'c-day:p-crew': 'cr-chat', 'c-mood:p-crew': 'cr-out' });
+  it('turns a pool on at the lane last picked for that pool, as the lane row’s own chip', () => {
+    store({ 'p-crew': 'cr-chat' });
     const view = sheet();
     fireEvent.click(view.getByText('Day'));
     turn(view, 'p-crew');
     expect(on(view, 'p-crew')).toBe(true);
-    expect(lane(view, 'p-crew')).toBe('·💬 Chat');
+    expect(lane(view, 'p-crew')).toBe('💬Chat');
+    // The lane row's chip shape, with a chevron: it opens a picker.
+    const nested = chip(view, 'p-crew').querySelector('[data-share-lane]')!;
+    expect(nested.className).toMatch(/rounded-full px-2\.5 py-1 text-xs/);
+    expect(nested.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(nested.querySelector('svg')).not.toBeNull();
     expect(view.container.querySelector('[data-share-private]')).toBeNull();
   });
 
@@ -518,35 +537,87 @@ describe('the Share to row (H75, revising H45(b))', () => {
     const view = sheet({ pools: named });
     fireEvent.click(view.getByText('Day'));
     turn(view, 'p-pan');
-    expect(lane(view, 'p-pan')).toBe('·🖋 day');
+    expect(lane(view, 'p-pan')).toBe('🖋day');
     turn(view, 'p-crew');
-    expect(lane(view, 'p-crew')).toBe('·🚲 Outings');
+    expect(lane(view, 'p-crew')).toBe('🚲Outings');
     // Nothing is remembered for a lane the hand did not pick.
     expect(stored()).toBeNull();
   });
 
-  it('changes a pool’s lane from the chip’s lane part, and remembers that pick', () => {
+  it('changes a pool’s lane from its lane chip, never toggling the pool, and remembers that pick', () => {
     const view = sheet();
     fireEvent.click(view.getByText('Day'));
     turn(view, 'p-crew');
     fireEvent.click(chip(view, 'p-crew').querySelector('[data-share-lane]')!);
-    fireEvent.click(
-      view.container.querySelector('[data-share-lanes="p-crew"]')!.querySelectorAll('button')[1],
-    );
-    expect(lane(view, 'p-crew')).toBe('·💬 Chat');
-    expect(stored()).toEqual({ 'c-day:p-crew': 'cr-chat' });
+    expect(on(view, 'p-crew')).toBe(true);
+    const lanes = document.querySelector('[data-share-lanes="p-crew"]')!;
+    // The lane row's chips, the current one selected.
+    expect(lanes.querySelectorAll('button[aria-pressed="true"]')).toHaveLength(1);
+    expect(lanes.querySelector('button[aria-pressed="true"]')!.textContent).toBe('🚲Outings');
+    fireEvent.click(lanes.querySelectorAll('button')[1]);
+    expect(document.querySelector('[data-share-lanes="p-crew"]')).toBeNull();
+    expect(lane(view, 'p-crew')).toBe('💬Chat');
+    expect(stored()).toEqual({ 'p-crew': 'cr-chat' });
+    // On a phone the lanes were a bottom sheet.
+    fireEvent.click(chip(view, 'p-crew').querySelector('[data-share-lane]')!);
+    expect(document.querySelector('[data-pool-sheet="Lane in Crew"]')).not.toBeNull();
+    fireEvent.click(document.querySelector('[data-share-lanes="p-crew"] button')!);
     // Off again: nothing is shared.
     turn(view, 'p-crew');
     expect(on(view, 'p-crew')).toBe(false);
     expect(view.container.querySelector('[data-share-private]')).not.toBeNull();
   });
 
-  it('keeps a pool on its lane when my lane changes', () => {
+  it('opens the lanes as a popover on a wide screen, closed by Escape or a press outside', () => {
+    media(true);
+    const view = sheet();
+    turn(view, 'p-crew');
+    const open = () => fireEvent.click(chip(view, 'p-crew').querySelector('[data-share-lane]')!);
+    open();
+    expect(view.container.querySelector('[data-share-lane-popover]')).not.toBeNull();
+    expect(document.querySelector('[data-pool-sheet]')).toBeNull();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(view.container.querySelector('[data-share-lane-popover]')).toBeNull();
+    open();
+    fireEvent.pointerDown(document.body);
+    expect(view.container.querySelector('[data-share-lane-popover]')).toBeNull();
+    expect(on(view, 'p-crew')).toBe(true);
+  });
+
+  it('keeps an auto pool on its lane when my new lane has no namesake there', () => {
     const view = sheet();
     fireEvent.click(view.getByText('Place'));
     turn(view, 'p-ours');
     fireEvent.click(view.getAllByText('Day')[0]);
-    expect(lane(view, 'p-ours')).toBe('·🏕 Trips');
+    expect(lane(view, 'p-ours')).toBe('🏕Trips');
+  });
+
+  it('moves an auto pool to the namesake of my new lane; a picked one stays (H75)', () => {
+    const named: AudiencePool[] = [
+      {
+        id: 'p-pan',
+        name: 'Pancake',
+        lanes: [
+          { id: 'pk-mood', name: 'Mood', icon: '🌙' },
+          { id: 'pk-day', name: 'Day', icon: '🖋' },
+        ],
+      },
+      ...POOLS,
+    ];
+    const view = sheet({ pools: named });
+    fireEvent.click(view.getByText('Day'));
+    turn(view, 'p-pan');
+    expect(lane(view, 'p-pan')).toBe('🖋Day');
+    fireEvent.click(view.getAllByText('Mood')[0]);
+    expect(lane(view, 'p-pan')).toBe('🌙Mood');
+    // Picked by hand: it stays through a lane change.
+    fireEvent.click(chip(view, 'p-pan').querySelector('[data-share-lane]')!);
+    fireEvent.click(
+      document.querySelector('[data-share-lanes="p-pan"]')!.querySelectorAll('button')[1],
+    );
+    fireEvent.click(view.getAllByText('Mood')[0]);
+    fireEvent.click(view.getAllByText('Mood')[0]);
+    expect(lane(view, 'p-pan')).toBe('🖋Day');
   });
 
   it('places the dropped record where the row says, on its pool lane', async () => {

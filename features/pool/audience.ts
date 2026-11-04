@@ -35,9 +35,17 @@ export function fallbackLane(
   poolLanes: { id: string; name: string }[],
 ): string | null {
   if (lastPicked && poolLanes.some((l) => l.id === lastPicked)) return lastPicked;
+  return sameNamedLane(myLaneName, poolLanes) ?? poolLanes[0]?.id ?? null;
+}
+
+/** The pool lane named as my lane, case and edge spaces aside; none without one. */
+export function sameNamedLane(
+  myLaneName: string | null,
+  poolLanes: { id: string; name: string }[],
+): string | null {
   const named = myLaneName?.trim().toLowerCase();
-  const same = named ? poolLanes.find((l) => l.name.trim().toLowerCase() === named) : undefined;
-  return same?.id ?? poolLanes[0]?.id ?? null;
+  if (!named) return null;
+  return poolLanes.find((l) => l.name.trim().toLowerCase() === named)?.id ?? null;
 }
 
 /** The audience with one pool switched: on a pool lane, or off (null). */

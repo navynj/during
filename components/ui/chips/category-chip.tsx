@@ -1,35 +1,53 @@
 'use client';
 
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+
 /**
  * A category chip. Selected is an **ink fill with white text** — ink means
  * selection, blue means action (H20f), so the one blue thing in the sheet is
  * the Drop that commits. Unselected is a quiet surface with muted text, so
  * the row reads on a white page as well as on the old sheet's grey band.
+ * `onInk` is the same chip set inside an ink-filled one — a pool turned on
+ * in Share to (H75) — a lighter wash of white so it stays legible there.
  */
 export function CategoryChip({
   icon,
   name,
   selected,
   onSelect,
+  onInk = false,
+  trailing = null,
+  className = '',
+  ...rest
 }: {
   icon: string | null;
   name: string;
   selected: boolean;
   onSelect: () => void;
-}) {
+  /** Inside an ink-filled chip (H75). */
+  onInk?: boolean;
+  /** After the name: a chevron where the chip opens a picker. */
+  trailing?: ReactNode;
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'type' | 'children'>) {
   return (
     <button
       type="button"
       onClick={onSelect}
-      aria-pressed={selected}
+      aria-pressed={onInk ? undefined : selected}
+      {...rest}
       // Small on purpose: the row is the whole category vocabulary, and a
       // chip the size of a button showed three of them before scrolling.
       className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors ${
-        selected ? 'bg-ink text-white' : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
-      }`}
+        onInk
+          ? 'bg-white/20 text-white hover:bg-white/30'
+          : selected
+            ? 'bg-ink text-white'
+            : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
+      } ${className}`}
     >
       {icon ? <span aria-hidden>{icon}</span> : null}
       {name}
+      {trailing}
     </button>
   );
 }

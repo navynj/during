@@ -80,13 +80,13 @@ export function SplashAudience({
         // Shared the moment a pool is turned on, on a lane it names (H75).
         preselect={(poolId) =>
           fallbackLane(
-            lastPicked(myLaneId, poolId),
+            lastPicked(poolId),
             categories.find((c) => c.id === myLaneId)?.name ?? null,
             pools.find((p) => p.id === poolId)?.lanes ?? [],
           )
         }
-        onChange={(poolId, poolLaneId) => {
-          if (poolLaneId) rememberPick(myLaneId, poolId, poolLaneId);
+        onChange={(poolId, poolLaneId, picked) => {
+          if (poolLaneId && picked) rememberPick(poolId, poolLaneId);
           audience.run(
             (current) => withPick(current, poolId, poolLaneId),
             () => setPlacement(splashId, poolId, poolLaneId !== null, poolLaneId),
