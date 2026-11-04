@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 
 import { videosIn } from '@/lib/youtube';
@@ -53,8 +53,6 @@ export function BlockEditor({
   onDelete,
   onLock,
   onCancel,
-  placeholder = 'Drop your words here',
-  files = null,
 }: {
   target: EditorTarget;
   /** The post's range: a day chip when it spans more than a day (0031). */
@@ -64,10 +62,6 @@ export function BlockEditor({
   onDelete: () => void;
   onLock: (locked: boolean) => void;
   onCancel: () => void;
-  /** The field's invitation: someone else's splash asks for their side (H75). */
-  placeholder?: string;
-  /** Photos picked from the add card before the editor opened (H75), attached at once. */
-  files?: FileList | null;
 }) {
   const editing = target.kind === 'edit' ? target.block : null;
   const [note, setNote] = useState(editing?.note ?? '');
@@ -87,13 +81,6 @@ export function BlockEditor({
   const [confirming, setConfirming] = useState(false);
   const attach = useMediaAttach(media, setMedia);
   const field = useRef<HTMLTextAreaElement>(null);
-  // The add card's photos, taken in once: a remount in development must not add them twice.
-  const took = useRef(false);
-  useEffect(() => {
-    if (!files || took.current) return;
-    took.current = true;
-    void attach.attach(files);
-  }, [files, attach]);
 
   // The words grow the field; the field never scrolls inside the page.
   useLayoutEffect(() => {
@@ -123,7 +110,7 @@ export function BlockEditor({
         ref={field}
         value={note}
         onChange={(event) => setNote(event.target.value)}
-        placeholder={placeholder}
+        placeholder="Drop your words here"
         rows={3}
         autoFocus
         aria-label="Block"

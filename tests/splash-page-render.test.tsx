@@ -413,23 +413,57 @@ describe('writing on the page, in place', () => {
     expect(router.refresh).not.toHaveBeenCalled();
   });
 
-  it('opens with the next block’s editor up when opened to write (Board: "Add your side")', () => {
+  it('puts the cursor in the add row when opened to write (Board: "Add your side")', () => {
     const { container } = page({ writing: true });
-    expect(container.querySelector('[data-block-editor="new"]')).not.toBeNull();
+    const row = container.querySelector('[data-add-row]')!;
+    expect(row.hasAttribute('data-open')).toBe(true);
+    expect(document.activeElement).toBe(row.querySelector('[data-add-field]'));
+  });
+
+  it('is one quiet row under a faint wave: my face, a field that says what it does, a photo button (H75)', () => {
+    const { container } = page({ initials: 'YL' });
+    const slot = container.querySelector('[data-add-slot]')!;
+    expect(slot.querySelector('[data-add-wave]')!.className).toContain('opacity-25');
+    const row = slot.querySelector('[data-add-row]')!;
+    expect(row.hasAttribute('data-open')).toBe(false);
+    expect(row.querySelector<HTMLTextAreaElement>('[data-add-field]')!.placeholder).toBe(
+      'Add to this splash',
+    );
+    expect(row.querySelector('[data-add-photo]')).not.toBeNull();
+    expect(row.querySelector('[data-add-drop]')).toBeNull();
+    // No card, no ring, no title.
+    expect(slot.querySelector('[data-badge], [data-add-card], [data-add-label]')).toBeNull();
+    expect(slot.className).not.toMatch(/border/);
+  });
+
+  it('opens to lines and a Drop in focus, and folds back to one row when left empty', () => {
+    const { container } = page();
+    const row = container.querySelector('[data-add-row]')!;
+    const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+    fireEvent.focus(field);
+    expect(row.hasAttribute('data-open')).toBe(true);
+    expect(field.rows).toBe(3);
+    expect(row.querySelector<HTMLButtonElement>('[data-add-drop]')!.disabled).toBe(true);
+    fireEvent.blur(field);
+    expect(row.hasAttribute('data-open')).toBe(false);
+    expect(field.rows).toBe(1);
+    // With words in it, it stays open when left.
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: 'half a thought' } });
+    fireEvent.blur(field);
+    expect(row.hasAttribute('data-open')).toBe(true);
   });
 
   it('starts a new block on a range at its last day when today is past it, never a lane (0031)', async () => {
-    const { container, getByText, getByLabelText } = page();
-    fireEvent.click(getByText('Drop your words here'));
-    await waitFor(() =>
-      expect(container.querySelector('[data-block-editor="new"]')).not.toBeNull(),
-    );
-    const editor = container.querySelector<HTMLElement>('[data-block-editor="new"]')!;
-    expect(editor.querySelector('[role="group"][aria-label="Lane"]')).toBeNull();
+    const { container, getByText } = page();
+    const row = container.querySelector<HTMLElement>('[data-add-row]')!;
+    const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+    fireEvent.focus(field);
+    expect(row.querySelector('[role="group"][aria-label="Lane"]')).toBeNull();
     // Today (Sep 25) is past Aug 17–20: the range's last day.
-    expect((within(editor).getByLabelText('Day') as HTMLSelectElement).value).toBe('2026-08-20');
-    fireEvent.change(getByLabelText('Block'), { target: { value: 'the drive home' } });
-    fireEvent.click(getByText('Save'));
+    expect((within(row).getByLabelText('Day') as HTMLSelectElement).value).toBe('2026-08-20');
+    fireEvent.change(field, { target: { value: 'the drive home' } });
+    fireEvent.click(getByText('Drop'));
     await waitFor(() => expect(calls.some((c) => c.name === 'addBlock')).toBe(true));
     const added = calls.find((c) => c.name === 'addBlock')!.args[0];
     expect(added).toMatchObject({
@@ -439,21 +473,22 @@ describe('writing on the page, in place', () => {
       occurredOn: '2026-08-20',
     });
     expect(added).not.toHaveProperty('categoryId');
+    // Dropped: the row is empty and one row again.
+    expect(field.value).toBe('');
+    expect(row.hasAttribute('data-open')).toBe(false);
   });
 
   it('offers no day on a one-day post: the block takes the post’s (H24)', async () => {
     const oneDay = { ...board, declared_end: null };
-    const { container, getByText, getByLabelText } = page({
+    const { container, getByText } = page({
       splash: summarizeSplash(oneDay, blocks, TZ, NOW),
     });
-    fireEvent.click(getByText('Drop your words here'));
-    await waitFor(() =>
-      expect(container.querySelector('[data-block-editor="new"]')).not.toBeNull(),
-    );
-    const editor = container.querySelector<HTMLElement>('[data-block-editor="new"]')!;
-    expect(within(editor).queryByLabelText('Day')).toBeNull();
-    fireEvent.change(getByLabelText('Block'), { target: { value: 'lunch' } });
-    fireEvent.click(getByText('Save'));
+    const row = container.querySelector<HTMLElement>('[data-add-row]')!;
+    const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+    fireEvent.focus(field);
+    expect(within(row).queryByLabelText('Day')).toBeNull();
+    fireEvent.change(field, { target: { value: 'lunch' } });
+    fireEvent.click(getByText('Drop'));
     await waitFor(() => expect(calls.some((c) => c.name === 'addBlock')).toBe(true));
     expect(calls.find((c) => c.name === 'addBlock')!.args[0]).not.toHaveProperty('occurredOn');
   });

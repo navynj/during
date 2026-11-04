@@ -28,7 +28,7 @@ import { addBlock, editBlock } from './block-actions';
 import { SplashDescription } from './splash-description';
 import { orderBlocks } from './block-day';
 import { BlockEditor, type BlockDraft, type EditorTarget } from './block-editor';
-import { AddCard } from './add-card';
+import { AddRow } from './add-row';
 import { BlockView } from './block';
 import { RippleThread } from './ripple-thread';
 import { useCloseSplash } from './splash-modal';
@@ -200,9 +200,8 @@ export function SplashPage({
         : document.getElementById(openedAt);
     target?.scrollIntoView({ block: 'center' });
   }, [openedAt, openedRipple]);
-  const [editor, setEditor] = useState<EditorTarget | null>(() =>
-    writing && !splash.orphan ? { kind: 'add', splashId: splash.id } : null,
-  );
+  // A block being edited in place; a new one is written in the add row.
+  const [editor, setEditor] = useState<EditorTarget | null>(null);
   const showsBlock = (block: RippleWithSplash): boolean =>
     !block.thread_pool_id || shownPool === null || block.thread_pool_id === shownPool;
   const {
@@ -392,13 +391,6 @@ export function SplashPage({
       }),
       async () => outcome(await setRippleLock(block.id, locked)),
     );
-  }
-
-  // Photos picked on the add card, for its editor to take in (H75).
-  const [addFiles, setAddFiles] = useState<FileList | null>(null);
-  function startBlock(files: FileList | null = null): void {
-    setAddFiles(files);
-    setEditor({ kind: 'add', splashId: page.splash.id });
   }
 
   // An edit made from the sheet a moment ago shows at once (review).
@@ -690,33 +682,20 @@ export function SplashPage({
           )}
         </div>
 
-        {/* The add slot: the seat of the next block, at the bottom where the
-          story continues. The ring ripples as the one invitation (law 3). */}
+        {/* The add row: the seat of the next block, at the bottom where the
+          story continues (H75). */}
         {/* Someone else's splash takes no words of mine (review), unless I
           am invited on it in this pool (0035). */}
         {(scope === 'theirs' && !sidePool) || orphan ? null : (
-          <div data-add-slot className="border-pool-100 mt-2 border-t pt-4 pb-10">
-            {editor?.kind === 'add' ? (
-              <BlockEditor
-                target={editor}
-                range={page.splash.declaredRange}
-                today={today}
-                onSubmit={(draft) => saveBlock(editor, draft)}
-                onDelete={() => setEditor(null)}
-                onLock={() => {}}
-                onCancel={() => setEditor(null)}
-                placeholder={ownRecord ? undefined : 'Your side of this splash'}
-                files={addFiles}
-              />
-            ) : (
-              <AddCard
-                label={ownRecord ? 'Add to this splash' : 'Add yours too'}
-                placeholder={ownRecord ? 'Drop your words here' : 'Your side of this splash'}
-                onWrite={() => startBlock()}
-                onPhotos={(files) => startBlock(files)}
-              />
-            )}
-          </div>
+          <AddRow
+            label={ownRecord ? 'Add to this splash' : 'Add yours too'}
+            me={pool?.me ?? me}
+            initials={initials}
+            range={page.splash.declaredRange}
+            today={today}
+            autoFocus={writing}
+            onSubmit={(draft) => saveBlock({ kind: 'add', splashId: page.splash.id }, draft)}
+          />
         )}
       </div>
     </div>

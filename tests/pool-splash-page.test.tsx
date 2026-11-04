@@ -143,37 +143,33 @@ function page(
 }
 
 describe('adding yours, not replying (H75)', () => {
+  const field = (view: ReturnType<typeof page>) =>
+    view.container.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+
   it('asks for my side on someone’s record I am invited on', () => {
     const view = page([ripple('r-mina', MINA, 'Mina’s record')], { ...POOL, scope: 'theirs' }, 'p');
-    const card = view.container.querySelector('[data-add-card]')!;
-    expect(card.querySelector('[data-add-label]')!.textContent).toBe('Add yours too');
-    fireEvent.click(card.querySelector('[data-add-field]')!);
-    expect(view.getByLabelText('Block').getAttribute('placeholder')).toBe(
-      'Your side of this splash',
-    );
+    expect(field(view).placeholder).toBe('Add yours too');
   });
 
-  it('adds to my own splash, with the editor’s own words', () => {
+  it('adds to my own splash', () => {
     const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
-    const card = view.container.querySelector('[data-add-card]')!;
-    expect(card.querySelector('[data-add-label]')!.textContent).toBe('Add to this splash');
-    fireEvent.click(card.querySelector('[data-add-field]')!);
-    expect(view.getByLabelText('Block').getAttribute('placeholder')).toBe('Drop your words here');
+    expect(field(view).placeholder).toBe('Add to this splash');
   });
 
-  it('opens the editor with the photos picked on the card', () => {
+  it('opens the row with the photos picked on it', () => {
     window.URL.createObjectURL = () => 'blob:preview';
     const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
     const file = new File(['x'], 'a.jpg', { type: 'image/jpeg' });
-    fireEvent.change(view.container.querySelector('[data-add-photo-input]')!, {
+    fireEvent.change(view.container.querySelector('[data-add-row] [data-media-input]')!, {
       target: { files: [file] },
     });
-    expect(view.container.querySelector('[data-block-editor="new"]')).not.toBeNull();
+    expect(view.container.querySelector('[data-add-row]')!.hasAttribute('data-open')).toBe(true);
+    expect(view.container.querySelector('[data-add-drop]')).not.toBeNull();
   });
 
-  it('keeps Reply under each ripple, apart from the add card', () => {
+  it('keeps Reply under each ripple, apart from the add row', () => {
     const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
-    expect(view.container.querySelector('[data-add-card]')!.textContent).not.toMatch(/reply/i);
+    expect(view.container.querySelector('[data-add-slot]')!.textContent).not.toMatch(/reply/i);
   });
 });
 

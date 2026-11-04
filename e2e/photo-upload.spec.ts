@@ -98,14 +98,14 @@ test('a picked photo goes up ready, with its display copy, thumbnail and size, a
     if (request.method() === 'PUT') puts.push(request.headers()['content-type'] ?? '');
   });
 
-  await page.getByRole('button', { name: 'Drop your words here' }).click();
-  await page.locator('[data-media-input]').setInputFiles({
+  // The add row at the foot takes the photo straight in (H75).
+  await page.locator('[data-add-row] [data-media-input]').setInputFiles({
     name: 'walk.jpg',
     mimeType: 'image/jpeg',
     buffer: Buffer.from(jpeg),
   });
   await expect(page.locator('[data-media-previews] img')).toHaveCount(1, { timeout: 30_000 });
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.locator('[data-add-drop]').click();
 
   // The row: one path in my folder, its size, its display copy's and thumbnail's.
   let row: { media: string[]; media_meta: unknown } | null = null;
