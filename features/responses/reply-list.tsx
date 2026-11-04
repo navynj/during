@@ -20,32 +20,27 @@ export type ReplyHandlers = {
 };
 
 /**
- * A block's replies (H25): the first two, oldest first, then "+n more
- * replies"; each its author's face, name, age and text — "edited" once
+ * A block's replies (H25), every one, oldest first (H75); each its author's face, name, age and text — "edited" once
  * edited, "Hidden by the author" once hidden. Mine I edit and delete; on my
  * ripple I hide anyone's. The one-line input opens from the reactions
  * row's "Reply" (Yoonji, in the session), at the bottom, with Cancel and
- * Save, and grows to four lines. Read down to the last reply, a second
- * "Reply" sits under it, at the replies' indent, opening the same input in
- * the same place; not while "+n more" hides the rest (H75). Opened from the
+ * Save, and grows to four lines. Under the last reply, a second
+ * "Reply" sits at the replies' indent, opening the same input in the same
+ * place (H75). Opened from the
  * top, the input is scrolled into view.
  */
 export function ReplyList({
   replies,
-  more,
   rippleAuthor,
   canReply,
-  onMore,
   on,
   composing = false,
   onDoneComposing = () => {},
   onCompose,
 }: {
   replies: ReplyRow[];
-  more: number;
   rippleAuthor: string;
   canReply: boolean;
-  onMore: () => void;
   on: ReplyHandlers;
   /** The reply field is open, asked for by the reactions row's "Reply". */
   composing?: boolean;
@@ -122,16 +117,6 @@ export function ReplyList({
           ))}
         </ol>
       ) : null}
-      {more > 0 ? (
-        <button
-          type="button"
-          data-replies-more
-          onClick={onMore}
-          className="text-main-900 self-start text-xs font-medium"
-        >
-          +{more} more {more === 1 ? 'reply' : 'replies'}
-        </button>
-      ) : null}
       {canReply && composing ? (
         <div ref={field} data-reply-field>
           <ReplyInput
@@ -144,7 +129,7 @@ export function ReplyList({
             onCancel={onDoneComposing}
           />
         </div>
-      ) : canReply && onCompose && replies.length > 0 && more === 0 ? (
+      ) : canReply && onCompose && replies.length > 0 ? (
         // Read to the end, answered from there (H75): the replies' own indent.
         <button
           type="button"

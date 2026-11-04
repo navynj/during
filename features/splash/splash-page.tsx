@@ -170,10 +170,8 @@ export function SplashPage({
   // the owner's from no pool; written into the pool shown.
   const answered = useRippleResponses(responses, shownPool);
   const thread = inThread(answered.value, shownPool);
-  // Opened at a reply from the board: its block's replies open in full (H25).
-  const [expanded, setExpanded] = useState<string[]>([]);
+  // Opened at a reply from the board: its block, brought into view.
   const openedRipple = thread.replies.find((r) => `reply-${r.id}` === openedAt)?.ripple_id;
-  const isExpanded = (id: string): boolean => expanded.includes(id) || id === openedRipple;
   // Seen as of this open, on this device; its dots stay until the next (H25),
   // or until I tap that block's reactions or replies (Yoonji, in the session).
   const seenBefore = useSeenBefore(splash.id);
@@ -465,8 +463,6 @@ export function SplashPage({
               rippleAuthor=""
               value={thread}
               canRespond={false}
-              expanded={isExpanded(block.id)}
-              onExpand={() => setExpanded((ids) => [...ids, block.id])}
               onReact={(emoji) => answered.react(block.id, emoji)}
               on={answered.handlers(block.id)}
             />
@@ -505,8 +501,6 @@ export function SplashPage({
                 rippleAuthor={block.author_id}
                 value={thread}
                 canRespond={respondable && !page.lockedIds.includes(block.id)}
-                expanded={isExpanded(block.id)}
-                onExpand={() => setExpanded((ids) => [...ids, block.id])}
                 onReact={(emoji) => answered.react(block.id, emoji)}
                 on={answered.handlers(block.id)}
               />

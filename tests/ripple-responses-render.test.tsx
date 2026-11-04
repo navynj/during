@@ -40,15 +40,10 @@ const reaction = (user: string, emoji: string, at: number): ReactionRow => ({
 
 function view(
   value: RippleResponsesValue,
-  {
-    canRespond = true,
-    rippleAuthor = MINA,
-    expanded = false,
-  }: { canRespond?: boolean; rippleAuthor?: string; expanded?: boolean } = {},
+  { canRespond = true, rippleAuthor = MINA }: { canRespond?: boolean; rippleAuthor?: string } = {},
 ) {
   const on = { reply: vi.fn(), edit: vi.fn(), remove: vi.fn(), hide: vi.fn() };
   const onReact = vi.fn();
-  const onExpand = vi.fn();
   const result = render(
     <PeopleProvider
       me={ME}
@@ -62,14 +57,12 @@ function view(
         rippleAuthor={rippleAuthor}
         value={value}
         canRespond={canRespond}
-        expanded={expanded}
-        onExpand={onExpand}
         onReact={onReact}
         on={on}
       />
     </PeopleProvider>,
   );
-  return { ...result, on, onReact, onExpand };
+  return { ...result, on, onReact };
 }
 
 describe('reactions under a block', () => {
@@ -117,13 +110,10 @@ describe('reactions under a block', () => {
 describe('replies under a block', () => {
   const five = [0, 1, 2, 3, 4].map((at) => reply(`p${at}`, at % 2 ? ME : MINA, at));
 
-  it('shows the first two, then "+3 more replies"; the input waits behind "Reply"', () => {
-    const { container, onExpand } = view({ reactions: [], replies: five });
-    expect(container.querySelectorAll('[data-reply]')).toHaveLength(2);
-    const more = container.querySelector('[data-replies-more]')!;
-    expect(more.textContent).toBe('+3 more replies');
-    fireEvent.click(more);
-    expect(onExpand).toHaveBeenCalled();
+  it('shows every reply, none folded (H75); the input waits behind "Reply"', () => {
+    const { container } = view({ reactions: [], replies: five });
+    expect(container.querySelectorAll('[data-reply]')).toHaveLength(5);
+    expect(container.textContent).not.toMatch(/more repl/);
     // Not always open (Yoonji, in the session): "Reply" at the reactions row's left end.
     expect(container.querySelector('[data-reply-input]')).toBeNull();
     const toggle = container.querySelector('[data-reactions] [data-reply-toggle]')!;
@@ -133,12 +123,6 @@ describe('replies under a block', () => {
     const input = container.querySelector('[data-reply-input] textarea')!;
     expect(input.getAttribute('placeholder')).toBe('Reply…');
     expect(input.getAttribute('maxlength')).toBe('500');
-  });
-
-  it('expanded, shows them all', () => {
-    const { container } = view({ reactions: [], replies: five }, { expanded: true });
-    expect(container.querySelectorAll('[data-reply]')).toHaveLength(5);
-    expect(container.querySelector('[data-replies-more]')).toBeNull();
   });
 
   it('offers a second Reply under the last reply, at the replies’ indent (H75)', () => {
@@ -174,7 +158,7 @@ describe('replies under a block', () => {
     }
   });
 
-  it('has no second Reply with no replies, with the rest behind "+n more", or where none may reply', () => {
+  it('has no second Reply with no replies, or where none may reply; with many, under the last', () => {
     expect(
       view({ reactions: [], replies: [] }).container.querySelector('[data-reply-again]'),
     ).toBeNull();
@@ -182,12 +166,6 @@ describe('replies under a block', () => {
     const many = [1, 2, 3, 4].map((n) => reply(`r${n}`, MINA, n));
     expect(
       view({ reactions: [], replies: many }).container.querySelector('[data-reply-again]'),
-    ).toBeNull();
-    cleanup();
-    expect(
-      view({ reactions: [], replies: many }, { expanded: true }).container.querySelector(
-        '[data-reply-again]',
-      ),
     ).not.toBeNull();
     cleanup();
     expect(
