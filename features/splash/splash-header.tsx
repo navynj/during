@@ -5,7 +5,7 @@ import { useState, useTransition, type ReactNode } from 'react';
 import { OutlineChip } from '@/components/ui/chips/category-chip';
 import { WaveRule } from '@/components/ui/waves/wave-rule';
 import { impressionLineCount } from '@/components/ui/waves';
-import { QuietAffordance } from '@/features/input-sheet/annotation-control';
+import { AnnotationControl, QuietAffordance } from '@/features/input-sheet/annotation-control';
 import { LaneChips } from '@/features/input-sheet/lane-chips';
 import { EmojiInput } from '@/features/lanes/emoji-input';
 import type { MyCategory } from '@/lib/queries/profile';
@@ -83,8 +83,9 @@ export function SplashHeader({
   const [icon, setIcon] = useState(splash.icon ?? '');
   const [editingDate, setEditingDate] = useState(false);
   const [range, setRange] = useState<{ start: IsoDate; end: IsoDate | null } | null>(
-    // Every post has a date (H24): its own, else the day it was made.
-    splash.range ? { start: splash.range.start, end: splash.range.end } : null,
+    // Every post has a date (H24): its own, else the day it was made. An end
+    // on the start's day reads as one field, the drop sheet's (oneDay).
+    splash.range ? { start: splash.range.start, end: oneDay(splash.range) } : null,
   );
   const [editingLane, setEditingLane] = useState(false);
   const [, startTransition] = useTransition();
@@ -93,7 +94,7 @@ export function SplashHeader({
     title: title.trim(),
     icon: splash.icon,
     declaredStart: range?.start ?? null,
-    declaredEnd: range?.end ?? null,
+    declaredEnd: range ? oneDay(range) : null,
     declaredLaneId: splash.declaredLaneId,
     ...over,
   });
@@ -251,28 +252,18 @@ export function SplashHeader({
         ) : null
       ) : editingDate ? (
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <input
-            type="date"
-            lang="en"
-            aria-label="Start date"
-            value={range?.start ?? today}
-            onChange={(event) =>
-              event.target.value && setRange({ start: event.target.value, end: range?.end ?? null })
-            }
-            className="text-ink bg-pool-100 rounded px-2 py-1 tabular-nums"
-          />
-          <span aria-hidden className="text-pool-500">
-            ~
-          </span>
-          <input
-            type="date"
-            lang="en"
-            aria-label="End date"
-            value={range?.end ?? ''}
-            onChange={(event) =>
-              setRange({ start: range?.start ?? today, end: event.target.value || null })
-            }
-            className="text-ink bg-pool-100 rounded px-2 py-1 tabular-nums"
+          {/* The drop sheet's own date control (H24: a date is changed, never removed). */}
+          <AnnotationControl
+            annotation={{
+              date: range?.start ?? today,
+              time: null,
+              endDate: range?.end ?? null,
+              endTime: null,
+            }}
+            today={today}
+            onChange={(next) => next && setRange({ start: next.date, end: next.endDate })}
+            clock={false}
+            removable={false}
           />
           <button
             type="button"
@@ -280,7 +271,7 @@ export function SplashHeader({
               const next = range ?? { start: today, end: null };
               setRange(next);
               setEditingDate(false);
-              run(() => onEdit(header({ declaredStart: next.start, declaredEnd: next.end })));
+              run(() => onEdit(header({ declaredStart: next.start, declaredEnd: oneDay(next) })));
             }}
             className="text-main-900 font-medium"
           >
@@ -311,4 +302,9 @@ export function SplashHeader({
       ) : null}
     </header>
   );
+}
+
+/** A range's end, or none when it ends on its start's day: a one-day post stores no end. */
+export function oneDay(range: { start: IsoDate; end: IsoDate | null }): IsoDate | null {
+  return range.end === range.start ? null : range.end;
 }

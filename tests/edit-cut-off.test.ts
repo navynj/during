@@ -60,6 +60,14 @@ describe('a header update cut off at the deadline', () => {
     expect(await saveHeader(ID, HEADER)).toEqual({ ok: true, splash: ROW });
   });
 
+  it('writes an end on the start’s day as no end, and reads it back so', async () => {
+    db.row = ROW;
+    expect(await saveHeader(ID, { ...HEADER, declaredEnd: '2026-10-28' })).toEqual({
+      ok: true,
+      splash: ROW,
+    });
+  });
+
   it('says it could not confirm when the row does not, never the raw error', async () => {
     db.row = { ...ROW, title: 'Before' };
     expect(await saveHeader(ID, HEADER)).toEqual({ ok: false, message: UNCONFIRMED });

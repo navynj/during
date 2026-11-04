@@ -671,6 +671,76 @@ describe('the header menu', () => {
   });
 });
 
+describe('the header’s date, the drop sheet’s control', () => {
+  const oneDayPage = (declared_end: string | null) => {
+    const splash = { ...board, declared_start: '2026-08-17', declared_end };
+    return page({ splash: summarizeSplash(splash, blocks, TZ, NOW) });
+  };
+  const saved = () => calls.find((c) => c.name === 'updateSplashHeader')!.args[1];
+
+  it('shows one field and + add end date when there is no end date', () => {
+    const { getByLabelText, queryByLabelText, getByText } = oneDayPage(null);
+    fireEvent.click(getByLabelText('Edit the declared date'));
+    expect((getByLabelText('Date') as HTMLInputElement).value).toBe('2026-08-17');
+    expect(queryByLabelText('End date')).toBeNull();
+    expect(getByText('+ add end date')).toBeTruthy();
+    // A post's date is changed, never removed (H24).
+    expect(queryByLabelText('Remove the time')).toBeNull();
+  });
+
+  it('shows one field when the end is the start', () => {
+    const { getByLabelText, queryByLabelText, getByText } = oneDayPage('2026-08-17');
+    fireEvent.click(getByLabelText('Edit the declared date'));
+    expect(queryByLabelText('End date')).toBeNull();
+    expect(getByText('+ add end date')).toBeTruthy();
+  });
+
+  it('shows both fields on a range', () => {
+    const { getByLabelText } = page();
+    fireEvent.click(getByLabelText('Edit the declared date'));
+    expect((getByLabelText('End date') as HTMLInputElement).value).toBe('2026-08-20');
+  });
+
+  it('adds an end date, and takes it away by its × or by setting it to the start', async () => {
+    const { getByLabelText, queryByLabelText, getByText } = oneDayPage(null);
+    fireEvent.click(getByLabelText('Edit the declared date'));
+    fireEvent.click(getByText('+ add end date'));
+    fireEvent.change(getByLabelText('End date'), { target: { value: '2026-08-19' } });
+    fireEvent.click(getByLabelText('Remove the end'));
+    expect(queryByLabelText('End date')).toBeNull();
+
+    fireEvent.click(getByText('+ add end date'));
+    fireEvent.change(getByLabelText('End date'), { target: { value: '2026-08-19' } });
+    fireEvent.change(getByLabelText('End date'), { target: { value: '2026-08-17' } });
+    expect(queryByLabelText('End date')).toBeNull();
+
+    fireEvent.click(getByText('+ add end date'));
+    fireEvent.change(getByLabelText('End date'), { target: { value: '2026-08-19' } });
+    fireEvent.click(getByText('Done'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'updateSplashHeader')).toBe(true));
+    expect(saved()).toMatchObject({ declaredStart: '2026-08-17', declaredEnd: '2026-08-19' });
+  });
+
+  it('saves an end on the start’s day as no end date', async () => {
+    const { getByLabelText, getByText } = oneDayPage(null);
+    fireEvent.click(getByLabelText('Edit the declared date'));
+    // + add end date opens on the start's day; Done with it there stores none.
+    fireEvent.click(getByText('+ add end date'));
+    fireEvent.click(getByText('Done'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'updateSplashHeader')).toBe(true));
+    expect(saved()).toMatchObject({ declaredStart: '2026-08-17', declaredEnd: null });
+  });
+
+  it('normalizes a stored end = start the next time the post is saved', async () => {
+    const { getByLabelText } = oneDayPage('2026-08-17');
+    fireEvent.click(getByLabelText('Edit the title'));
+    fireEvent.change(getByLabelText('Title'), { target: { value: 'One night' } });
+    fireEvent.blur(getByLabelText('Title'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'updateSplashHeader')).toBe(true));
+    expect(saved()).toMatchObject({ declaredStart: '2026-08-17', declaredEnd: null });
+  });
+});
+
 describe('a block read alone: its post is a joint splash of a pool I left (H23, H24)', () => {
   const lone = block({
     id: 'r-lone',

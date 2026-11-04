@@ -50,7 +50,13 @@ export function refuseRange(header: Pick<Header, 'declaredStart' | 'declaredEnd'
 export async function saveHeader(id: string, input: Header): Promise<SplashResult> {
   const parsed = Header.safeParse(input);
   if (!parsed.success) return { ok: false, message: 'That header is incomplete.' };
-  const header = parsed.data;
+  // An end on the start's day is a one-day post: it stores no end, and a
+  // row that still holds one is put right the next time it is saved.
+  const header = {
+    ...parsed.data,
+    declaredEnd:
+      parsed.data.declaredEnd === parsed.data.declaredStart ? null : parsed.data.declaredEnd,
+  };
   const refused = refuseRange(header);
   if (refused) return { ok: false, message: refused };
 

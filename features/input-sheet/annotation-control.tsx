@@ -25,6 +25,7 @@ export function AnnotationControl({
   onChange,
   clock = true,
   label = '+ Add Time',
+  removable = true,
 }: {
   annotation: Annotation | null;
   today: IsoDate;
@@ -32,6 +33,8 @@ export function AnnotationControl({
   /** False for a splash's own dates, which are days with no clock (H21f). */
   clock?: boolean;
   label?: string;
+  /** False where a date cannot be taken away, only changed: a post's header (H24). */
+  removable?: boolean;
 }) {
   // The clock field is shown once asked for, even while still empty.
   const [clockOpen, setClockOpen] = useState(annotation?.time !== null);
@@ -49,6 +52,12 @@ export function AnnotationControl({
   }
 
   const set = (patch: Partial<Annotation>): void => onChange({ ...annotation, ...patch });
+  // An end on its start's day with no clock adds nothing: it folds back to
+  // one field, as its × would.
+  const setEnd = (endDate: IsoDate): void =>
+    endDate === annotation.date && annotation.time === null
+      ? set({ endDate: null, endTime: null })
+      : set({ endDate });
   const verdict = annotationVerdict(annotation);
   const field = 'text-ink rounded bg-white px-1 py-px tabular-nums';
 
@@ -86,9 +95,11 @@ export function AnnotationControl({
             + add time
           </button>
         )}
-        <button type="button" aria-label="Remove the time" onClick={() => onChange(null)}>
-          <X aria-hidden size={11} />
-        </button>
+        {removable ? (
+          <button type="button" aria-label="Remove the time" onClick={() => onChange(null)}>
+            <X aria-hidden size={11} />
+          </button>
+        ) : null}
       </span>
 
       {annotation.endDate === null ? (
@@ -107,7 +118,7 @@ export function AnnotationControl({
             lang="en"
             aria-label="End date"
             value={annotation.endDate}
-            onChange={(event) => event.target.value && set({ endDate: event.target.value })}
+            onChange={(event) => event.target.value && setEnd(event.target.value)}
             className={field}
           />
           {annotation.time !== null ? (
