@@ -678,10 +678,18 @@ describe('direct manipulation: the page around it', () => {
       pointerType: 'touch',
       button: 0,
     });
+    const buzz = vi.fn();
+    Object.defineProperty(navigator, 'vibrate', { value: buzz, configurable: true });
     fireEvent.pointerDown(label(container, 's1'), touch(100, 100));
     expect(container.querySelector('[data-edit-frame]')).toBeNull();
     await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
     expect(q(container, '[data-board-piece="s1"] [data-edit-frame="piece"]')).not.toBeNull();
+    // Taken: a short buzz, and drawn lifted over every piece.
+    expect(buzz).toHaveBeenCalledTimes(1);
+    const piece = q(container, '[data-board-piece="s1"]');
+    expect(piece.hasAttribute('data-lifted')).toBe(true);
+    expect(piece.style.scale).toBe('1.08');
+    expect(piece.style.filter).toContain('drop-shadow');
     // Held, the board refuses to scroll under the finger.
     const scroll = new Event('touchmove', { cancelable: true });
     window.dispatchEvent(scroll);
@@ -696,6 +704,68 @@ describe('direct manipulation: the page around it', () => {
     expect(saved).toHaveLength(1);
     expect(saved[0].patch).toEqual({ piece: { x: 0.5, y: 2 } });
     expect(pushed).toEqual([]);
+    // Let go: set down.
+    expect(q(container, '[data-board-piece="s1"]').hasAttribute('data-lifted')).toBe(false);
+  });
+
+  it('held and carried, a touch the browser cancels saves nothing and puts the piece back (G)', async () => {
+    const { container } = home();
+    const touch = (x: number, y: number) => ({
+      clientX: x,
+      clientY: y,
+      pointerId: 4,
+      pointerType: 'touch',
+      button: 0,
+    });
+    fireEvent.pointerDown(label(container, 's1'), touch(100, 100));
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    fireEvent.pointerMove(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await frames(1);
+    expect(label(container, 's1').style.transform).not.toBe('');
+    fireEvent.pointerCancel(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await settle();
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 900)));
+    expect(saved).toHaveLength(0);
+    expect(label(container, 's1').style.transform).toBe('');
+    expect(q(container, '[data-board-piece="s1"]').hasAttribute('data-lifted')).toBe(false);
+  });
+
+  it('on a phone in edit mode, a plain touch tap still makes a piece active at once, moving nothing', async () => {
+    const { container } = home();
+    const touch = { clientX: 100, clientY: 100, pointerId: 6, pointerType: 'touch', button: 0 };
+    fireEvent.pointerDown(label(container, 's1'), touch);
+    fireEvent.pointerUp(window, touch);
+    fireEvent.click(label(container, 's1'));
+    expect(q(container, '[data-board-piece="s1"] [data-edit-frame="piece"]')).not.toBeNull();
+    expect(q(container, '[data-board-piece="s1"]').hasAttribute('data-lifted')).toBe(false);
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    await settle();
+    expect(saved).toHaveLength(0);
+    expect(pushed).toEqual([]);
+  });
+
+  it('held, the board scrolled under a still finger moves the piece with it (edge scroll, G)', async () => {
+    const { container } = home();
+    const touch = (y: number) => ({
+      clientX: 100,
+      clientY: y,
+      pointerId: 5,
+      pointerType: 'touch',
+      button: 0,
+    });
+    const page = document.documentElement;
+    page.scrollTop = 0;
+    fireEvent.pointerDown(label(container, 's1'), touch(100));
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    // The finger stays; two lines of board pass under it.
+    page.scrollTop = 2 * LINE;
+    fireEvent.pointerMove(window, touch(100));
+    await frames(1);
+    expect(label(container, 's1').style.transform).toBe(`translate(0px, ${2 * LINE}px)`);
+    fireEvent.pointerUp(window, touch(100));
+    await settle();
+    page.scrollTop = 0;
+    expect(saved.at(-1)!.patch).toEqual({ piece: { x: 0, y: 2 } });
   });
 
   it('on a phone in edit mode, a quick swipe over a piece is a scroll: nothing taken', async () => {

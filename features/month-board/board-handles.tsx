@@ -9,7 +9,7 @@ import {
   type CSSProperties,
   type Ref,
 } from 'react';
-import { claimHeldMove } from './use-hold-to-move';
+import { claimHeldMove, holdingPiece, scrollerOf } from './use-hold-to-move';
 import { createPortal } from 'react-dom';
 import {
   ArrowDown,
@@ -102,6 +102,9 @@ type Gesture = {
   moved: boolean;
   /** A size change holds a point of the part still: the piece keeps it there as it redraws. */
   holding: boolean;
+  /** What scrolls under the board, and where it stood: scrolled under a still finger is moved (G). */
+  scroller: HTMLElement;
+  scrolled: Point;
 };
 
 /** A corner pull or a width pull begins after this much travel, then tracks the finger exactly. */
@@ -261,7 +264,7 @@ export function PartFrame({
   values: PartValues;
   units: FrameUnits;
   tools: Tools;
-  editing: Pick<BoardEditing, 'hold' | 'commit'>;
+  editing: Pick<BoardEditing, 'hold' | 'commit' | 'cancel'>;
   /** The part's transform origin: its centre, or (a band) its left edge's middle. */
   origin?: 'center' | 'left';
   /** The label reaches the board's edge, which clips past it: its width bar sits just inside. */
@@ -350,8 +353,9 @@ export function PartFrame({
       return;
     }
     const now = { x: event.clientX, y: event.clientY };
-    const dx = now.x - g.from.x;
-    const dy = now.y - g.from.y;
+    // The board scrolled under the finger (held at its edge) counts as moved.
+    const dx = now.x - g.from.x + (g.scroller.scrollLeft - g.scrolled.x);
+    const dy = now.y - g.from.y + (g.scroller.scrollTop - g.scrolled.y);
     const dead = g.kind === 'size' || g.kind === 'width' ? SIZE_DEAD_PX : AXIS_LOCK_PX;
     if (!g.moved && Math.hypot(dx, dy) < dead) return;
     g.moved = true;
@@ -395,7 +399,10 @@ export function PartFrame({
       const under = siblingAt(root.current, latest.current.part, event.clientX, event.clientY);
       if (under) latest.current.onPick?.(partAt(under));
     }
-    if (g.moved) {
+    // Cancelled — the browser took the touch for a scroll, or the page let
+    // go of it — nothing is saved and the part goes back (G). Lifted, saved.
+    if (g.moved && event.type === 'pointercancel') latest.current.editing.cancel();
+    else if (g.moved) {
       flush();
       latest.current.editing.commit();
     }
@@ -433,6 +440,7 @@ export function PartFrame({
     }
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const holding = kind === 'size' || kind === 'width';
+    const scroller = scrollerOf(root.current);
     gesture.current = {
       kind,
       start: { ...latest.current.values },
@@ -444,6 +452,8 @@ export function PartFrame({
       pinch: null,
       moved: false,
       holding,
+      scroller: scroller,
+      scrolled: { x: scroller.scrollLeft, y: scroller.scrollTop },
     };
     // A corner pulled or a width pulled holds the top-left where it is.
     if (holding) latest.current.onHold?.({ x: 0, y: 0 });
@@ -890,7 +900,8 @@ function useDock(
   const partKey = JSON.stringify(part);
   useEffect(() => {
     const el = bar.current;
-    if (!docked || !el || !activeId) return;
+    // Taken by a held finger (G): it stays under the finger, unscrolled.
+    if (!docked || !el || !activeId || holdingPiece()) return;
     const target =
       document.querySelector('[data-edit-overlay], [data-edit-ghost]') ??
       document.querySelector(`[data-board-piece="${activeId}"], [data-board-tape="${activeId}"]`);

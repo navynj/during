@@ -83,7 +83,7 @@ import {
   type Stacking,
 } from './stacking';
 import type { BoardEditing, PartChip } from './use-board-editing';
-import { useHoldToMove } from './use-hold-to-move';
+import { useHeldPiece, useHoldToMove } from './use-hold-to-move';
 import type { ToolbarEye } from './board-handles';
 import { usePrefersReducedMotion } from '@/components/ui/waves/use-reduced-motion';
 
@@ -617,7 +617,9 @@ export function BoardPieceView({
     if (selected && samePart(partAt(event.target), selected)) frameRef.current?.beginMove(event);
   };
   // A phone's edit mode (G): held, a piece is taken and moved with no tap first.
+  const lifted = useHeldPiece() === card.splash.id;
   const onHoldDown = useHoldToMove({
+    piece: card.splash.id,
     enabled: editing?.direct ?? false,
     active,
     onHold: () => editing?.tap(card.splash.id),
@@ -881,8 +883,24 @@ export function BoardPieceView({
       // Its bob or plunge plays on each part, never on this wrapper: an
       // animated wrapper is a stacking context of its own, and its parts
       // would stop meeting other pieces' (review: z-order while it bobs).
-      className="absolute"
-      style={{ left: piece.x, top: piece.y, width: piece.w, height: piece.h }}
+      // Taken by a held finger (G), it is lifted — a little larger, a soft
+      // shadow — and over every piece: the one time this wrapper is a
+      // stacking context, on purpose, so all of it rises together.
+      data-lifted={lifted ? '' : undefined}
+      className="absolute transition-[scale,filter] duration-150 motion-reduce:transition-none"
+      style={{
+        left: piece.x,
+        top: piece.y,
+        width: piece.w,
+        height: piece.h,
+        ...(lifted
+          ? {
+              scale: '1.08',
+              filter: 'drop-shadow(0 6px 10px rgb(22 22 33 / 0.35))',
+              zIndex: overAll(total, 3),
+            }
+          : {}),
+      }}
     >
       {/* The tap that brings its card up, under the drawing; the slot is a tap of its own. */}
       <button

@@ -76,6 +76,8 @@ export type BoardEditing = {
   hold: (patch: BoardLayoutJson) => void;
   /** A handle let go: one save. */
   commit: () => void;
+  /** A handle's gesture cancelled by the browser: nothing saved (G). */
+  cancel: () => void;
   /**
    * A part's place kept as its size changes (review): written into the
    * handle's run of edits as it stands, held while held, saved with the release.
@@ -184,6 +186,11 @@ export function useBoardEditing({
     held.current = null;
     if (id) drafts.commit(id);
   }, [activeId, drafts]);
+  const cancel = useCallback((): void => {
+    const id = held.current ?? activeId;
+    held.current = null;
+    if (id) drafts.discard(id);
+  }, [activeId, drafts]);
   const edit = useCallback(
     (patch: BoardLayoutJson, clear: string[] = []): void => {
       if (activeId) drafts.edit(activeId, patch, clear);
@@ -251,6 +258,7 @@ export function useBoardEditing({
     deactivate,
     hold,
     commit,
+    cancel,
     adjust,
     edit,
     undo,

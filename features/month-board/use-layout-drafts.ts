@@ -156,6 +156,23 @@ export function useLayoutDrafts(
     [shown],
   );
 
+  /**
+   * A handle's gesture cancelled by the browser (G: it took the touch for a
+   * scroll): what it held is dropped, never saved, and the piece is drawn
+   * as last saved. Anything else not yet sent for it goes too.
+   */
+  const discard = useCallback((id: string): void => {
+    setDrafts((all) => {
+      const was = all[id];
+      if (!was?.held) return all;
+      if (was.sent === 0) return omit(all, id);
+      return {
+        ...all,
+        [id]: { ...was, layout: was.base, patch: {}, clear: [], held: false, version: was.sent },
+      };
+    });
+  }, []);
+
   /** A handle let go: what it held is saved now. */
   const commit = useCallback((id: string): void => {
     setDrafts((all) => (all[id] ? { ...all, [id]: { ...all[id], held: false, now: true } } : all));
@@ -270,6 +287,7 @@ export function useLayoutDrafts(
     shown,
     edit,
     commit,
+    discard,
     revertToPool,
     status,
     message,

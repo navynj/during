@@ -22,6 +22,7 @@ import type { SignedMedia } from '@/lib/media';
 import type { IsoDate } from '@/lib/time';
 
 import { ON_PIECE } from './board-handles';
+import { holdingPiece } from './use-hold-to-move';
 import { stackingOf } from './stacking';
 import { BoardPieceView, BoardTapeView } from './board-pieces';
 import { boardPhotos } from './board-layout';
@@ -369,7 +370,8 @@ export function MonthBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanted]);
   useEffect(() => {
-    if (!ring) return;
+    // Taken by a held finger (G): it is under the finger already.
+    if (!ring || holdingPiece()) return;
     const el = scroller.current?.querySelector<HTMLElement>(
       `[data-board-piece="${ring.id}"], [data-board-tape="${ring.id}"]`,
     );
