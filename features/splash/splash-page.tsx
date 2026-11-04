@@ -637,7 +637,10 @@ export function SplashPage({
                     ? 'All'
                     : t.off
                       ? `${t.label} (off)`
-                      : `${t.label} · ${t.count}`}
+                      : // A zero reads as broken (testers): the name alone (H75).
+                        t.count > 0
+                        ? `${t.label} · ${t.count}`
+                        : t.label}
                   {on ? (
                     <span
                       aria-hidden

@@ -6,6 +6,7 @@ import { SplashGone } from '@/features/splash/splash-gone';
 import { SplashPage } from '@/features/splash/splash-page';
 import { declaredRange, orderBlocks } from '@/features/splash/block-day';
 import { summarizeOrphan, summarizeSplash } from '@/features/splash/summary';
+import { threadCount } from '@/features/splash/thread-count';
 import { signOwnMedia, signRippleMedia } from '@/lib/media';
 import { mediaMetaOf } from '@/lib/ripple-media';
 import { getMyCategories, getMyProfile } from '@/lib/queries/profile';
@@ -160,7 +161,7 @@ export async function HomeSplash({ id }: { id: string }) {
           .map((p) => ({
             poolId: p.poolId,
             label: pools.find((x) => x.id === p.poolId)?.name ?? 'A pool you left',
-            count: others.filter((r) => r.thread_pool_id === p.poolId).length,
+            count: threadCount(p.poolId, profile.id, others, responses.replies),
             off: !p.shared,
           }));
 

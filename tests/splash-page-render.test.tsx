@@ -616,11 +616,13 @@ describe('my record’s sides, a tab per pool (0035)', () => {
       threads: [
         { poolId: 'p-crew', label: 'Crew', count: 1, off: false },
         { poolId: 'p-club', label: 'Club', count: 1, off: true },
+        { poolId: 'p-quiet', label: 'Pancake', count: 0, off: false },
       ],
       initialsOf: { 'u-mina': 'MI', 'u-jae': 'JA' },
     });
     const tabs = [...container.querySelectorAll('[data-thread-tab]')].map((t) => t.textContent);
-    expect(tabs).toEqual(['All', 'Crew · 1', 'Club (off)']);
+    // A zero is no number at all (H75).
+    expect(tabs).toEqual(['All', 'Crew · 1', 'Club (off)', 'Pancake']);
     expect(container.querySelector('[data-thread-tab="p-club"]')!.hasAttribute('data-off')).toBe(
       true,
     );
