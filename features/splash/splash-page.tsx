@@ -19,6 +19,7 @@ import { usePeople } from '@/features/people/people-provider';
 import { SplashAuthors } from './splash-authors';
 import { inThread, latestFromOthers, type RippleResponsesValue } from '@/features/responses/model';
 import { RippleResponses } from '@/features/responses/ripple-responses';
+import { ThreadLabel } from '@/features/responses/thread-label';
 import { isUnseen, rememberSeen, useSeenBefore } from '@/features/responses/seen';
 import { useOpenedAt, useRippleResponses } from '@/features/responses/use-ripple-responses';
 import { authorClock } from '@/features/pool/times';
@@ -170,6 +171,12 @@ export function SplashPage({
   // the owner's from no pool; written into the pool shown.
   const answered = useRippleResponses(responses, shownPool);
   const thread = inThread(answered.value, shownPool);
+  // On All, where each pool's part came from, "in Pancake", as the card
+  // stack says it (H75); a pool's own tab needs none.
+  const labelOf = (poolId: string | null): string | null => {
+    if (threads.length === 0 || tab !== ALL_TAB || !poolId) return null;
+    return `in ${threads.find((t) => t.poolId === poolId)?.label ?? 'a Pool'}`;
+  };
   // Opened at a reply from the board: its block, brought into view.
   const openedRipple = thread.replies.find((r) => `reply-${r.id}` === openedAt)?.ripple_id;
   // Seen as of this open, on this device; its dots stay until the next (H25),
@@ -439,8 +446,16 @@ export function SplashPage({
 
   /** A block's body, the same in both layouts: read, edited, deleted alike. */
   function entryBody(block: RippleWithSplash): ReactNode {
+    // On All, someone else's ripple says which pool it was written in (H75).
+    const where =
+      block.author_id && block.author_id !== owner ? labelOf(block.thread_pool_id) : null;
     return (
       <div id={`block-${block.id}`} data-block-entry={block.id} className="pb-2">
+        {where ? (
+          <p data-ripple-thread-label>
+            <ThreadLabel>{where}</ThreadLabel>
+          </p>
+        ) : null}
         {editor?.kind === 'edit' && editor.block.id === block.id ? (
           <BlockEditor
             target={editor}
@@ -465,6 +480,7 @@ export function SplashPage({
               canRespond={false}
               onReact={(emoji) => answered.react(block.id, emoji)}
               on={answered.handlers(block.id)}
+              labelOf={labelOf}
             />
           </>
         ) : (
@@ -503,6 +519,7 @@ export function SplashPage({
                 canRespond={respondable && !page.lockedIds.includes(block.id)}
                 onReact={(emoji) => answered.react(block.id, emoji)}
                 on={answered.handlers(block.id)}
+                labelOf={labelOf}
               />
             </div>
           </>
@@ -544,7 +561,8 @@ export function SplashPage({
             />
           }
           place={
-            poolTags.length > 0 ? (
+            // With tabs, the tabs and the Audience chip say where it is (H75).
+            poolTags.length > 0 && threads.length === 0 ? (
               <p data-origin-tags className="text-pool-500 flex flex-wrap gap-x-3 text-xs">
                 {poolTags.map((tag) => (
                   <span key={tag} data-origin-tag>
@@ -587,16 +605,16 @@ export function SplashPage({
             {message ?? answered.message}
           </p>
         ) : null}
-      </div>
-
-      <div data-splash-blocks className="flex flex-col">
         {threads.length > 0 ? (
           // All, then a tab per pool whose members wrote on my record (0035;
           // review): underlined tabs, the chosen one in ink, as the toolbar's.
+          // At the pinned header's foot (H75), so they stay whole and in
+          // view over the ripples; edge to edge on white, a hairline under
+          // them; wider than the panel, they scroll sideways, never wrapped.
           <div
             role="tablist"
             data-thread-tabs
-            className="no-scrollbar border-pool-100 mb-3 flex overflow-x-auto border-b"
+            className="no-scrollbar border-pool-100 -mx-6 flex overflow-x-auto border-b bg-white px-6 lg:-mx-8 lg:px-8"
           >
             {[{ poolId: ALL_TAB, label: 'All', count: 0, off: false }, ...threads].map((t) => {
               const on = tab === t.poolId;
@@ -609,7 +627,7 @@ export function SplashPage({
                   data-thread-tab={t.poolId}
                   data-off={t.off ? '' : undefined}
                   onClick={() => setTab(t.poolId)}
-                  className={`relative h-9 shrink-0 px-3 text-sm ${
+                  className={`relative shrink-0 px-3 py-2.5 text-sm/5 whitespace-nowrap ${
                     on ? 'text-ink font-medium' : 'text-pool-500'
                   } ${t.off ? 'opacity-50' : ''}`}
                 >
@@ -632,6 +650,9 @@ export function SplashPage({
             })}
           </div>
         ) : null}
+      </div>
+
+      <div data-splash-blocks className="flex flex-col">
         {/* One person's splash reads as one post (testers): its words straight
           under the header, the face once, in the byline. Once someone else
           adds theirs, each block an entry of its own, threaded avatar to

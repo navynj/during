@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 
 import { Avatar, PersonName } from '@/features/people/avatar';
 import { usePeople } from '@/features/people/people-provider';
 
 import { relativeTime, type ReplyRow } from './model';
 import { ReplyInput } from './reply-input';
+import { ThreadLabel } from './thread-label';
 import { LinkedText } from '@/components/ui/linked-text';
 
 /** A reply's face: small, beside its words. */
@@ -27,7 +28,8 @@ export type ReplyHandlers = {
  * Save, and grows to four lines. Under the last reply, a second
  * "Reply" sits at the replies' indent, opening the same input in the same
  * place (H75). Opened from the
- * top, the input is scrolled into view.
+ * top, the input is scrolled into view. With `labelOf` (the All tab), a run
+ * of replies from one pool sits under one "in Pancake" (H75).
  */
 export function ReplyList({
   replies,
@@ -37,6 +39,7 @@ export function ReplyList({
   composing = false,
   onDoneComposing = () => {},
   onCompose,
+  labelOf,
 }: {
   replies: ReplyRow[];
   rippleAuthor: string;
@@ -47,6 +50,8 @@ export function ReplyList({
   onDoneComposing?: () => void;
   /** Opens the reply field from under the last reply (H75); absent, no second Reply. */
   onCompose?: () => void;
+  /** Where a reply was written, "in Pancake", or none; absent, no labels. */
+  labelOf?: (poolId: string | null) => string | null;
 }) {
   const { me } = usePeople();
   const [editing, setEditing] = useState<string | null>(null);
@@ -60,61 +65,78 @@ export function ReplyList({
     <div data-replies className="flex flex-col gap-2">
       {replies.length > 0 ? (
         <ol className="flex flex-col gap-2">
-          {replies.map((reply) => (
-            <li
-              key={reply.id}
-              id={`reply-${reply.id}`}
-              data-reply={reply.id}
-              data-hidden={reply.hidden ? '' : undefined}
-              className="grid gap-x-2"
-              style={{ gridTemplateColumns: `${FACE_PX}px minmax(0, 1fr)` }}
-            >
-              <Avatar
-                id={reply.author_id}
-                initials=""
-                className="bg-pool-100 text-pool-500 mt-0.5 flex items-center justify-center rounded-full text-[10px]"
-                style={{ width: FACE_PX, height: FACE_PX }}
-              />
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <p className="text-pool-500 flex flex-wrap items-baseline gap-x-1 text-[11px]">
-                  <span className="text-ink font-medium">
-                    <PersonName id={reply.author_id} name="Someone" />
-                  </span>
-                  <span>· {relativeTime(reply.created_at)}</span>
-                  {reply.edited_at ? <span data-reply-edited>· edited</span> : null}
-                  {reply.former ? <span data-reply-former>· Former member</span> : null}
-                </p>
-                {editing === reply.id ? (
-                  <ReplyInput
-                    initial={reply.body ?? ''}
-                    label="Edit reply"
-                    onSubmit={(body) => {
-                      setEditing(null);
-                      on.edit(reply.id, body);
-                    }}
-                    onCancel={() => setEditing(null)}
-                  />
-                ) : reply.body === null ? (
-                  <p className="text-pool-500 text-sm italic">Hidden by the author</p>
-                ) : (
-                  <p className="text-ink text-sm break-words whitespace-pre-wrap">
-                    <LinkedText text={reply.body} />
-                  </p>
-                )}
-                {reply.hidden && reply.body !== null ? (
-                  <p className="text-pool-500 text-[11px] italic">Hidden by the author</p>
+          {replies.map((reply, at) => {
+            const label = labelOf?.(reply.thread_pool_id) ?? null;
+            // Once per run: a reply from the same pool as the one above takes none.
+            const heads =
+              label !== null &&
+              (at === 0 || replies[at - 1].thread_pool_id !== reply.thread_pool_id);
+            return (
+              <Fragment key={reply.id}>
+                {heads ? (
+                  <li
+                    data-reply-thread-label
+                    style={{ marginLeft: FACE_PX + 8 }}
+                    className="-mb-1.5"
+                  >
+                    <ThreadLabel>{label}</ThreadLabel>
+                  </li>
                 ) : null}
-                <ReplyActions
-                  reply={reply}
-                  mine={reply.author_id === me}
-                  onMyRipple={rippleAuthor === me && reply.author_id !== me}
-                  editing={editing === reply.id}
-                  onEdit={() => setEditing(reply.id)}
-                  on={on}
-                />
-              </div>
-            </li>
-          ))}
+                <li
+                  id={`reply-${reply.id}`}
+                  data-reply={reply.id}
+                  data-hidden={reply.hidden ? '' : undefined}
+                  className="grid gap-x-2"
+                  style={{ gridTemplateColumns: `${FACE_PX}px minmax(0, 1fr)` }}
+                >
+                  <Avatar
+                    id={reply.author_id}
+                    initials=""
+                    className="bg-pool-100 text-pool-500 mt-0.5 flex items-center justify-center rounded-full text-[10px]"
+                    style={{ width: FACE_PX, height: FACE_PX }}
+                  />
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <p className="text-pool-500 flex flex-wrap items-baseline gap-x-1 text-[11px]">
+                      <span className="text-ink font-medium">
+                        <PersonName id={reply.author_id} name="Someone" />
+                      </span>
+                      <span>· {relativeTime(reply.created_at)}</span>
+                      {reply.edited_at ? <span data-reply-edited>· edited</span> : null}
+                      {reply.former ? <span data-reply-former>· Former member</span> : null}
+                    </p>
+                    {editing === reply.id ? (
+                      <ReplyInput
+                        initial={reply.body ?? ''}
+                        label="Edit reply"
+                        onSubmit={(body) => {
+                          setEditing(null);
+                          on.edit(reply.id, body);
+                        }}
+                        onCancel={() => setEditing(null)}
+                      />
+                    ) : reply.body === null ? (
+                      <p className="text-pool-500 text-sm italic">Hidden by the author</p>
+                    ) : (
+                      <p className="text-ink text-sm break-words whitespace-pre-wrap">
+                        <LinkedText text={reply.body} />
+                      </p>
+                    )}
+                    {reply.hidden && reply.body !== null ? (
+                      <p className="text-pool-500 text-[11px] italic">Hidden by the author</p>
+                    ) : null}
+                    <ReplyActions
+                      reply={reply}
+                      mine={reply.author_id === me}
+                      onMyRipple={rippleAuthor === me && reply.author_id !== me}
+                      editing={editing === reply.id}
+                      onEdit={() => setEditing(reply.id)}
+                      on={on}
+                    />
+                  </div>
+                </li>
+              </Fragment>
+            );
+          })}
         </ol>
       ) : null}
       {canReply && composing ? (

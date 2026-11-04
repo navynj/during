@@ -12,6 +12,7 @@ import {
   type RippleResponsesValue,
   type ThreadLabels,
 } from './model';
+import { ThreadLabel } from './thread-label';
 import { ReactionChips } from './reaction-chips';
 
 /** A reply's face on the card: small, beside its words. */
@@ -107,9 +108,7 @@ function Thread({
       {label ? (
         // A pool's reactions ride its label's line: "in Church 🙏 2".
         <div className="flex flex-wrap items-center gap-1.5">
-          <span data-card-thread-label className="text-pool-500 text-[10px] font-medium">
-            {label}
-          </span>
+          <ThreadLabel>{label}</ThreadLabel>
           <ReactionChips chips={chips} canReact={canReact} onToggle={onReact} floating />
         </div>
       ) : (

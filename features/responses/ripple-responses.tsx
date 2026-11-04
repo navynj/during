@@ -24,6 +24,7 @@ export function RippleResponses({
   canRespond,
   onReact,
   on,
+  labelOf,
 }: {
   rippleId: string;
   rippleAuthor: string;
@@ -31,6 +32,8 @@ export function RippleResponses({
   canRespond: boolean;
   onReact: (emoji: string) => void;
   on: ReplyHandlers;
+  /** The All tab's "in Pancake" over each pool's replies (H75). */
+  labelOf?: (poolId: string | null) => string | null;
 }) {
   const { me } = usePeople();
   const [composing, setComposing] = useState(false);
@@ -65,6 +68,7 @@ export function RippleResponses({
         composing={composing}
         onDoneComposing={() => setComposing(false)}
         onCompose={() => setComposing(true)}
+        labelOf={labelOf}
       />
     </div>
   );

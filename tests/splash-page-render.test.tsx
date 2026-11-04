@@ -737,6 +737,107 @@ describe('my record’s sides, a tab per pool (0035)', () => {
   });
 });
 
+describe('the pool tabs and All’s labels (H75)', () => {
+  const reply = (id: string, ripple: string, pool: string | null, at: number) => ({
+    id,
+    ripple_id: ripple,
+    author_id: pool ? 'u-mina' : 'a1',
+    body: `reply ${id}`,
+    created_at: `2026-10-26T09:0${at}:00Z`,
+    edited_at: null,
+    hidden: false,
+    former: false,
+    thread_pool_id: pool,
+  });
+  const theirs = [
+    block({ id: 'side-a', author_id: 'u-mina', note: 'from Crew', thread_pool_id: 'p-crew' }),
+  ];
+  const threads = [
+    { poolId: 'p-crew', label: 'Crew', count: 1, off: false },
+    { poolId: 'p-pan', label: 'Pancake', count: 2, off: false },
+  ];
+  const view = (over: Partial<Parameters<typeof SplashPage>[0]> = {}) =>
+    page({
+      blocks: [...blocks, ...theirs],
+      threads,
+      initialsOf: { 'u-mina': 'MI' },
+      poolTags: ['Crew · 🎲 Games', 'Pancake · 🍳 Food'],
+      respondable: true,
+      responses: {
+        reactions: [],
+        replies: [
+          reply('r1', 'first', 'p-pan', 1),
+          reply('r2', 'first', 'p-pan', 2),
+          reply('r3', 'first', 'p-crew', 3),
+          reply('r4', 'first', null, 4),
+          reply('r5', 'first', 'p-pan', 5),
+        ],
+      },
+      ...over,
+    });
+
+  it('sits at the pinned header’s foot, edge to edge on white, scrolling sideways, never wrapping', () => {
+    const { container } = view();
+    const row = container.querySelector('[data-thread-tabs]')!;
+    expect(row.closest('[data-splash-side]')).not.toBeNull();
+    expect(row.className).toMatch(/overflow-x-auto/);
+    expect(row.className).toMatch(/no-scrollbar/);
+    expect(row.className).toMatch(/bg-white/);
+    expect(row.className).toMatch(/border-b/);
+    for (const tab of row.querySelectorAll('[data-thread-tab]')) {
+      expect(tab.className).toMatch(/whitespace-nowrap/);
+      expect(tab.className).toMatch(/shrink-0/);
+      expect(tab.className).not.toMatch(/truncate|\bh-\d/);
+    }
+  });
+
+  it('drops the pool tags line under the byline while tabs show; keeps it without tabs', () => {
+    expect(view().container.querySelector('[data-origin-tags]')).toBeNull();
+    cleanup();
+    expect(view({ threads: [] }).container.querySelector('[data-origin-tags]')).not.toBeNull();
+  });
+
+  it('on All, labels someone else’s ripple and each run of a pool’s replies, once per run', () => {
+    const { container } = view();
+    expect(
+      container.querySelector('[data-block-entry="side-a"] [data-ripple-thread-label]')!
+        .textContent,
+    ).toBe('in Crew');
+    // The author's own ripples carry none.
+    expect(
+      container.querySelector('[data-block-entry="first"] [data-ripple-thread-label]'),
+    ).toBeNull();
+    const list = container.querySelector('[data-ripple-responses="first"] ol')!;
+    const read = [...list.children].map((li) =>
+      li.hasAttribute('data-reply-thread-label')
+        ? `[${li.textContent}]`
+        : li.getAttribute('data-reply'),
+    );
+    // Pancake's two under one label; the owner's from no pool unlabelled.
+    expect(read).toEqual([
+      '[in Pancake]',
+      'r1',
+      'r2',
+      '[in Crew]',
+      'r3',
+      'r4',
+      '[in Pancake]',
+      'r5',
+    ]);
+    // The card stack's own text style.
+    expect(list.querySelector('[data-card-thread-label]')!.className).toBe(
+      'text-pool-500 text-[10px] font-medium',
+    );
+  });
+
+  it('hides the labels in a pool’s own tab', () => {
+    const { container, getByRole } = view();
+    fireEvent.click(getByRole('tab', { name: 'Pancake · 2' }));
+    expect(container.querySelector('[data-reply-thread-label]')).toBeNull();
+    expect(container.querySelector('[data-ripple-thread-label]')).toBeNull();
+  });
+});
+
 describe('a splash’s description (0037)', () => {
   /** The header's `…`, then its description item. */
   function fromMenu(container: HTMLElement, which: 'add' | 'hide'): void {
