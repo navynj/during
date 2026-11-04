@@ -258,16 +258,84 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
     expect(container.querySelector('[data-photo-placeholder]')).not.toBeNull();
   });
 
-  it('threads the ripples: an avatar each, one line fewer than ripples, the body beside', () => {
+  it('reads a splash written alone as one post: no avatar beside its blocks (testers)', () => {
     const { container } = page({ initials: 'YL' });
+    const solo = container.querySelector('[data-blocks] [data-solo-blocks]')!;
+    expect(solo.querySelectorAll('[data-block]')).toHaveLength(3);
+    expect(container.querySelector('[data-blocks] [data-ripple-thread]')).toBeNull();
+    expect(container.querySelectorAll('[data-thread-avatar]')).toHaveLength(0);
+  });
+
+  it('shows the face once on a splash written alone: the byline’s, and nothing under it', () => {
+    const { container } = render(
+      <PeopleProvider me="a1" people={{ a1: { name: 'Yoonji', photo: null } }}>
+        <InputSheetProvider>
+          <SplashPage
+            splash={summarizeSplash(board, blocks, TZ, NOW)}
+            blocks={blocks}
+            photos={{}}
+            lockedIds={[]}
+            categories={LANES}
+            timeZone={TZ}
+            today={TODAY}
+            initials="YL"
+          />
+        </InputSheetProvider>
+      </PeopleProvider>,
+    );
+    expect(container.querySelectorAll('[data-splash-author]')).toHaveLength(1);
+    // The initials appear once on the page: in the byline, not again by a block.
+    expect(container.querySelector('[data-blocks]')!.textContent).not.toContain('YL');
+    expect(container.querySelectorAll('[data-thread-avatar]')).toHaveLength(0);
+    expect(container.querySelector('[data-solo-blocks]')).not.toBeNull();
+  });
+
+  it('threads the ripples once someone else adds theirs, the author’s first', () => {
+    const mixed = [...blocks, block({ id: 'theirs', author_id: 'u-mina', note: 'mine too' })];
+    const { container } = page({
+      initials: 'YL',
+      blocks: mixed,
+      splash: summarizeSplash(board, mixed, TZ, NOW),
+      initialsOf: { 'u-mina': 'MI' },
+    });
     const thread = container.querySelector('[data-blocks] [data-ripple-thread]')!;
     const avatars = thread.querySelectorAll('[data-thread-avatar]');
-    expect(avatars).toHaveLength(3);
+    expect(avatars).toHaveLength(4);
     expect(avatars[0].textContent).toBe('YL');
-    expect(thread.querySelectorAll('[data-thread-line]')).toHaveLength(2);
+    expect(thread.querySelectorAll('[data-thread-line]')).toHaveLength(3);
     // The body sits in the column to the right of the avatar.
     const entry = thread.querySelector('[data-thread-entry="first"]')!;
     expect(entry.children[1].querySelector('[data-block="first"]')).not.toBeNull();
+    expect(container.querySelector('[data-solo-blocks]')).toBeNull();
+  });
+
+  it('edits the author’s block the same way in both layouts', () => {
+    const mixed = [...blocks, block({ id: 'theirs', author_id: 'u-mina', note: 'mine too' })];
+    for (const props of [{}, { blocks: mixed, splash: summarizeSplash(board, mixed, TZ, NOW) }]) {
+      const { container, unmount } = render(
+        <PeopleProvider me="a1" people={{ a1: { name: 'Yoonji', photo: null } }}>
+          <InputSheetProvider>
+            <SplashPage
+              splash={summarizeSplash(board, blocks, TZ, NOW)}
+              blocks={blocks}
+              photos={{}}
+              lockedIds={[]}
+              categories={LANES}
+              timeZone={TZ}
+              today={TODAY}
+              {...props}
+            />
+          </InputSheetProvider>
+        </PeopleProvider>,
+      );
+      fireEvent.click(container.querySelector('[data-block="night"]')!);
+      expect(container.querySelector('[data-block-editor="night"]')).not.toBeNull();
+      // Someone else's block is read only.
+      expect(container.querySelector('[data-block="theirs"][data-read-only]') !== null).toBe(
+        'blocks' in props,
+      );
+      unmount();
+    }
   });
 
   it('is two halves on a wide screen: the header left, the blocks right', () => {

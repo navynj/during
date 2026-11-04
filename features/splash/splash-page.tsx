@@ -317,7 +317,7 @@ export function SplashPage({
     const placeholder: RippleWithSplash = shaped(
       {
         id: draft.id,
-        author_id: pool?.me ?? '',
+        author_id: pool?.me ?? me ?? '',
         note: null,
         media: [],
         occurred_on: null,
@@ -419,6 +419,97 @@ export function SplashPage({
       ? (pool?.me ?? me)
       : blocks.find((b) => b.author_id && !b.thread_pool_id)?.author_id;
   const authorIds = scope === 'joint' ? writers : owner ? [owner] : [];
+
+  // By day inside a range, then as written (0031).
+  const shown = orderBlocks(page.blocks.filter(showsBlock), page.splash.declaredRange);
+  // Every block shown is one person's, and that person the record's own:
+  // read as a single post, not a thread of one (testers).
+  const solo =
+    shown.every((b) => b.author_id !== null && b.author_id === shown[0].author_id) &&
+    (shown.length === 0 || !owner || shown[0].author_id === owner);
+  // Something new from someone else on my ripple since I last opened it (H25).
+  const dotOn = (block: RippleWithSplash): boolean =>
+    block.author_id === me &&
+    !answeredSeen.includes(block.id) &&
+    isUnseen(fromOthers[block.id], seenBefore);
+
+  /** A block's body, the same in both layouts: read, edited, deleted alike. */
+  function entryBody(block: RippleWithSplash): ReactNode {
+    return (
+      <div id={`block-${block.id}`} data-block-entry={block.id} className="pb-2">
+        {editor?.kind === 'edit' && editor.block.id === block.id ? (
+          <BlockEditor
+            target={editor}
+            range={page.splash.declaredRange}
+            today={today}
+            onSubmit={(draft) => saveBlock(editor, draft)}
+            onDelete={() => removeBlock(block)}
+            onLock={(locked) => lockBlock(block, locked)}
+            onCancel={() => setEditor(null)}
+          />
+        ) : block.author_id === null ? (
+          // Its author's part, gone with them; what others said
+          // to it stays (0061, H46).
+          <>
+            <p data-removed-part className="text-pool-500 py-1 text-sm">
+              This part was removed
+            </p>
+            <RippleResponses
+              rippleId={block.id}
+              rippleAuthor=""
+              value={thread}
+              canRespond={false}
+              expanded={isExpanded(block.id)}
+              onExpand={() => setExpanded((ids) => [...ids, block.id])}
+              onReact={(emoji) => answered.react(block.id, emoji)}
+              on={answered.handlers(block.id)}
+            />
+          </>
+        ) : (
+          <>
+            <BlockView
+              block={block}
+              range={page.splash.declaredRange}
+              photos={photos[block.id] ?? []}
+              clock={
+                pool
+                  ? authorClock(
+                      block.started_at ?? block.created_at,
+                      timeZone,
+                      pool.zoneOf[block.author_id] ?? timeZone,
+                    )
+                  : null
+              }
+              timeZone={timeZone}
+              today={today}
+              onEdit={
+                editable(block)
+                  ? () =>
+                      setEditor({
+                        kind: 'edit',
+                        block,
+                        locked: page.lockedIds.includes(block.id),
+                      })
+                  : undefined
+              }
+            />
+            <div onPointerDownCapture={() => seeAnswers(block.id)}>
+              <RippleResponses
+                rippleId={block.id}
+                rippleAuthor={block.author_id}
+                value={thread}
+                canRespond={respondable && !page.lockedIds.includes(block.id)}
+                expanded={isExpanded(block.id)}
+                onExpand={() => setExpanded((ids) => [...ids, block.id])}
+                onReact={(emoji) => answered.react(block.id, emoji)}
+                on={answered.handlers(block.id)}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -543,13 +634,30 @@ export function SplashPage({
             })}
           </div>
         ) : null}
-        {/* Each block an entry of its own, threaded avatar to avatar (round 3). */}
+        {/* One person's splash reads as one post (testers): its words straight
+          under the header, the face once, in the byline. Once someone else
+          adds theirs, each block an entry of its own, threaded avatar to
+          avatar (round 3), the author's first. */}
         <div data-blocks className="py-2">
-          <RippleThread
-            initials={initials}
-            // By day inside a range, then as written (0031).
-            entries={orderBlocks(page.blocks.filter(showsBlock), page.splash.declaredRange).map(
-              (block) => ({
+          {solo ? (
+            <div data-solo-blocks className="flex flex-col gap-4">
+              {shown.map((block) => (
+                <div key={block.id} data-solo-entry={block.id} className="relative">
+                  {dotOn(block) ? (
+                    <span
+                      aria-label="New reactions or replies"
+                      data-responses-unseen
+                      className="bg-main-900 absolute top-1 -left-3 h-2 w-2 rounded-full"
+                    />
+                  ) : null}
+                  {entryBody(block)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <RippleThread
+              initials={initials}
+              entries={shown.map((block) => ({
                 id: block.id,
                 // Each ripple keeps its author in a pool (H23), and on Home
                 // someone else's on my record (0035). A removed part has none.
@@ -563,88 +671,11 @@ export function SplashPage({
                         : undefined,
                 authorId: block.author_id ?? undefined,
                 removed: block.author_id === null,
-                // Something new from someone else on my ripple since I last opened it (H25).
-                dot:
-                  block.author_id === me &&
-                  !answeredSeen.includes(block.id) &&
-                  isUnseen(fromOthers[block.id], seenBefore),
-                body: (
-                  <div id={`block-${block.id}`} data-block-entry={block.id} className="pb-2">
-                    {editor?.kind === 'edit' && editor.block.id === block.id ? (
-                      <BlockEditor
-                        target={editor}
-                        range={page.splash.declaredRange}
-                        today={today}
-                        onSubmit={(draft) => saveBlock(editor, draft)}
-                        onDelete={() => removeBlock(block)}
-                        onLock={(locked) => lockBlock(block, locked)}
-                        onCancel={() => setEditor(null)}
-                      />
-                    ) : block.author_id === null ? (
-                      // Its author's part, gone with them; what others said
-                      // to it stays (0061, H46).
-                      <>
-                        <p data-removed-part className="text-pool-500 py-1 text-sm">
-                          This part was removed
-                        </p>
-                        <RippleResponses
-                          rippleId={block.id}
-                          rippleAuthor=""
-                          value={thread}
-                          canRespond={false}
-                          expanded={isExpanded(block.id)}
-                          onExpand={() => setExpanded((ids) => [...ids, block.id])}
-                          onReact={(emoji) => answered.react(block.id, emoji)}
-                          on={answered.handlers(block.id)}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <BlockView
-                          block={block}
-                          range={page.splash.declaredRange}
-                          photos={photos[block.id] ?? []}
-                          clock={
-                            pool
-                              ? authorClock(
-                                  block.started_at ?? block.created_at,
-                                  timeZone,
-                                  pool.zoneOf[block.author_id] ?? timeZone,
-                                )
-                              : null
-                          }
-                          timeZone={timeZone}
-                          today={today}
-                          onEdit={
-                            editable(block)
-                              ? () =>
-                                  setEditor({
-                                    kind: 'edit',
-                                    block,
-                                    locked: page.lockedIds.includes(block.id),
-                                  })
-                              : undefined
-                          }
-                        />
-                        <div onPointerDownCapture={() => seeAnswers(block.id)}>
-                          <RippleResponses
-                            rippleId={block.id}
-                            rippleAuthor={block.author_id}
-                            value={thread}
-                            canRespond={respondable && !page.lockedIds.includes(block.id)}
-                            expanded={isExpanded(block.id)}
-                            onExpand={() => setExpanded((ids) => [...ids, block.id])}
-                            onReact={(emoji) => answered.react(block.id, emoji)}
-                            on={answered.handlers(block.id)}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ),
-              }),
-            )}
-          />
+                dot: dotOn(block),
+                body: entryBody(block),
+              }))}
+            />
+          )}
         </div>
 
         {/* The add slot: the seat of the next block, at the bottom where the
