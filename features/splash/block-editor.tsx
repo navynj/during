@@ -15,6 +15,7 @@ import type { IsoDate } from '@/lib/time';
 
 import { blockDay, defaultBlockDay, isRange } from './block-day';
 import { DayChip } from './day-chip';
+import { VideoPreviewsSwitch } from './video-previews-switch';
 import type { DateRange } from './summary';
 
 export type EditorTarget =
@@ -135,24 +136,7 @@ export function BlockEditor({
         onChange={attach.change}
       />
 
-      {linksVideos ? (
-        // Its links as players, or left as links (part 5); saved with Save.
-        <button
-          type="button"
-          role="switch"
-          aria-checked={previews}
-          data-video-previews
-          onClick={() => setPreviews((on) => !on)}
-          className="text-pool-500 flex items-center gap-2 self-start text-sm"
-        >
-          <span
-            className={`flex h-4 w-7 items-center rounded-full p-0.5 ${previews ? 'bg-ink justify-end' : 'bg-pool-200 justify-start'}`}
-          >
-            <span className="h-3 w-3 rounded-full bg-white" />
-          </span>
-          Show video previews
-        </button>
-      ) : null}
+      {linksVideos ? <VideoPreviewsSwitch on={previews} onChange={setPreviews} /> : null}
 
       <div className="flex items-center gap-3 text-sm">
         {editing ? (

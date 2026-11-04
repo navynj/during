@@ -6,11 +6,13 @@ import { ImagePlus } from 'lucide-react';
 import { WaveRule } from '@/components/ui/waves/wave-rule';
 import { MediaPreviews, useMediaAttach } from '@/features/input-sheet/media-field';
 import { Avatar } from '@/features/people/avatar';
+import { videosIn } from '@/lib/youtube';
 import type { IsoDate } from '@/lib/time';
 
 import { defaultBlockDay, isRange } from './block-day';
 import type { BlockDraft } from './block-editor';
 import { DayChip } from './day-chip';
+import { VideoPreviewsSwitch } from './video-previews-switch';
 import type { DateRange } from './summary';
 
 /**
@@ -19,7 +21,8 @@ import type { DateRange } from './summary';
  * face, a borderless field whose placeholder says what it does (*Add to this
  * splash* on mine, *Add yours too* on someone else's), and a photo button.
  * In focus the field opens to a few lines and Drop appears at the row's
- * end; left empty, it folds back to one row. No card, no ring, no title:
+ * end; left empty, it folds back to one row. Its words linking a video,
+ * the editor's *Show video previews* switch shows. No card, no ring, no title:
  * Reply under each ripple is the comment, this is a record of your own.
  */
 export function AddRow({
@@ -47,6 +50,9 @@ export function AddRow({
     isRange(range) ? defaultBlockDay(range, today) : null,
   );
   const [open, setOpen] = useState(autoFocus);
+  // Show video previews (part 5): on unless turned off before Drop.
+  const [videos, setVideos] = useState(true);
+  const linksVideos = videosIn(note).length > 0;
   const { input, busy, failed, previews, attach, meta, progress, change, keep } = useMediaAttach(
     media,
     setMedia,
@@ -73,9 +79,11 @@ export function AddRow({
       mediaMeta: meta,
       uploaded: keep(media),
       ...(day ? { occurredOn: day } : {}),
+      ...(linksVideos ? { videoPreviews: videos } : {}),
     });
     setNote('');
     setMedia([]);
+    setVideos(true);
     setOpen(false);
     field.current?.blur();
   }
@@ -150,10 +158,11 @@ export function AddRow({
             </button>
           ) : null}
         </div>
-        {shown && (media.length > 0 || (day && isRange(range))) ? (
+        {shown && (media.length > 0 || (day && isRange(range)) || linksVideos) ? (
           <div className="flex flex-col items-start gap-2 pl-8">
             {day && isRange(range) ? <DayChip range={range} value={day} onChange={setDay} /> : null}
             <MediaPreviews paths={media} previews={previews} failed={failed} onChange={change} />
+            {linksVideos ? <VideoPreviewsSwitch on={videos} onChange={setVideos} /> : null}
           </div>
         ) : null}
         {busy && progress ? <p className="text-pool-500 pl-8 text-xs">{progress}</p> : null}

@@ -478,6 +478,23 @@ describe('writing on the page, in place', () => {
     expect(row.hasAttribute('data-open')).toBe(false);
   });
 
+  it('offers Show video previews once its words link a video, and saves the choice (part 5)', async () => {
+    const { container, getByText } = page();
+    const row = container.querySelector<HTMLElement>('[data-add-row]')!;
+    const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+    fireEvent.focus(field);
+    expect(row.querySelector('[data-video-previews]')).toBeNull();
+    fireEvent.change(field, { target: { value: 'https://youtu.be/dQw4w9WgXcQ' } });
+    const toggle = row.querySelector('[data-video-previews]')!;
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(toggle);
+    fireEvent.click(getByText('Drop'));
+    await waitFor(() => expect(calls.some((c) => c.name === 'addBlock')).toBe(true));
+    expect(calls.find((c) => c.name === 'addBlock')!.args[0]).toMatchObject({
+      videoPreviews: false,
+    });
+  });
+
   it('offers no day on a one-day post: the block takes the post’s (H24)', async () => {
     const oneDay = { ...board, declared_end: null };
     const { container, getByText } = page({
