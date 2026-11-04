@@ -18,8 +18,8 @@ export function ComposeTop({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    // Centred on the title's first line (text-3xl/snug), not its whole box.
-    <div data-compose-top className="flex shrink-0 items-center pt-1">
+    // Centred on the title's row, beside the icon (H75: the title is one small line).
+    <div data-compose-top className="flex shrink-0 items-center">
       <div className="relative shrink-0">
         <button
           type="button"

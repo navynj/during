@@ -64,9 +64,9 @@ function isComposing(event: React.KeyboardEvent): boolean {
 }
 
 /**
- * The composer (SPEC 6, H21, review): a large bold blue title field over a
- * smaller, lighter body field — the first line is still the title and Enter
- * still moves on to the body — the lane chip row (the post's lane), the
+ * The composer (SPEC 6, H21, H75): a small optional title field over the
+ * content, which takes the cursor first — Enter in the title still moves on
+ * to the content — then the lane chip row (the post's lane), the
  * post's date chip preset to today, `+ Add Image`, and one full-width Drop.
  * The lane and the date are the post's, and every block takes them (H24). The
  * same form inside the phone's bottom sheet and the wide screen's standing
@@ -371,17 +371,18 @@ export function SplashComposer({
     setAnnotation(fresh());
     setChosenDay(null);
     setMediaPaths([]);
-    field.current?.focus();
+    bodyField.current?.focus();
   }
 
   return (
     <div data-splash-composer className="flex flex-col gap-5">
-      {/* The title, large and bold; Enter moves on to the body, so the
-          first line is still the title and the rest still follows it.
-          Not while an IME is composing (Korean, say): that Enter commits
+      {/* The title, small and optional (H75): most records are a photo and
+          a line, and a big title field asked for a name every time. Left
+          empty, the record is untitled (H21). Enter moves on to the body;
+          not while an IME is composing (Korean, say): that Enter commits
           the character, and moving focus on it would carry the character
           into the body. */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         {/* The post's own icon: one glyph from the phone's emoji keyboard,
           shown large; left empty, the lane's emoji stands for the post. */}
         <EmojiInput
@@ -400,12 +401,11 @@ export function SplashComposer({
             if (isComposing(event)) return;
             bodyField.current?.focus();
           }}
-          placeholder="Drop your splash"
+          placeholder="Title (optional)"
           rows={1}
-          autoFocus={autoFocus}
           aria-label="Title"
           data-sheet-title
-          className="text-main-900 placeholder:text-main-900 min-w-0 flex-1 resize-none text-3xl/snug font-semibold outline-none placeholder:opacity-20"
+          className="text-ink placeholder:text-ink min-w-0 flex-1 resize-none text-lg/snug font-semibold outline-none placeholder:opacity-30"
         />
         {/* `…` beside the title, not on a line of its own above it, so the
             sheet does not open on an empty top (Yoonji, in the session). */}
@@ -445,10 +445,12 @@ export function SplashComposer({
           title.setSelectionRange(title.value.length, title.value.length);
         }}
         placeholder="Enter the content"
-        rows={2}
+        rows={3}
+        // The content is what is written first (H75): the cursor starts here.
+        autoFocus={autoFocus}
         aria-label="Content"
         data-sheet-body
-        className="text-ink placeholder:text-ink min-h-12 w-full resize-none text-base/relaxed font-light outline-none placeholder:opacity-20"
+        className="text-ink placeholder:text-ink min-h-20 w-full resize-none text-lg/relaxed outline-none placeholder:opacity-30"
       />
 
       {/* The date and a photo come first, above the lane (review). */}

@@ -308,18 +308,26 @@ describe('the first line is the title (SPEC 6)', () => {
     expect(drops[1]).toMatchObject({ title: 'No icon', icon: null });
   });
 
-  it('is two fields in one voice: the title large and bold, the content smaller and lighter', () => {
+  it('puts the content first: the cursor in it, a small optional title above (H75)', () => {
     const { container } = sheet();
     const title = container.querySelector<HTMLTextAreaElement>('[data-sheet-title]')!;
     const body = container.querySelector<HTMLTextAreaElement>('[data-sheet-body]')!;
-    expect(title.placeholder).toBe('Drop your splash');
+    expect(title.placeholder).toBe('Title (optional)');
     expect(body.placeholder).toBe('Enter the content');
-    expect(title.className).toContain('text-3xl');
-    expect(title.className).toContain('font-semibold');
-    expect(title.className).toContain('text-main-900');
-    expect(body.className).toContain('text-base');
-    expect(body.className).toContain('font-light');
+    expect(document.activeElement).toBe(body);
+    expect(title.className).toContain('text-lg');
+    expect(title.className).not.toContain('text-3xl');
+    expect(body.className).toContain('text-lg');
     expect(title.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('drops a line with no title as an untitled post: no title is made up (H21)', async () => {
+    const view = sheet();
+    fireEvent.change(view.getByLabelText('Content'), { target: { value: 'a line, no title' } });
+    fireEvent.click(view.getByText('Day'));
+    fireEvent.click(view.drop());
+    await waitFor(() => expect(drops).toHaveLength(1));
+    expect(drops[0]).toMatchObject({ title: '', body: 'a line, no title' });
   });
 
   it('moves from the title to the content on Enter: the first line stays the title', () => {
@@ -387,7 +395,7 @@ describe('the sheet’s shape', () => {
     expect(dialog.className).toContain('bg-white');
     expect(container.querySelector('[aria-label="Close"]')!.className).toContain('bg-main-900/60');
     expect(getByRole('dialog').querySelector('textarea')!.getAttribute('placeholder')).toBe(
-      'Drop your splash',
+      'Title (optional)',
     );
   });
 
