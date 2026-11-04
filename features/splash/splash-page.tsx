@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import type { CommitResult } from '@/features/input-sheet/commit';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
@@ -30,6 +30,8 @@ import { SplashDescription } from './splash-description';
 import { orderBlocks } from './block-day';
 import { BlockEditor, type BlockDraft, type EditorTarget } from './block-editor';
 import { AddRow } from './add-row';
+import { CompactBar } from './compact-bar';
+import { HeaderMenu } from './header-menu';
 import { BlockView } from './block';
 import { RippleThread } from './ripple-thread';
 import { useCloseSplash } from './splash-modal';
@@ -171,6 +173,23 @@ export function SplashPage({
   // the owner's from no pool; written into the pool shown.
   const answered = useRippleResponses(responses, shownPool);
   const thread = inThread(answered.value, shownPool);
+  // The header's title out of view: the compact bar shows (H75).
+  const side = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const row = side.current?.querySelector('[data-splash-title-row]');
+    if (!row || typeof IntersectionObserver === 'undefined') return;
+    const watch = new IntersectionObserver(
+      ([entry]) =>
+        setCompact(
+          !entry.isIntersecting &&
+            entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0) + 1,
+        ),
+      { root: side.current?.closest('[data-sheet-body]') ?? null },
+    );
+    watch.observe(row);
+    return () => watch.disconnect();
+  }, []);
   // On All, where each pool's part came from, "in Pancake", as the card
   // stack says it (H75); a pool's own tab needs none.
   const labelOf = (poolId: string | null): string | null => {
@@ -528,9 +547,54 @@ export function SplashPage({
     );
   }
 
+  async function remove(): Promise<void> {
+    // Gone the moment it is asked for, from every surface (CLAUDE.md,
+    // the principle): back where it came from, and the rows follow. A
+    // block read alone is its own post, so deleting it deletes the block.
+    markDeleted(page.splash.id);
+    if (closeSheet) closeSheet();
+    else router.push('/');
+    // The rows follow in the action's own response (revalidatePath).
+    await (scope === 'joint'
+      ? deleteJointSplash(pool!.poolId, page.splash.id)
+      : orphan
+        ? deleteRipple(page.splash.id)
+        : deleteSplash(page.splash.id));
+  }
+  const canPin = !orphan && scope !== 'theirs';
+  const canDelete = scope === 'mine' || (scope === 'joint' && pool!.canDeleteJoint);
+  const descriptionMenu = describable
+    ? { shown: descriptionShown, onToggle: toggleDescription }
+    : null;
+
   return (
     <div data-splash-page className="flex flex-1 flex-col bg-white pt-1">
-      <div data-splash-side className="flex flex-col">
+      {/* The header in one line once its title is gone (H75). */}
+      <CompactBar
+        shown={compact}
+        icon={
+          headerSplash.icon ??
+          (pool
+            ? (pool.laneChip?.icon ?? null)
+            : (categories.find((c) => c.id === headerSplash.laneIds[0])?.icon ?? null))
+        }
+        title={headerSplash.title}
+        untitled={headerSplash.ghostTitle ?? 'Untitled'}
+        audience={audience}
+        menu={
+          <HeaderMenu
+            pinned={headerSplash.pinnedAt !== null}
+            count={headerSplash.count}
+            canPin={canPin}
+            canDelete={canDelete}
+            description={descriptionMenu}
+            onPin={pin}
+            onDelete={remove}
+          />
+        }
+        ruled={threads.length === 0}
+      />
+      <div ref={side} data-splash-side className="flex flex-col">
         <SplashHeader
           // Remounted when an edit from the sheet lands, so it reads the new words.
           key={`${headerSplash.id}:${headerSplash.title}:${headerSplash.icon ?? ''}`}
@@ -543,12 +607,10 @@ export function SplashPage({
           editLevel={
             orphan ? 'none' : scope === 'mine' ? 'all' : scope === 'joint' ? 'title' : 'none'
           }
-          canPin={!orphan && scope !== 'theirs'}
-          canDelete={scope === 'mine' || (scope === 'joint' && pool!.canDeleteJoint)}
+          canPin={canPin}
+          canDelete={canDelete}
           laneChip={pool ? pool.laneChip : undefined}
-          description={
-            describable ? { shown: descriptionShown, onToggle: toggleDescription } : null
-          }
+          description={descriptionMenu}
           byline={
             <SplashAuthors
               ids={authorIds}
@@ -572,20 +634,7 @@ export function SplashPage({
               </p>
             ) : null
           }
-          onDelete={async () => {
-            // Gone the moment it is asked for, from every surface (CLAUDE.md,
-            // the principle): back where it came from, and the rows follow. A
-            // block read alone is its own post, so deleting it deletes the block.
-            markDeleted(page.splash.id);
-            if (closeSheet) closeSheet();
-            else router.push('/');
-            // The rows follow in the action's own response (revalidatePath).
-            await (scope === 'joint'
-              ? deleteJointSplash(pool!.poolId, page.splash.id)
-              : orphan
-                ? deleteRipple(page.splash.id)
-                : deleteSplash(page.splash.id));
-          }}
+          onDelete={remove}
         />
 
         {/* Its description (0037): under the header, a divider from the ripples. */}
@@ -605,16 +654,19 @@ export function SplashPage({
             {message ?? answered.message}
           </p>
         ) : null}
+      </div>
+
+      <div data-splash-blocks className="flex flex-col">
         {threads.length > 0 ? (
           // All, then a tab per pool whose members wrote on my record (0035;
           // review): underlined tabs, the chosen one in ink, as the toolbar's.
-          // At the pinned header's foot (H75), so they stay whole and in
-          // view over the ripples; edge to edge on white, a hairline under
-          // them; wider than the panel, they scroll sideways, never wrapped.
+          // Pinned under the compact bar while the header scrolls away (H75),
+          // whole and in view over the ripples; edge to edge on white, a
+          // hairline under them; wider than the panel, sideways, never wrapped.
           <div
             role="tablist"
             data-thread-tabs
-            className="no-scrollbar border-pool-100 -mx-6 flex overflow-x-auto border-b bg-white px-6 lg:-mx-8 lg:px-8"
+            className="no-scrollbar border-pool-100 sticky top-12 z-10 -mx-6 flex overflow-x-auto border-b bg-white px-6 lg:-mx-8 lg:px-8"
           >
             {[{ poolId: ALL_TAB, label: 'All', count: 0, off: false }, ...threads].map((t) => {
               const on = tab === t.poolId;
@@ -650,9 +702,6 @@ export function SplashPage({
             })}
           </div>
         ) : null}
-      </div>
-
-      <div data-splash-blocks className="flex flex-col">
         {/* One person's splash reads as one post (testers): its words straight
           under the header, the face once, in the byline. Once someone else
           adds theirs, each block an entry of its own, threaded avatar to

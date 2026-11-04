@@ -26,7 +26,8 @@ export function SettingsSheet({ title, tabs }: { title: string; tabs: SettingsTa
       <div
         data-splash-side
         data-settings-sheet={current.key}
-        className="flex flex-col gap-3 pt-2 pb-4"
+        // Its heading and tabs pinned over what scrolls beneath.
+        className="sticky top-0 z-10 flex flex-col gap-3 bg-white pt-2 pb-4"
       >
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-main-900 text-2xl font-semibold">{title}</h2>

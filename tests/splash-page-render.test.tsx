@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const router = { push: vi.fn(), replace: vi.fn(), refresh: vi.fn() };
@@ -776,10 +776,11 @@ describe('the pool tabs and All’s labels (H75)', () => {
       ...over,
     });
 
-  it('sits at the pinned header’s foot, edge to edge on white, scrolling sideways, never wrapping', () => {
+  it('pins under the compact bar, outside the header that scrolls away, edge to edge on white, never wrapping', () => {
     const { container } = view();
     const row = container.querySelector('[data-thread-tabs]')!;
-    expect(row.closest('[data-splash-side]')).not.toBeNull();
+    expect(row.closest('[data-splash-side]')).toBeNull();
+    expect(row.className).toMatch(/sticky top-12/);
     expect(row.className).toMatch(/overflow-x-auto/);
     expect(row.className).toMatch(/no-scrollbar/);
     expect(row.className).toMatch(/bg-white/);
@@ -835,6 +836,54 @@ describe('the pool tabs and All’s labels (H75)', () => {
     fireEvent.click(getByRole('tab', { name: 'Pancake · 2' }));
     expect(container.querySelector('[data-reply-thread-label]')).toBeNull();
     expect(container.querySelector('[data-ripple-thread-label]')).toBeNull();
+  });
+});
+
+describe('the compact bar, once the title has scrolled away (H75)', () => {
+  // The title row's visibility, driven by hand.
+  let report: (out: boolean) => void = () => {};
+  beforeEach(() => {
+    class Watch {
+      constructor(cb: IntersectionObserverCallback) {
+        report = (out) =>
+          act(() =>
+            cb(
+              [
+                {
+                  isIntersecting: !out,
+                  boundingClientRect: { bottom: out ? -10 : 200 },
+                  rootBounds: { top: 0 },
+                } as unknown as IntersectionObserverEntry,
+              ],
+              this as unknown as IntersectionObserver,
+            ),
+          );
+      }
+      observe() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('IntersectionObserver', Watch);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('is not there while the title shows; scrolled past, the emoji, the title, the chip and the menu', async () => {
+    const { container } = page({ audience: <button data-audience-chip>2 pools</button> });
+    expect(container.querySelector('[data-compact-bar]')).toBeNull();
+    report(true);
+    const bar = container.querySelector('[data-compact-bar]')!;
+    expect(bar.querySelector('[data-compact-title]')!.textContent).toBe('Whistler, two nights');
+    expect(bar.querySelector('[data-compact-title]')!.className).toMatch(/truncate/);
+    expect(bar.textContent).toContain('📍');
+    expect(bar.querySelector('[data-audience-chip]')).not.toBeNull();
+    expect(bar.querySelector('[aria-label="More"]')).not.toBeNull();
+    expect(bar.className).toMatch(/h-12/);
+    expect(bar.className).toMatch(/bg-white/);
+    // Without tabs, its own hairline.
+    expect(bar.className).toMatch(/border-b/);
+    // It takes no room in the flow.
+    expect(bar.parentElement!.className).toMatch(/sticky top-0 .*h-0/);
+    report(false);
+    await waitFor(() => expect(container.querySelector('[data-compact-bar]')).toBeNull());
   });
 });
 

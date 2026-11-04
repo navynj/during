@@ -340,7 +340,7 @@ export function SplashModal({
             <div
               ref={scroller}
               data-sheet-body
-              className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 lg:px-8 [&_[data-splash-side]]:sticky [&_[data-splash-side]]:top-0 [&_[data-splash-side]]:z-10 [&_[data-splash-side]]:bg-white"
+              className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 lg:px-8"
               style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
               {leaving ? held : children}

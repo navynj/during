@@ -152,7 +152,8 @@ describe('the splash sheet (review)', () => {
     expect(panel.className).toContain('rounded-t-[32px]');
     const body = container.querySelector('[data-sheet-body]')!;
     expect(body.className).toContain('overflow-y-auto');
-    expect(body.className).toContain('[&_[data-splash-side]]:sticky');
+    // The header scrolls away; only the splash's own bar and tabs pin (H75).
+    expect(body.className).not.toContain('sticky');
     expect(container.querySelector('[data-sheet-handle]')).not.toBeNull();
   });
 });

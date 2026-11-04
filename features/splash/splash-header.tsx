@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition, type ReactNode } from 'react';
-import { MoreHorizontal, Pin, PinOff } from 'lucide-react';
 
 import { OutlineChip } from '@/components/ui/chips/category-chip';
 import { WaveRule } from '@/components/ui/waves/wave-rule';
@@ -12,6 +11,7 @@ import { EmojiInput } from '@/features/lanes/emoji-input';
 import type { MyCategory } from '@/lib/queries/profile';
 import type { IsoDate } from '@/lib/time';
 
+import { HeaderMenu } from './header-menu';
 import { formatRange, type DateRange, type SplashSummary } from './summary';
 
 /** The title's size and weight on a post's page; the top card on Home reads at the same (review). */
@@ -87,8 +87,7 @@ export function SplashHeader({
     splash.range ? { start: splash.range.start, end: splash.range.end } : null,
   );
   const [editingLane, setEditingLane] = useState(false);
-  const [menu, setMenu] = useState<'closed' | 'open' | 'delete'>('closed');
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const header = (over: Partial<HeaderEdit> = {}): HeaderEdit => ({
     title: title.trim(),
@@ -154,105 +153,19 @@ export function SplashHeader({
 
         {audience}
 
-        {canPin || canDelete || description ? (
-          <div className="relative shrink-0">
-            <button
-              type="button"
-              aria-label="More"
-              aria-expanded={menu !== 'closed'}
-              onClick={() => setMenu(menu === 'closed' ? 'open' : 'closed')}
-              className="text-pool-500 flex h-8 w-8 items-center justify-center"
-            >
-              <MoreHorizontal aria-hidden size={18} />
-            </button>
-
-            {menu === 'open' ? (
-              <ul
-                role="menu"
-                data-header-menu
-                className="border-pool-100 absolute top-full right-0 z-10 flex w-52 flex-col rounded-xl border bg-white py-1 text-sm shadow-lg"
-              >
-                {canPin ? (
-                  <li>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      disabled={pending}
-                      onClick={() => {
-                        setMenu('closed');
-                        run(() => onPin(splash.pinnedAt === null));
-                      }}
-                      className="text-ink hover:bg-pool-100 flex w-full items-center gap-2 px-3 py-2 text-left"
-                    >
-                      {splash.pinnedAt ? (
-                        <PinOff aria-hidden size={14} />
-                      ) : (
-                        <Pin aria-hidden size={14} />
-                      )}
-                      {splash.pinnedAt ? 'Unpin' : 'Pin'}
-                    </button>
-                  </li>
-                ) : null}
-                {description ? (
-                  <li>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      data-description-toggle={description.shown ? 'hide' : 'add'}
-                      onClick={() => {
-                        setMenu('closed');
-                        description.onToggle();
-                      }}
-                      className="text-ink hover:bg-pool-100 flex w-full items-center gap-2 px-3 py-2 text-left"
-                    >
-                      {description.shown ? 'Hide description' : 'Add description'}
-                    </button>
-                  </li>
-                ) : null}
-                {canDelete ? (
-                  <li>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => setMenu('delete')}
-                      className="text-pool-500 hover:bg-pool-100 flex w-full items-center gap-2 px-3 py-2 text-left"
-                    >
-                      Delete
-                    </button>
-                  </li>
-                ) : null}
-              </ul>
-            ) : null}
-
-            {menu === 'delete' ? (
-              <div
-                role="alertdialog"
-                className="border-pool-100 absolute top-full right-0 z-10 flex w-60 flex-col gap-2 rounded-xl border bg-white px-3 py-2 text-sm shadow-lg"
-              >
-                <p data-delete-confirm className="text-pool-500">
-                  Deletes the post and its {splash.count} block{splash.count === 1 ? '' : 's'}.
-                </p>
-                <span className="flex gap-3">
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => run(onDelete)}
-                    className="text-main-900 font-medium disabled:opacity-50"
-                  >
-                    Delete
-                  </button>
-                  <button type="button" onClick={() => setMenu('closed')} className="text-pool-500">
-                    Keep
-                  </button>
-                </span>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+        <HeaderMenu
+          pinned={splash.pinnedAt !== null}
+          count={splash.count}
+          canPin={canPin}
+          canDelete={canDelete}
+          description={description}
+          onPin={onPin}
+          onDelete={onDelete}
+        />
       </div>
 
-      {/* The title, edited where it is read. */}
-      <div className="flex items-start gap-3">
+      {/* The title, edited where it is read; the compact bar shows once it is gone (H75). */}
+      <div data-splash-title-row className="flex items-start gap-3">
         {/* The post's own icon, edited in place (0008): one glyph, saved as it
           is chosen; emptied, the lane's emoji stands for the post again. */}
         {editLevel === 'none' ? (
