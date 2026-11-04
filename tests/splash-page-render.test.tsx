@@ -478,6 +478,43 @@ describe('writing on the page, in place', () => {
     expect(row.hasAttribute('data-open')).toBe(false);
   });
 
+  it('cancels a few words at once, back to one row; asks first past a few words', () => {
+    const { container, getByText } = page();
+    const row = container.querySelector<HTMLElement>('[data-add-row]')!;
+    const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+    expect(row.querySelector('[data-add-cancel]')).toBeNull();
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: 'just three words' } });
+    fireEvent.click(row.querySelector('[data-add-cancel]')!);
+    expect(row.querySelector('[data-add-discard]')).toBeNull();
+    expect(field.value).toBe('');
+    expect(row.hasAttribute('data-open')).toBe(false);
+
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: 'four words and more' } });
+    fireEvent.click(row.querySelector('[data-add-cancel]')!);
+    expect(row.querySelector('[data-add-discard]')!.textContent).toMatch(/Discard this\?/);
+    fireEvent.click(getByText('Keep writing'));
+    expect(row.querySelector('[data-add-discard]')).toBeNull();
+    expect(field.value).toBe('four words and more');
+    fireEvent.click(row.querySelector('[data-add-cancel]')!);
+    fireEvent.click(getByText('Discard'));
+    expect(field.value).toBe('');
+    expect(row.hasAttribute('data-open')).toBe(false);
+    expect(calls.some((c) => c.name === 'addBlock')).toBe(false);
+  });
+
+  it('leaves the field on Escape, the draft kept', () => {
+    const { container } = page();
+    const row = container.querySelector<HTMLElement>('[data-add-row]')!;
+    const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
+    field.focus();
+    fireEvent.change(field, { target: { value: 'half a thought' } });
+    fireEvent.keyDown(field, { key: 'Escape' });
+    expect(document.activeElement).not.toBe(field);
+    expect(field.value).toBe('half a thought');
+  });
+
   it('offers Show video previews once its words link a video, and saves the choice (part 5)', async () => {
     const { container, getByText } = page();
     const row = container.querySelector<HTMLElement>('[data-add-row]')!;

@@ -15,13 +15,18 @@ import { DayChip } from './day-chip';
 import { VideoPreviewsSwitch } from './video-previews-switch';
 import type { DateRange } from './summary';
 
+/** Up to this many words go without asking; past it, or with a photo, Cancel asks. */
+const FEW_WORDS = 3;
+
 /**
  * The seat of the next block, at the foot of a splash (H75): a thin wave
  * apart from what is above — the title's own wave, faint — then one row: my
  * face, a borderless field whose placeholder says what it does (*Add to this
  * splash* on mine, *Add yours too* on someone else's), and a photo button.
- * In focus the field opens to a few lines and Drop appears at the row's
- * end; left empty, it folds back to one row. Its words linking a video,
+ * In focus the field opens to a few lines with Cancel and Drop at the
+ * row's end; left empty, it folds back to one row. Cancel clears it, asking
+ * first when there is more to lose than a few words; Escape only leaves
+ * the field, the draft kept and the panel open. Its words linking a video,
  * the editor's *Show video previews* switch shows. No card, no ring, no title:
  * Reply under each ripple is the comment, this is a record of your own.
  */
@@ -50,6 +55,8 @@ export function AddRow({
     isRange(range) ? defaultBlockDay(range, today) : null,
   );
   const [open, setOpen] = useState(autoFocus);
+  // Cancel asked "Discard this?" and waits for an answer.
+  const [asking, setAsking] = useState(false);
   // Show video previews (part 5): on unless turned off before Drop.
   const [videos, setVideos] = useState(true);
   const linksVideos = videosIn(note).length > 0;
@@ -88,6 +95,22 @@ export function AddRow({
     field.current?.blur();
   }
 
+  function discard(): void {
+    // Through `change`, so the photos already uploaded are removed too.
+    change([]);
+    setNote('');
+    setVideos(true);
+    setAsking(false);
+    setOpen(false);
+    field.current?.blur();
+  }
+
+  function cancel(): void {
+    const words = note.trim().split(/\s+/).filter(Boolean).length;
+    if (media.length > 0 || words > FEW_WORDS) setAsking(true);
+    else discard();
+  }
+
   return (
     <div data-add-slot className="mt-2 pb-10">
       <div data-add-wave className="py-3 opacity-25">
@@ -115,6 +138,11 @@ export function AddRow({
             value={note}
             onChange={(event) => setNote(event.target.value)}
             onFocus={() => setOpen(true)}
+            onKeyDown={(event) => {
+              // Leaves the field and keeps the draft; the panel ignores an
+              // Escape from a field, so it stays open.
+              if (event.key === 'Escape') event.currentTarget.blur();
+            }}
             placeholder={label}
             aria-label={label}
             rows={shown ? 3 : 1}
@@ -146,6 +174,16 @@ export function AddRow({
             }}
           />
           {shown ? (
+            <button
+              type="button"
+              data-add-cancel
+              onClick={cancel}
+              className="text-pool-500 shrink-0 py-1 text-sm"
+            >
+              Cancel
+            </button>
+          ) : null}
+          {shown ? (
             // Blue means action: the one filled thing here commits (H20f).
             <button
               type="button"
@@ -164,6 +202,17 @@ export function AddRow({
             <MediaPreviews paths={media} previews={previews} failed={failed} onChange={change} />
             {linksVideos ? <VideoPreviewsSwitch on={videos} onChange={setVideos} /> : null}
           </div>
+        ) : null}
+        {asking ? (
+          <p data-add-discard className="flex items-center gap-3 pl-8 text-sm">
+            <span className="text-ink">Discard this?</span>
+            <button type="button" onClick={discard} className="text-main-900 font-medium">
+              Discard
+            </button>
+            <button type="button" onClick={() => setAsking(false)} className="text-pool-500">
+              Keep writing
+            </button>
+          </p>
         ) : null}
         {busy && progress ? <p className="text-pool-500 pl-8 text-xs">{progress}</p> : null}
       </div>
