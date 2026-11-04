@@ -143,10 +143,11 @@ describe('the splash sheet (review)', () => {
     // On a phone a fixed height would make short content a tall sheet.
     expect(panel.className.split(' ').some((c) => c.startsWith('h-['))).toBe(false);
     // Wide: the screen's full height at the right edge, about 600px across,
-    // rounded on its left only, the calendar still in view (H75).
+    // square-cornered, the calendar still in view (H75).
     expect(panel.className).toContain('lg:h-full');
     expect(panel.className).toContain('lg:w-[clamp(520px,46vw,640px)]');
-    expect(panel.className).toContain('lg:rounded-l-[32px]');
+    expect(panel.className).toContain('lg:rounded-none');
+    expect(panel.className).not.toContain('lg:rounded-l-');
     expect(container.querySelector('[data-splash-modal]')!.className).toContain('lg:items-end');
     expect(panel.className).toContain('rounded-t-[32px]');
     const body = container.querySelector('[data-sheet-body]')!;

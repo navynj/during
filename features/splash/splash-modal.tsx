@@ -61,8 +61,8 @@ const FOCUSABLE =
  *
  * On a phone it fits its content, up to the visible viewport less the 56px
  * band every bottom sheet leaves (sheet-frame). On a wide screen (`lg`) a
- * record is a full-height panel from the right edge, about 600px wide and
- * rounded on its left, so the calendar stays in view beside it and the page
+ * record is a full-height panel from the right edge, about 600px wide,
+ * square-cornered, so the calendar stays in view beside it and the page
  * inside reads in the phone's one column (H75); `fit` — a sheet that is not
  * a record (settings) — stays a content-fit sheet in the middle. The header
  * stays pinned while the body scrolls. Dismissed by dragging down the
@@ -321,7 +321,7 @@ export function SplashModal({
             className={`surface relative flex ${SHEET_MAX_HEIGHT} w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-xl outline-none ${
               fit
                 ? 'lg:max-h-[min(88dvh,var(--sheet-room))] lg:w-[min(1040px,90vw)]'
-                : 'lg:h-full lg:max-h-none lg:w-[clamp(520px,46vw,640px)] lg:rounded-none lg:rounded-l-[32px]'
+                : 'lg:h-full lg:max-h-none lg:w-[clamp(520px,46vw,640px)] lg:rounded-none'
             }`}
             style={
               {
