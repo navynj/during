@@ -209,7 +209,7 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
     expect(container.querySelector('[data-wave-underline]')!.getAttribute('data-lines')).toBe('2');
   });
 
-  it('writes who wrote it under the date, and where it sits in a pool at that line’s end', () => {
+  it('writes who wrote it under the date, and where it sits in a pool on the line under it', () => {
     const { container } = render(
       <PeopleProvider me="u-me" people={{ 'u-me': { name: 'Yoonji', photo: null } }}>
         <InputSheetProvider>
@@ -235,8 +235,9 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
     expect(byline.querySelector('[data-splash-author]')?.getAttribute('data-splash-author')).toBe(
       'u-me',
     );
-    // One line: the author at its start, the pool and its lane at its end.
-    expect(byline.className).toContain('justify-between');
+    // The pool and its lane on a line of their own under the author, so a
+    // name is never cut short beside them (H75).
+    expect(byline.className).toContain('flex-col');
     expect(byline.lastElementChild?.querySelector('[data-origin-tag]')?.textContent).toBe(
       'Our Pool · 🎲 Games',
     );
@@ -255,6 +256,8 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
     expect(labels[2]).toBe('Aug 20');
     expect(container.querySelector('[data-block-body]')!.className).toMatch(/text-\[15px\]/);
     expect(container.querySelector('[data-photo]')!.className).toContain('w-full');
+    // A tall photo stops at 70vh in the wide panel (H75).
+    expect(container.querySelector('[data-photo]')!.className).toContain('lg:max-h-[70vh]');
     expect(container.querySelector('[data-photo-placeholder]')).not.toBeNull();
   });
 
@@ -338,10 +341,10 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
     }
   });
 
-  it('is two halves on a wide screen: the header left, the blocks right', () => {
+  it('is one column at every width: the header, then the blocks, then the add row (H75)', () => {
     const { container } = page();
     const root = container.querySelector('[data-splash-page]')!;
-    expect(root.className).toContain('lg:grid-cols-2');
+    expect(root.className).not.toContain('lg:grid');
     const side = container.querySelector('[data-splash-side]')!;
     const blocks = container.querySelector('[data-splash-blocks]')!;
     expect(side.querySelector('[data-splash-header]')).not.toBeNull();

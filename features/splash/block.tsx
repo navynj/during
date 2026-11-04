@@ -97,7 +97,8 @@ export function BlockView({
             data-photo
             width={size?.w}
             height={size?.h}
-            className="h-auto w-full rounded-xl object-contain"
+            // A tall photo never takes the whole wide panel (H75).
+            className="h-auto w-full rounded-xl object-contain lg:max-h-[70vh]"
           />
         ) : (
           <span

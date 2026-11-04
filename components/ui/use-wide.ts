@@ -3,7 +3,8 @@
 import { useSyncExternalStore } from 'react';
 
 /** Tailwind's `lg`: where the grid and the board sit side by side. */
-const QUERY = '(min-width: 64rem)';
+export const WIDE_QUERY = '(min-width: 64rem)';
+const QUERY = WIDE_QUERY;
 
 function subscribe(onChange: () => void): () => void {
   const media = window.matchMedia(QUERY);

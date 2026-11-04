@@ -526,11 +526,8 @@ export function SplashPage({
   }
 
   return (
-    <div
-      data-splash-page
-      className="flex flex-1 flex-col bg-white pt-1 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-16"
-    >
-      <div data-splash-side className="flex flex-col lg:sticky lg:top-0 lg:pt-3">
+    <div data-splash-page className="flex flex-1 flex-col bg-white pt-1">
+      <div data-splash-side className="flex flex-col">
         <SplashHeader
           // Remounted when an edit from the sheet lands, so it reads the new words.
           key={`${headerSplash.id}:${headerSplash.title}:${headerSplash.icon ?? ''}`}
@@ -562,10 +559,7 @@ export function SplashPage({
           }
           place={
             poolTags.length > 0 ? (
-              <p
-                data-origin-tags
-                className="text-pool-500 flex flex-wrap justify-end gap-x-3 text-xs"
-              >
+              <p data-origin-tags className="text-pool-500 flex flex-wrap gap-x-3 text-xs">
                 {poolTags.map((tag) => (
                   <span key={tag} data-origin-tag>
                     {tag}
@@ -609,7 +603,7 @@ export function SplashPage({
         ) : null}
       </div>
 
-      <div data-splash-blocks className="flex flex-col lg:pt-3">
+      <div data-splash-blocks className="flex flex-col">
         {threads.length > 0 ? (
           // All, then a tab per pool whose members wrote on my record (0035;
           // review): underlined tabs, the chosen one in ink, as the toolbar's.

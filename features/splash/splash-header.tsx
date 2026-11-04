@@ -29,8 +29,8 @@ export type HeaderEdit = {
 /**
  * A post's header (SPEC 5, H21): lane tags (declared first), the title at
  * display scale, a wave underline sized to the block count, the range small
- * below, and under it the byline: who wrote it, and at the line's right end
- * where it sits in a pool (2026-10-29). Title, declared date and declared lane are edited in place; pin
+ * below, and under it the byline: who wrote it (2026-10-29), and on a line
+ * of its own under that, where it sits in a pool (H75). Title, declared date and declared lane are edited in place; pin
  * and Delete live in the quiet menu at the right.
  */
 export function SplashHeader({
@@ -75,7 +75,7 @@ export function SplashHeader({
   description?: { shown: boolean; onToggle: () => void } | null;
   /** Who wrote it, under the date. */
   byline?: ReactNode;
-  /** Where it sits in a pool ("Pool · 🏕 lane"), at the byline's right end. */
+  /** Where it sits in a pool ("Pool · 🏕 lane"), on its own line under the byline (H75). */
   place?: ReactNode;
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
@@ -389,9 +389,11 @@ export function SplashHeader({
       )}
 
       {byline || place ? (
-        <div data-splash-byline className="flex items-center justify-between gap-3 pt-1">
+        // The pool tags on a line of their own under the byline, so a name
+        // is never cut short beside them (H75).
+        <div data-splash-byline className="flex flex-col gap-1.5 pt-1">
           <div className="min-w-0">{byline}</div>
-          {place ? <div className="min-w-0 shrink text-right">{place}</div> : null}
+          {place ? <div className="min-w-0">{place}</div> : null}
         </div>
       ) : null}
     </header>

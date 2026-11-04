@@ -239,9 +239,9 @@ describe('a pool’s splash on Home’s page (review)', () => {
     expect(container.querySelector('[data-header-menu]')!.textContent).not.toContain('Delete');
   });
 
-  it('renders the same split layout as Home on a wide screen', () => {
+  it('reads in one column at every width, as on Home (H75)', () => {
     const { container } = page();
-    expect(container.querySelector('[data-splash-page]')!.className).toContain('lg:grid-cols-2');
+    expect(container.querySelector('[data-splash-page]')!.className).not.toContain('lg:grid');
   });
 
   it('is the same component on Home and in a pool: no pool-only detail remains', () => {

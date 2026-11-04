@@ -14,6 +14,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MotionConfig, animate, motion, useDragControls, type PanInfo } from 'motion/react';
 
 import { usePrefersReducedMotion } from '@/components/ui/waves/use-reduced-motion';
+import { useWide, WIDE_QUERY } from '@/components/ui/use-wide';
 import { FLIP_SPRING } from '@/features/home/use-flip';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { SHEET_MAX_HEIGHT } from '@/features/splash-sheet/sheet-frame';
@@ -59,13 +60,14 @@ const FOCUSABLE =
  * and null means back, the screen it was opened over.
  *
  * On a phone it fits its content, up to the visible viewport less the 56px
- * band every bottom sheet leaves (sheet-frame). On a wide screen — the
- * board 600px and up, which is `lg` — it is min(1040px, 90vw) wide, keeps
- * the detail's two halves, and stands at 90vh whatever the record's length,
- * a short one leaving white below (review); `fit` keeps it content-fit there. The
- * header stays pinned while the body scrolls. Dismissed by dragging down the
- * handle or the header, or the body once scrolled to its top; by the dimmed
- * screen; by Escape; by back. It opens and closes on the board's spring, a
+ * band every bottom sheet leaves (sheet-frame). On a wide screen (`lg`) a
+ * record is a full-height panel from the right edge, about 600px wide and
+ * rounded on its left, so the calendar stays in view beside it and the page
+ * inside reads in the phone's one column (H75); `fit` — a sheet that is not
+ * a record (settings) — stays a content-fit sheet in the middle. The header
+ * stays pinned while the body scrolls. Dismissed by dragging down the
+ * handle or the header, or the body once scrolled to its top (a phone); by
+ * the dimmed screen; by Escape; by back. It opens and closes on the board's spring, a
  * fade under reduced motion; above the keyboard it sizes itself to the
  * visual viewport so the editor in focus stays in view. Focus is held inside
  * and given back to what opened it; the screen behind does not scroll.
@@ -94,6 +96,8 @@ export function SplashModal({
   // again; or it was closed while this was on its way, and this one goes.
   const [handoff] = useState(() => (onLeave ? null : (openings?.peek(pathname) ?? null)));
   const reduce = usePrefersReducedMotion();
+  // A record on a wide screen: the panel from the right (H75).
+  const side = useWide() && !fit;
   const controls = useDragControls();
   const { sheet: compose } = useInputSheet();
   const frame = useRef<HTMLDivElement>(null);
@@ -258,9 +262,15 @@ export function SplashModal({
   // shows it; under reduced motion MotionConfig drops the slide and leaves
   // the fade (review). Never branched on the hook, whose answer can change
   // after mount and once left the sheet invisible.
-  const shown = { y: 0, opacity: 1 };
-  const hidden = { y: '100%', opacity: 0 };
-  const transition = { y: FLIP_SPRING, opacity: { duration: 0.2, ease: 'easeOut' as const } };
+  // The panel slides in from the right instead; shown is the same either
+  // way, so a width that changes while it is up cannot strand it.
+  const shown = { x: 0, y: 0, opacity: 1 };
+  const hidden = side ? { x: '100%', y: 0, opacity: 0 } : { x: 0, y: '100%', opacity: 0 };
+  const transition = {
+    x: FLIP_SPRING,
+    y: FLIP_SPRING,
+    opacity: { duration: 0.2, ease: 'easeOut' as const },
+  };
 
   return (
     <MotionConfig reducedMotion="user">
@@ -268,7 +278,10 @@ export function SplashModal({
         <div
           ref={frame}
           data-splash-modal
-          className="fixed inset-x-0 top-0 z-30 flex flex-col items-center justify-end"
+          data-side={fit ? undefined : ''}
+          className={`fixed inset-x-0 top-0 z-30 flex flex-col items-center justify-end ${
+            fit ? '' : 'lg:items-end lg:justify-start'
+          }`}
           style={{ bottom: viewport?.bottom ?? 0 }}
         >
           <motion.button
@@ -277,7 +290,7 @@ export function SplashModal({
             tabIndex={-1}
             data-sheet-scrim
             onClick={close}
-            className="bg-main-900/60 absolute inset-0"
+            className={`bg-main-900/60 absolute inset-0 ${fit ? '' : 'lg:bg-main-900/30'}`}
             initial={handoff === 'adopt' ? false : { opacity: 0 }}
             animate={{ opacity: leaving || handoff === 'dismissed' ? 0 : 1 }}
             transition={{ duration: 0.2 }}
@@ -293,7 +306,7 @@ export function SplashModal({
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={() => (press.current = null)}
-            drag={reduce ? false : 'y'}
+            drag={reduce || side ? false : 'y'}
             dragControls={controls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
@@ -305,8 +318,10 @@ export function SplashModal({
             onAnimationComplete={() => {
               if (leaving) leave();
             }}
-            className={`surface relative flex ${SHEET_MAX_HEIGHT} w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-xl outline-none lg:w-[min(1040px,90vw)] ${
-              fit ? 'lg:max-h-[min(88dvh,var(--sheet-room))]' : 'lg:h-[90vh] lg:max-h-[90vh]'
+            className={`surface relative flex ${SHEET_MAX_HEIGHT} w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-xl outline-none ${
+              fit
+                ? 'lg:max-h-[min(88dvh,var(--sheet-room))] lg:w-[min(1040px,90vw)]'
+                : 'lg:h-full lg:max-h-none lg:w-[clamp(520px,46vw,640px)] lg:rounded-none lg:rounded-l-[32px]'
             }`}
             style={
               {
@@ -314,7 +329,8 @@ export function SplashModal({
               } as React.CSSProperties
             }
           >
-            <div className="flex shrink-0 justify-center pt-3 pb-1">
+            {/* The handle drags a phone's sheet down; the panel keeps its room, unhandled. */}
+            <div className={`flex shrink-0 justify-center pt-3 pb-1 ${fit ? '' : 'lg:invisible'}`}>
               <span
                 data-sheet-handle
                 aria-hidden
@@ -324,7 +340,7 @@ export function SplashModal({
             <div
               ref={scroller}
               data-sheet-body
-              className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 lg:px-10 [&_[data-splash-side]]:sticky [&_[data-splash-side]]:top-0 [&_[data-splash-side]]:z-10 [&_[data-splash-side]]:bg-white"
+              className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 lg:px-8 [&_[data-splash-side]]:sticky [&_[data-splash-side]]:top-0 [&_[data-splash-side]]:z-10 [&_[data-splash-side]]:bg-white"
               style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
               {leaving ? held : children}
@@ -352,6 +368,11 @@ export function playExit(node: HTMLElement, scrollTop: number): void {
   const body = ghost.querySelector<HTMLElement>('[data-sheet-body]');
   if (body) body.scrollTop = scrollTop;
   const sheet = ghost.querySelector<HTMLElement>('[data-splash-sheet]');
+  // A record's panel on a wide screen goes back out to the right (H75).
+  const side =
+    ghost.hasAttribute('data-side') &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(WIDE_QUERY).matches;
   const scrim = ghost.querySelector<HTMLElement>('[data-sheet-scrim]');
   const reduce =
     typeof window.matchMedia === 'function' &&
@@ -361,11 +382,11 @@ export function playExit(node: HTMLElement, scrollTop: number): void {
     sheet
       ? reduce
         ? animate(sheet, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' })
-        : animate(
-            sheet,
-            { y: '100%', opacity: 0 },
-            { y: FLIP_SPRING, opacity: { duration: 0.2, ease: 'easeOut' } },
-          )
+        : animate(sheet, side ? { x: '100%', opacity: 0 } : { y: '100%', opacity: 0 }, {
+            x: FLIP_SPRING,
+            y: FLIP_SPRING,
+            opacity: { duration: 0.2, ease: 'easeOut' },
+          })
       : null,
   ].filter((run) => run !== null);
   void Promise.all(runs.map((run) => run.finished)).finally(() => ghost.remove());

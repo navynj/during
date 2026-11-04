@@ -135,17 +135,19 @@ describe('the splash sheet (review)', () => {
     expect(document.documentElement.style.overflow).toBe('');
   });
 
-  it('fits its content on a phone under the 56px band, stands at 90vh wide, min(1040px, 90vw) across, header pinned', () => {
+  it('fits its content on a phone under the 56px band; wide, a full-height panel from the right (H75); header pinned', () => {
     const { container } = sheet(null);
     const panel = container.querySelector('[data-splash-sheet]')!;
     expect(panel.className).toContain(SHEET_MAX_HEIGHT);
     expect(SHEET_MAX_HEIGHT).toMatch(/56px/);
     // On a phone a fixed height would make short content a tall sheet.
     expect(panel.className.split(' ').some((c) => c.startsWith('h-['))).toBe(false);
-    // Wide (the board 600px and up): 90vh whatever the length (review).
-    expect(panel.className).toContain('lg:h-[90vh]');
-    expect(panel.className).toContain('lg:max-h-[90vh]');
-    expect(panel.className).toContain('lg:w-[min(1040px,90vw)]');
+    // Wide: the screen's full height at the right edge, about 600px across,
+    // rounded on its left only, the calendar still in view (H75).
+    expect(panel.className).toContain('lg:h-full');
+    expect(panel.className).toContain('lg:w-[clamp(520px,46vw,640px)]');
+    expect(panel.className).toContain('lg:rounded-l-[32px]');
+    expect(container.querySelector('[data-splash-modal]')!.className).toContain('lg:items-end');
     expect(panel.className).toContain('rounded-t-[32px]');
     const body = container.querySelector('[data-sheet-body]')!;
     expect(body.className).toContain('overflow-y-auto');
