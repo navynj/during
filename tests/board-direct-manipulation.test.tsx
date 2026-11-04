@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { HOLD_MS } from '@/features/month-board/use-hold-to-move';
 import { useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -666,6 +667,53 @@ describe('direct manipulation: the page around it', () => {
     expect(container.querySelector('[data-edit-frame]')).toBeNull();
     expect(container.querySelector('[data-edit-mode-done]')).toBeNull();
     expect(q(container, '[data-stack-card="s1"]').dataset.stair).toBe('top');
+  });
+
+  it('on a phone in edit mode, a finger held on a piece takes it and moves it, no tap first (G)', async () => {
+    const { container } = home();
+    const touch = (x: number, y: number) => ({
+      clientX: x,
+      clientY: y,
+      pointerId: 7,
+      pointerType: 'touch',
+      button: 0,
+    });
+    fireEvent.pointerDown(label(container, 's1'), touch(100, 100));
+    expect(container.querySelector('[data-edit-frame]')).toBeNull();
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    expect(q(container, '[data-board-piece="s1"] [data-edit-frame="piece"]')).not.toBeNull();
+    // Held, the board refuses to scroll under the finger.
+    const scroll = new Event('touchmove', { cancelable: true });
+    window.dispatchEvent(scroll);
+    expect(scroll.defaultPrevented).toBe(true);
+    fireEvent.pointerMove(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await frames(1);
+    expect(label(container, 's1').style.transform).toBe(
+      `translate(${COLUMN / 2}px, ${2 * LINE}px)`,
+    );
+    fireEvent.pointerUp(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await settle();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].patch).toEqual({ piece: { x: 0.5, y: 2 } });
+    expect(pushed).toEqual([]);
+  });
+
+  it('on a phone in edit mode, a quick swipe over a piece is a scroll: nothing taken', async () => {
+    const { container } = home();
+    const touch = (x: number, y: number) => ({
+      clientX: x,
+      clientY: y,
+      pointerId: 8,
+      pointerType: 'touch',
+    });
+    fireEvent.pointerDown(label(container, 's1'), touch(100, 100));
+    fireEvent.pointerMove(window, touch(100, 130));
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    expect(container.querySelector('[data-edit-frame]')).toBeNull();
+    const scroll = new Event('touchmove', { cancelable: true });
+    window.dispatchEvent(scroll);
+    expect(scroll.defaultPrevented).toBe(false);
+    expect(saved).toHaveLength(0);
   });
 
   it('offers no edit mode on a desktop, where a second tap edits', () => {

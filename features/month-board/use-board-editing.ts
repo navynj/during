@@ -67,6 +67,8 @@ export type PartChip = { part: BoardPart; name: string; hidden?: boolean };
 export type BoardEditing = {
   activeId: string | null;
   part: BoardPart;
+  /** A phone's edit mode: a press held on any piece takes it and moves it (G). */
+  direct: boolean;
   /** A tap on a piece, or on one of its parts. */
   tap: (id: string, part?: BoardPart) => void;
   deactivate: () => void;
@@ -244,6 +246,7 @@ export function useBoardEditing({
   return {
     activeId,
     part,
+    direct,
     tap,
     deactivate,
     hold,

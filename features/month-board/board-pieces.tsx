@@ -83,6 +83,7 @@ import {
   type Stacking,
 } from './stacking';
 import type { BoardEditing, PartChip } from './use-board-editing';
+import { useHoldToMove } from './use-hold-to-move';
 import type { ToolbarEye } from './board-handles';
 import { usePrefersReducedMotion } from '@/components/ui/waves/use-reduced-motion';
 
@@ -615,6 +616,12 @@ export function BoardPieceView({
   const onPartDown = (event: React.PointerEvent): void => {
     if (selected && samePart(partAt(event.target), selected)) frameRef.current?.beginMove(event);
   };
+  // A phone's edit mode (G): held, a piece is taken and moved with no tap first.
+  const onHoldDown = useHoldToMove({
+    enabled: editing?.direct ?? false,
+    active,
+    onHold: () => editing?.tap(card.splash.id),
+  });
   // The selected part takes the finger: dragging it never scrolls the board.
   const stillIf = (kind: BoardPart['kind']): CSSProperties | undefined =>
     selected?.kind === kind ? { touchAction: 'none' } : undefined;
@@ -895,7 +902,7 @@ export function BoardPieceView({
         data-board-hits
         className="pointer-events-none absolute inset-0"
         onClick={tap}
-        onPointerDown={active ? onPartDown : undefined}
+        onPointerDown={active ? onPartDown : onHoldDown}
       >
         {piece.photoBox ? (
           <span

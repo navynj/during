@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type Ref,
 } from 'react';
+import { claimHeldMove } from './use-hold-to-move';
 import { createPortal } from 'react-dom';
 import {
   ArrowDown,
@@ -465,6 +466,16 @@ export function PartFrame({
       if (latest.current.tools.move) begin('move', event);
     },
   }));
+
+  // A finger held on a piece to take it (G): whichever frame is drawn for
+  // it — and it is drawn afresh as the piece settles on top — takes the
+  // move from where that finger is, the frame before having let go.
+  useEffect(() => {
+    const held = claimHeldMove();
+    if (held && latest.current.tools.move) begin('move', held);
+    // Once, as it mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Its own taps do nothing more: never the piece's pick beneath.
   const swallow = (event: React.SyntheticEvent): void => event.stopPropagation();
