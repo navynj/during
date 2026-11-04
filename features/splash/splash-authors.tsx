@@ -12,14 +12,22 @@ import { usePeople } from '@/features/people/people-provider';
 export function SplashAuthors({
   ids,
   initialsOf,
+  label,
 }: {
   ids: string[];
   initialsOf: Record<string, string>;
+  /** Said over the faces once there is more than one (H75): *In this splash*. */
+  label?: string;
 }) {
   const { people } = usePeople();
   if (ids.length === 0) return null;
   return (
     <p data-splash-authors className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      {label && ids.length > 1 ? (
+        <span data-splash-authors-label className="text-pool-500 w-full text-xs">
+          {label}
+        </span>
+      ) : null}
       {ids.map((id) => {
         const name = people[id]?.name ?? 'Someone';
         return (

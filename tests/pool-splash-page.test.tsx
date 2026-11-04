@@ -113,7 +113,11 @@ const POOL: PoolContext = {
   zoneOf: { [ME]: 'America/Vancouver', [MINA]: 'Asia/Seoul' },
 };
 
-function page(blocks: RippleWithSplash[] = BLOCKS, pool: PoolContext = POOL) {
+function page(
+  blocks: RippleWithSplash[] = BLOCKS,
+  pool: PoolContext = POOL,
+  sidePool: string | null = null,
+) {
   return render(
     <InputSheetProvider>
       <SplashPage
@@ -132,10 +136,46 @@ function page(blocks: RippleWithSplash[] = BLOCKS, pool: PoolContext = POOL) {
         initials="YO"
         poolTags={['Our Pool · 🎬 Media']}
         pool={pool}
+        sidePool={sidePool}
       />
     </InputSheetProvider>,
   );
 }
+
+describe('adding yours, not replying (H75)', () => {
+  it('asks for my side on someone’s record I am invited on', () => {
+    const view = page([ripple('r-mina', MINA, 'Mina’s record')], { ...POOL, scope: 'theirs' }, 'p');
+    const card = view.container.querySelector('[data-add-card]')!;
+    expect(card.querySelector('[data-add-label]')!.textContent).toBe('Add yours too');
+    fireEvent.click(card.querySelector('[data-add-field]')!);
+    expect(view.getByLabelText('Block').getAttribute('placeholder')).toBe(
+      'Your side of this splash',
+    );
+  });
+
+  it('adds to my own splash, with the editor’s own words', () => {
+    const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
+    const card = view.container.querySelector('[data-add-card]')!;
+    expect(card.querySelector('[data-add-label]')!.textContent).toBe('Add to this splash');
+    fireEvent.click(card.querySelector('[data-add-field]')!);
+    expect(view.getByLabelText('Block').getAttribute('placeholder')).toBe('Drop your words here');
+  });
+
+  it('opens the editor with the photos picked on the card', () => {
+    window.URL.createObjectURL = () => 'blob:preview';
+    const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
+    const file = new File(['x'], 'a.jpg', { type: 'image/jpeg' });
+    fireEvent.change(view.container.querySelector('[data-add-photo-input]')!, {
+      target: { files: [file] },
+    });
+    expect(view.container.querySelector('[data-block-editor="new"]')).not.toBeNull();
+  });
+
+  it('keeps Reply under each ripple, apart from the add card', () => {
+    const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
+    expect(view.container.querySelector('[data-add-card]')!.textContent).not.toMatch(/reply/i);
+  });
+});
 
 describe('who wrote it, at the top of the left column', () => {
   const authors = (view: ReturnType<typeof page>) =>
@@ -147,7 +187,7 @@ describe('who wrote it, at the top of the left column', () => {
     expect(authors(page([...BLOCKS, ripple('r-gone', null, null)]))).toEqual([MINA, ME]);
   });
 
-  it('names someone’s record by its owner, not by a member’s side on it', () => {
+  it('names someone’s record by its owner first, then everyone in it (H75)', () => {
     const side = {
       ...ripple('r-side', ME, 'my side', '2026-10-22T16:00:00.000Z'),
       thread_pool_id: 'p',
@@ -156,12 +196,17 @@ describe('who wrote it, at the top of the left column', () => {
       ...POOL,
       scope: 'theirs',
     });
-    expect(authors(view)).toEqual([MINA]);
+    expect(authors(view)).toEqual([MINA, ME]);
+    expect(view.container.querySelector('[data-splash-authors-label]')!.textContent).toBe(
+      'In this splash',
+    );
   });
 
   it('names me on my own', () => {
     const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
     expect(authors(view)).toEqual([ME]);
+    // Alone in it: no label, so it reads as the solo post it is.
+    expect(view.container.querySelector('[data-splash-authors-label]')).toBeNull();
   });
 });
 

@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 
-import { GhostRing } from '@/components/ui/ghost-ring';
 import type { CommitResult } from '@/features/input-sheet/commit';
 import { useInputSheet } from '@/features/input-sheet/sheet-provider';
 import { deleteRipple, setRippleLock } from '@/features/ripple-sheet/actions';
@@ -29,6 +28,7 @@ import { addBlock, editBlock } from './block-actions';
 import { SplashDescription } from './splash-description';
 import { orderBlocks } from './block-day';
 import { BlockEditor, type BlockDraft, type EditorTarget } from './block-editor';
+import { AddCard } from './add-card';
 import { BlockView } from './block';
 import { RippleThread } from './ripple-thread';
 import { useCloseSplash } from './splash-modal';
@@ -394,7 +394,10 @@ export function SplashPage({
     );
   }
 
-  function startBlock(): void {
+  // Photos picked on the add card, for its editor to take in (H75).
+  const [addFiles, setAddFiles] = useState<FileList | null>(null);
+  function startBlock(files: FileList | null = null): void {
+    setAddFiles(files);
     setEditor({ kind: 'add', splashId: page.splash.id });
   }
 
@@ -418,10 +421,21 @@ export function SplashPage({
     scope === 'mine'
       ? (pool?.me ?? me)
       : blocks.find((b) => b.author_id && !b.thread_pool_id)?.author_id;
-  const authorIds = scope === 'joint' ? writers : owner ? [owner] : [];
+  // The record's own, mine on my record: whose the add slot calls theirs (H75).
+  // Someone's record I am invited on is never mine, wherever it is read.
+  const ownRecord = scope === 'mine' && !sidePool;
 
   // By day inside a range, then as written (0031).
   const shown = orderBlocks(page.blocks.filter(showsBlock), page.splash.declaredRange);
+  // Who is in it (H75): the owner, then everyone who added a block shown,
+  // in the order of their first; a joint record's writers. Removed parts
+  // have no one.
+  const authorIds = [
+    ...new Set([
+      ...(scope === 'joint' ? writers : owner ? [owner] : []),
+      ...shown.flatMap((b) => (b.author_id ? [b.author_id] : [])),
+    ]),
+  ];
   // Every block shown is one person's, and that person the record's own:
   // read as a single post, not a thread of one (testers).
   const solo =
@@ -538,6 +552,7 @@ export function SplashPage({
           byline={
             <SplashAuthors
               ids={authorIds}
+              label="In this splash"
               initialsOf={{
                 ...pool?.initialsOf,
                 ...initialsOf,
@@ -693,19 +708,16 @@ export function SplashPage({
                 onDelete={() => setEditor(null)}
                 onLock={() => {}}
                 onCancel={() => setEditor(null)}
+                placeholder={ownRecord ? undefined : 'Your side of this splash'}
+                files={addFiles}
               />
             ) : (
-              <div className="flex items-center gap-3">
-                <GhostRing label="Write the next block" onClick={startBlock} />
-                <button
-                  type="button"
-                  onClick={startBlock}
-                  className="text-main-900 text-base font-medium"
-                  style={{ opacity: 0.3 }}
-                >
-                  Drop your words here
-                </button>
-              </div>
+              <AddCard
+                label={ownRecord ? 'Add to this splash' : 'Add yours too'}
+                placeholder={ownRecord ? 'Drop your words here' : 'Your side of this splash'}
+                onWrite={() => startBlock()}
+                onPhotos={(files) => startBlock(files)}
+              />
             )}
           </div>
         )}
