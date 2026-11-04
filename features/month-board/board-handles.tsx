@@ -9,7 +9,7 @@ import {
   type CSSProperties,
   type Ref,
 } from 'react';
-import { claimHeldMove, holdingPiece, scrollerOf } from './use-hold-to-move';
+import { claimHeldMove, heldScroll, holdingPiece } from './use-hold-to-move';
 import { createPortal } from 'react-dom';
 import {
   ArrowDown,
@@ -102,9 +102,8 @@ type Gesture = {
   moved: boolean;
   /** A size change holds a point of the part still: the piece keeps it there as it redraws. */
   holding: boolean;
-  /** What scrolls under the board, and where it stood: scrolled under a still finger is moved (G). */
-  scroller: HTMLElement;
-  scrolled: Point;
+  /** What the edge had scrolled under a held finger when this began: more since is moved (G). */
+  scrolled: number;
 };
 
 /** A corner pull or a width pull begins after this much travel, then tracks the finger exactly. */
@@ -353,9 +352,9 @@ export function PartFrame({
       return;
     }
     const now = { x: event.clientX, y: event.clientY };
-    // The board scrolled under the finger (held at its edge) counts as moved.
-    const dx = now.x - g.from.x + (g.scroller.scrollLeft - g.scrolled.x);
-    const dy = now.y - g.from.y + (g.scroller.scrollTop - g.scrolled.y);
+    // The board scrolled by the edge under a held finger counts as moved.
+    const dx = now.x - g.from.x;
+    const dy = now.y - g.from.y + (heldScroll() - g.scrolled);
     const dead = g.kind === 'size' || g.kind === 'width' ? SIZE_DEAD_PX : AXIS_LOCK_PX;
     if (!g.moved && Math.hypot(dx, dy) < dead) return;
     g.moved = true;
@@ -440,7 +439,6 @@ export function PartFrame({
     }
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const holding = kind === 'size' || kind === 'width';
-    const scroller = scrollerOf(root.current);
     gesture.current = {
       kind,
       start: { ...latest.current.values },
@@ -452,8 +450,7 @@ export function PartFrame({
       pinch: null,
       moved: false,
       holding,
-      scroller: scroller,
-      scrolled: { x: scroller.scrollLeft, y: scroller.scrollTop },
+      scrolled: heldScroll(),
     };
     // A corner pulled or a width pulled holds the top-left where it is.
     if (holding) latest.current.onHold?.({ x: 0, y: 0 });

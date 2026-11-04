@@ -744,7 +744,7 @@ describe('direct manipulation: the page around it', () => {
     expect(pushed).toEqual([]);
   });
 
-  it('held, the board scrolled under a still finger moves the piece with it (edge scroll, G)', async () => {
+  it('held and carried to the bottom edge, the board scrolls and the piece stays under the finger (G)', async () => {
     const { container } = home();
     const touch = (y: number) => ({
       clientX: 100,
@@ -753,19 +753,93 @@ describe('direct manipulation: the page around it', () => {
       pointerType: 'touch',
       button: 0,
     });
+    // jsdom scrolls nothing: the page's scroll is kept by hand.
     const page = document.documentElement;
     page.scrollTop = 0;
-    fireEvent.pointerDown(label(container, 's1'), touch(100));
+    page.scrollBy = ((options: ScrollToOptions) => {
+      page.scrollTop += options.top ?? 0;
+    }) as typeof page.scrollBy;
+    const bottom = window.innerHeight;
+    fireEvent.pointerDown(label(container, 's1'), touch(bottom - 80));
     await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
-    // The finger stays; two lines of board pass under it.
-    page.scrollTop = 2 * LINE;
-    fireEvent.pointerMove(window, touch(100));
-    await frames(1);
-    expect(label(container, 's1').style.transform).toBe(`translate(0px, ${2 * LINE}px)`);
-    fireEvent.pointerUp(window, touch(100));
+    // Carried into the bottom edge, and held there a few frames; then let go.
+    fireEvent.pointerMove(window, touch(bottom - 10));
+    await frames(4);
+    fireEvent.pointerUp(window, touch(bottom - 10));
     await settle();
+    const scrolled = page.scrollTop;
+    expect(scrolled).toBeGreaterThan(0);
+    // The finger moved 70px down the screen; the board under it, `scrolled` more.
+    const { y } = (saved.at(-1)!.patch as { piece: { y: number } }).piece;
+    expect(y * LINE).toBeCloseTo(70 + scrolled, -1);
     page.scrollTop = 0;
-    expect(saved.at(-1)!.patch).toEqual({ piece: { x: 0, y: 2 } });
+  });
+
+  it('held, a piece with a saved offset moves by exactly the finger’s distance from it (G)', async () => {
+    const { container } = home([
+      card('s2', 'Lynn Canyon', '2026-10-22'),
+      card('s1', 'Grand Austria Hotel', '2026-10-21', {
+        layout: { piece: { x: 0.637, y: -5.15 } },
+      }),
+    ]);
+    const touch = (x: number, y: number) => ({
+      clientX: x,
+      clientY: y,
+      pointerId: 2,
+      pointerType: 'touch',
+      button: 0,
+    });
+    const drawn = (): [number, number] => {
+      const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(
+        label(container, 's1').style.transform,
+      )!;
+      return [Number(m[1]), Number(m[2])];
+    };
+    // Drawn where it was left.
+    const [x0, y0] = drawn();
+    expect(x0).toBeCloseTo(0.637 * COLUMN, 2);
+    expect(y0).toBeCloseTo(-5.15 * LINE, 2);
+    fireEvent.pointerDown(label(container, 's1'), touch(100, 100));
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    fireEvent.pointerMove(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await frames(1);
+    // Exactly the finger's distance from where it was.
+    const [x1, y1] = drawn();
+    expect(x1 - x0).toBeCloseTo(COLUMN / 2, 2);
+    expect(y1 - y0).toBeCloseTo(2 * LINE, 2);
+    fireEvent.pointerUp(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await settle();
+    expect(saved.at(-1)!.patch).toEqual({ piece: { x: 1.137, y: -3.15 } });
+  });
+
+  it('held, a scroll the board makes for itself is not a move: only the finger moves the piece (G)', async () => {
+    const { container } = home();
+    const touch = (x: number, y: number) => ({
+      clientX: x,
+      clientY: y,
+      pointerId: 3,
+      pointerType: 'touch',
+      button: 0,
+    });
+    const page = document.documentElement;
+    page.scrollLeft = 0;
+    page.scrollTop = 0;
+    fireEvent.pointerDown(label(container, 's1'), touch(100, 100));
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, HOLD_MS + 20)));
+    // As when a part past the edge widens the board (0044): it keeps its
+    // place on screen by scrolling, which moves nothing under the finger.
+    page.scrollLeft = 24;
+    page.scrollTop = 24;
+    fireEvent.pointerMove(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await frames(1);
+    expect(label(container, 's1').style.transform).toBe(
+      `translate(${COLUMN / 2}px, ${2 * LINE}px)`,
+    );
+    fireEvent.pointerUp(window, touch(100 + COLUMN / 2, 100 + 2 * LINE));
+    await settle();
+    expect(saved.at(-1)!.patch).toEqual({ piece: { x: 0.5, y: 2 } });
+    page.scrollLeft = 0;
+    page.scrollTop = 0;
   });
 
   it('on a phone in edit mode, a quick swipe over a piece is a scroll: nothing taken', async () => {

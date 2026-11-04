@@ -23,6 +23,8 @@ type Press = {
   dragging: boolean;
   /** What scrolls under the board: nudged while the finger nears its edge. */
   scroller: HTMLElement;
+  /** How far the edge has scrolled it, in all, since the piece was taken. */
+  scrolled: number;
   frame: number | null;
   off: () => void;
 };
@@ -51,6 +53,16 @@ function end(): void {
  */
 export function holdingPiece(): boolean {
   return press !== null;
+}
+
+/**
+ * How far the edge has scrolled the board under the held finger, in all:
+ * the frame counts that, and only that, as moved. Not the scroller's own
+ * position — the board also scrolls itself to keep its place as a part
+ * pushed past its edge widens it (0044), and that moves nothing on screen.
+ */
+export function heldScroll(): number {
+  return press?.scrolled ?? 0;
 }
 
 /** The nearest box that scrolls vertically around `el`, else the page. */
@@ -104,6 +116,7 @@ function edgeScroll(): void {
       top: Math.max(-EDGE_SPEED, Math.min(EDGE_SPEED, (into / EDGE_PX) * EDGE_SPEED)),
       behavior: 'instant',
     });
+    press.scrolled += scroller.scrollTop - before;
     if (scroller.scrollTop !== before)
       window.dispatchEvent(
         new PointerEvent('pointermove', {
@@ -203,6 +216,7 @@ export function useHoldToMove({
       takenAt: at,
       dragging: false,
       scroller: scrollerOf(event.currentTarget as Element),
+      scrolled: 0,
       frame: null,
       timer: window.setTimeout(() => {
         if (!press) return;
