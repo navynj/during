@@ -105,11 +105,9 @@ const POOLS: AudiencePool[] = [
     ],
   },
 ];
-/** The last lane picked by hand per pool on this device (0033, H75), kept clean between tests. */
-const LAST_PICK = 'weming.audience.lastPickByPool';
-const store = (picks: Record<string, string>) =>
-  window.localStorage.setItem(LAST_PICK, JSON.stringify(picks));
-const stored = (): unknown => JSON.parse(window.localStorage.getItem(LAST_PICK) ?? 'null');
+/** Nothing about a lane is kept on the device any more (H75, 2026-11-04). */
+const kept = (): string[] =>
+  Object.keys(window.localStorage).filter((key) => key.startsWith('weming.audience'));
 
 beforeEach(() => {
   drops.length = 0;
@@ -118,11 +116,11 @@ beforeEach(() => {
   owns.length = 0;
   handoffs.length = 0;
   window.URL.createObjectURL = () => 'blob:preview';
-  window.localStorage.removeItem(LAST_PICK);
+  window.localStorage.clear();
 });
 afterEach(() => {
   cleanup();
-  window.localStorage.removeItem(LAST_PICK);
+  window.localStorage.clear();
 });
 
 /** The handoffs the sheet made: the post as the ground should show it, and its month. */
@@ -495,7 +493,6 @@ describe('the Share to row (H75, revising H45(b))', () => {
     chip(view, id).querySelector('[data-share-lane]')?.textContent;
 
   it('starts with every pool off and says only you can see it, for every lane (H45)', () => {
-    store({ 'p-crew': 'cr-chat' });
     const view = sheet();
     for (const name of ['Place', 'Mood', 'Day']) {
       fireEvent.click(view.getAllByText(name)[0]);
@@ -507,13 +504,14 @@ describe('the Share to row (H75, revising H45(b))', () => {
     }
   });
 
-  it('turns a pool on at the lane last picked for that pool, as the lane row’s own chip', () => {
-    store({ 'p-crew': 'cr-chat' });
+  it('turns a pool on at once, its lane as the lane row’s own chip', () => {
+    // A lane remembered by an older build is never read.
+    window.localStorage.setItem('weming.audience.lastPickByPool', '{"p-crew":"cr-chat"}');
     const view = sheet();
     fireEvent.click(view.getByText('Day'));
     turn(view, 'p-crew');
     expect(on(view, 'p-crew')).toBe(true);
-    expect(lane(view, 'p-crew')).toBe('💬Chat');
+    expect(lane(view, 'p-crew')).toBe('🚲Outings');
     // The lane row's chip shape, with a chevron: it opens a picker.
     const nested = chip(view, 'p-crew').querySelector('[data-share-lane]')!;
     expect(nested.className).toMatch(/rounded-full px-2\.5 py-1 text-xs/);
@@ -540,11 +538,11 @@ describe('the Share to row (H75, revising H45(b))', () => {
     expect(lane(view, 'p-pan')).toBe('🖋day');
     turn(view, 'p-crew');
     expect(lane(view, 'p-crew')).toBe('🚲Outings');
-    // Nothing is remembered for a lane the hand did not pick.
-    expect(stored()).toBeNull();
+    // Nothing is remembered.
+    expect(kept()).toEqual([]);
   });
 
-  it('changes a pool’s lane from its lane chip, never toggling the pool, and remembers that pick', () => {
+  it('changes a pool’s lane from its lane chip, never toggling the pool, remembering nothing', () => {
     const view = sheet();
     fireEvent.click(view.getByText('Day'));
     turn(view, 'p-crew');
@@ -557,7 +555,7 @@ describe('the Share to row (H75, revising H45(b))', () => {
     fireEvent.click(lanes.querySelectorAll('button')[1]);
     expect(document.querySelector('[data-share-lanes="p-crew"]')).toBeNull();
     expect(lane(view, 'p-crew')).toBe('💬Chat');
-    expect(stored()).toEqual({ 'p-crew': 'cr-chat' });
+    expect(kept()).toEqual([]);
     // On a phone the lanes were a bottom sheet.
     fireEvent.click(chip(view, 'p-crew').querySelector('[data-share-lane]')!);
     expect(document.querySelector('[data-pool-sheet="Lane in Crew"]')).not.toBeNull();
@@ -566,6 +564,25 @@ describe('the Share to row (H75, revising H45(b))', () => {
     turn(view, 'p-crew');
     expect(on(view, 'p-crew')).toBe(false);
     expect(view.container.querySelector('[data-share-private]')).not.toBeNull();
+  });
+
+  it('closed and opened again, a pool turned on starts auto again: a hand pick lasts one draft', () => {
+    const first = sheet();
+    fireEvent.click(first.getByText('Day'));
+    turn(first, 'p-crew');
+    fireEvent.click(chip(first, 'p-crew').querySelector('[data-share-lane]')!);
+    fireEvent.click(
+      document.querySelector('[data-share-lanes="p-crew"]')!.querySelectorAll('button')[1],
+    );
+    expect(lane(first, 'p-crew')).toBe('💬Chat');
+    // Closed: the sheet is gone, and its draft with it.
+    first.unmount();
+    const again = sheet();
+    expect(on(again, 'p-crew')).toBe(false);
+    fireEvent.click(again.getByText('Day'));
+    turn(again, 'p-crew');
+    // Crew has no Day lane: its first, as auto — not the Chat picked before.
+    expect(lane(again, 'p-crew')).toBe('🚲Outings');
   });
 
   it('opens the lanes as a popover on a wide screen, closed by Escape or a press outside', () => {

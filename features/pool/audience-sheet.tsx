@@ -43,8 +43,8 @@ export function AudienceChip({
   pools: AudiencePool[];
   /** The lane a pool starts on when turned on (fallbackLane, H75); none only for a pool with no lanes. */
   preselect: (poolId: string) => string | null;
-  /** A pool on a pool lane, or off (null); `picked` when the lane was chosen by hand. */
-  onChange: (poolId: string, poolLaneId: string | null, picked: boolean) => void;
+  /** A pool on a pool lane, or off (null). */
+  onChange: (poolId: string, poolLaneId: string | null) => void;
   /** With, per pool that is on (0035); absent, no With line. */
   onTogether?: (poolId: string, together: PickTogether) => void;
   /** My record written in a pool (0056): its pool, always on, its lane still picked. */
@@ -140,7 +140,7 @@ function AudienceSheet({
   pools: AudiencePool[];
   shared: AudiencePick[];
   preselect: (poolId: string) => string | null;
-  onChange: (poolId: string, poolLaneId: string | null, picked: boolean) => void;
+  onChange: (poolId: string, poolLaneId: string | null) => void;
   onTogether?: (poolId: string, together: PickTogether) => void;
   locked: string | null;
   moveHome: MoveHome | null;
@@ -239,11 +239,11 @@ function AudienceSheet({
                     onChange={(next) => {
                       if (!next) {
                         setWaiting((list) => list.filter((id) => id !== pool.id));
-                        onChange(pool.id, null, false);
+                        onChange(pool.id, null);
                         return;
                       }
                       const start = preselect(pool.id);
-                      if (start) onChange(pool.id, start, false);
+                      if (start) onChange(pool.id, start);
                       else setWaiting((list) => [...list, pool.id]);
                     }}
                   />
@@ -263,7 +263,7 @@ function AudienceSheet({
                         data-audience-lane={chip.id}
                         onSelect={() => {
                           setWaiting((list) => list.filter((id) => id !== pool.id));
-                          onChange(pool.id, chip.id, true);
+                          onChange(pool.id, chip.id);
                         }}
                       />
                     ))}

@@ -13,22 +13,17 @@ describe('the lane a pool starts on when turned on (H75)', () => {
     { id: 'pl-food', name: 'Food' },
   ];
 
-  it('is the lane last picked on this device', () => {
-    expect(fallbackLane('pl-food', 'Games', lanes)).toBe('pl-food');
+  it('is the pool lane named as my lane, whatever its case — nothing remembered from before', () => {
+    expect(fallbackLane(' food', lanes)).toBe('pl-food');
   });
 
-  it('then the pool lane named as my lane, whatever its case', () => {
-    expect(fallbackLane(null, ' food', lanes)).toBe('pl-food');
+  it('else the pool’s first lane', () => {
+    expect(fallbackLane('Swim', lanes)).toBe('pl-games');
+    expect(fallbackLane(null, lanes)).toBe('pl-games');
   });
 
-  it('then the pool’s first lane', () => {
-    expect(fallbackLane(null, 'Swim', lanes)).toBe('pl-games');
-    expect(fallbackLane(null, null, lanes)).toBe('pl-games');
-  });
-
-  it('never a lane of another pool, and none only when the pool has no lanes', () => {
-    expect(fallbackLane('ql', null, lanes)).toBe('pl-games');
-    expect(fallbackLane(null, 'Food', [])).toBeNull();
+  it('none only when the pool has no lanes', () => {
+    expect(fallbackLane('Food', [])).toBeNull();
   });
 });
 

@@ -8,7 +8,6 @@ import { usePeople } from '@/features/people/people-provider';
 import { fallbackLane, withPick, withTogether, type AudiencePick } from '@/features/pool/audience';
 import { AudienceChip } from '@/features/pool/audience-sheet';
 import type { PoolScope } from '@/features/pool/compose-scope';
-import { lastPicked, rememberPick } from '@/features/pool/last-pick';
 import { PoolLanePicker } from '@/features/pool/pool-lane-picker';
 import type { Together } from '@/features/pool/pool-pick';
 import { SplashAudience } from '@/features/pool/splash-audience';
@@ -257,13 +256,11 @@ export function useEditLanes(
               pools={pools}
               preselect={(poolId) =>
                 fallbackLane(
-                  lastPicked(poolId),
                   categories.find((c) => c.id === laneId)?.name ?? null,
                   pools.find((p) => p.id === poolId)?.lanes ?? [],
                 )
               }
-              onChange={(poolId, chip, picked) => {
-                if (chip && picked) rememberPick(poolId, chip);
+              onChange={(poolId, chip) => {
                 setShared((list) => withPick(list, poolId, chip));
               }}
               onTogether={(poolId, next) => setShared((list) => withTogether(list, poolId, next))}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { fallbackLane } from '@/features/pool/audience';
 import {
   followHomeLane,
   NO_SHARE,
@@ -60,5 +61,19 @@ describe('Share to lanes while writing (H75)', () => {
     const again = shareOn(off, 'crew', 'crew-day');
     expect(again.manual).toEqual([]);
     expect(laneOf(followHomeLane(again, 'Food', pools), 'crew')).toBe('crew-food');
+  });
+
+  it('closed and opened again, the draft starts empty and a pool turned on is auto again', () => {
+    const picked = shareLane(shareOn(NO_SHARE, 'crew', 'crew-day'), 'crew', 'crew-food');
+    expect(picked.manual).toEqual(['crew']);
+    // Closing drops the draft; the sheet opens on an empty one.
+    const reopened = NO_SHARE;
+    expect(reopened).toEqual({ picks: [], manual: [] });
+    // Turned on, it starts from my Home lane's namesake, never the lane picked before.
+    const on = shareOn(reopened, 'crew', fallbackLane('Day', pools[0].lanes)!);
+    expect(laneOf(on, 'crew')).toBe('crew-day');
+    expect(on.manual).toEqual([]);
+    // Auto: it follows the Home lane again.
+    expect(laneOf(followHomeLane(on, 'Food', pools), 'crew')).toBe('crew-food');
   });
 });

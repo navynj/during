@@ -24,17 +24,16 @@ export function audienceLabel(poolNames: string[]): string {
 /**
  * The pool lane a pool starts on when it is turned on — in the composer's
  * Share to row and in every Audience sheet (H75, revising H45(b)): sharing
- * is never held up by a lane. The one I last picked for it on this device;
- * else the pool lane named as my lane; else the pool's first. It only fills
- * the lane once I turn a pool on; it never turns sharing on by itself.
- * None only when the pool has no lanes at all.
+ * is never held up by a lane. The pool lane named as my lane; else the
+ * pool's first. Nothing remembered: a lane picked by hand lasts the draft
+ * or sheet it was picked in (H75, 2026-11-04). It only fills the lane once
+ * I turn a pool on; it never turns sharing on by itself. None only when
+ * the pool has no lanes at all.
  */
 export function fallbackLane(
-  lastPicked: string | null,
   myLaneName: string | null,
   poolLanes: { id: string; name: string }[],
 ): string | null {
-  if (lastPicked && poolLanes.some((l) => l.id === lastPicked)) return lastPicked;
   return sameNamedLane(myLaneName, poolLanes) ?? poolLanes[0]?.id ?? null;
 }
 

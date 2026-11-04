@@ -11,7 +11,6 @@ import { useShellData } from '@/features/home/shell-data';
 import { fallbackLane, withPick, withTogether, type AudiencePick } from './audience';
 import { AudienceChip, type AudiencePool } from './audience-sheet';
 import type { MoveHome } from './move-to-home';
-import { lastPicked, rememberPick } from './last-pick';
 
 /**
  * A record's Audience chip on its own page (H23, 0033): the pools it is
@@ -80,13 +79,11 @@ export function SplashAudience({
         // Shared the moment a pool is turned on, on a lane it names (H75).
         preselect={(poolId) =>
           fallbackLane(
-            lastPicked(poolId),
             categories.find((c) => c.id === myLaneId)?.name ?? null,
             pools.find((p) => p.id === poolId)?.lanes ?? [],
           )
         }
-        onChange={(poolId, poolLaneId, picked) => {
-          if (poolLaneId && picked) rememberPick(poolId, poolLaneId);
+        onChange={(poolId, poolLaneId) => {
           audience.run(
             (current) => withPick(current, poolId, poolLaneId),
             () => setPlacement(splashId, poolId, poolLaneId !== null, poolLaneId),

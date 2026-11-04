@@ -16,7 +16,6 @@ import { placeCard, type Card, ownPoolColumn } from '@/features/home/grid';
 import { createJointSplash, dropOwnPoolSplash, placeNewSplash } from '@/features/pool/actions';
 import { fallbackLane, type AudiencePick } from '@/features/pool/audience';
 import type { AudiencePool } from '@/features/pool/audience-sheet';
-import { lastPicked, rememberPick } from '@/features/pool/last-pick';
 import {
   followHomeLane,
   NO_SHARE,
@@ -519,7 +518,6 @@ export function SplashComposer({
           shared={audience}
           startLane={(poolId) =>
             fallbackLane(
-              lastPicked(poolId),
               categories.find((c) => c.id === laneId)?.name ?? null,
               pools.find((p) => p.id === poolId)?.lanes ?? [],
             )
@@ -529,11 +527,8 @@ export function SplashComposer({
               poolLaneId ? shareOn(draft, poolId, poolLaneId) : shareOff(draft, poolId),
             )
           }
-          onPick={(poolId, poolLaneId) => {
-            // Only a lane picked by hand is remembered for the pool.
-            rememberPick(poolId, poolLaneId);
-            setShare((draft) => shareLane(draft, poolId, poolLaneId));
-          }}
+          // Picked by hand: manual for this draft only, never remembered (H75).
+          onPick={(poolId, poolLaneId) => setShare((draft) => shareLane(draft, poolId, poolLaneId))}
         />
       )}
 
