@@ -195,6 +195,14 @@ skipped unless it passed (`scripts/vercel-ignore.mjs`). Locally, the
 pre-commit hook checks what is staged and the pre-push hook runs the whole
 suite, the database tests included (`vitest.config.mts` names them).
 
+**Known flaky browser checks.** Two checks in the pre-push browser
+measurements have each timed out once under load and passed on a plain
+retry, with no change in between. They are not fixed yet; retry the push
+(never `--no-verify`), and treat a second failure in a row as real.
+
+- `e2e/sheet-keyboard.spec.ts`: timed out once (2026-11-03); passed alone twice and on the retried push.
+- `e2e/fast-switch.spec.ts`: `page.waitForEvent: Timeout 30000ms exceeded while waiting for event "console"` once (2026-11-04); passed on the retried push.
+
 ### Environment variables — Production and Preview
 
 | Name | Value | Reaches |
