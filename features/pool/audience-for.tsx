@@ -49,6 +49,7 @@ export function audienceFor({
           together: { everyone: Boolean(p.inviteAll), picked: picks[p.poolId] ?? [] },
         }))}
       pools={pools}
+      invite
       locked={board.own_pool_id}
       moveHome={board.own_pool_id ? { lanes: categories, filed } : null}
     />

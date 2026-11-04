@@ -269,6 +269,17 @@ const BUSY: Card[] = [
 ];
 
 describe('the board shows no reactions or replies (review)', () => {
+  it('marks my record shared to no pool with a faint lock beside its words (H75)', () => {
+    const { container } = board([
+      { ...card('hoppers', 'Hoppers', '2026-10-20'), onlyMe: true },
+      card('lynn', 'Lynn Canyon', '2026-10-20'),
+    ]);
+    const lock = container.querySelector('[data-board-piece="hoppers"] [data-only-me]')!;
+    expect(lock.getAttribute('aria-label')).toBe('Only me');
+    expect(lock.className).toContain('opacity-50');
+    expect(container.querySelector('[data-board-piece="lynn"] [data-only-me]')).toBeNull();
+  });
+
   it('renders no reaction or reply elements on any item, whatever readers left', () => {
     // Each post with a ripple, and on it a reaction and a reply someone else left.
     const answered = OCTOBER.map((post) => ({

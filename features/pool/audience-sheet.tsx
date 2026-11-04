@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreHorizontal, Users } from 'lucide-react';
+import { Lock, MoreHorizontal, Users } from 'lucide-react';
 
 import { usePeople } from '@/features/people/people-provider';
 import type { PoolFace, PoolLaneChip } from '@/lib/queries/pools';
@@ -34,6 +34,7 @@ export function AudienceChip({
   onTogether,
   locked = null,
   moveHome = null,
+  invite = false,
 }: {
   /** Where the record is shared now: a pool lane per pool. */
   shared: AudiencePick[];
@@ -49,9 +50,46 @@ export function AudienceChip({
   locked?: string | null;
   /** The same record (H45): the header's `…` offers Move to Home. */
   moveHome?: MoveHome | null;
+  /** A record's header (H75): shared nowhere, it reads *Only me* with a *Share* to open the sheet. */
+  invite?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const on = shared.filter((pick) => pools.some((p) => p.id === pick.poolId));
+  const sheet = open ? (
+    <AudienceSheet
+      pools={pools}
+      shared={on}
+      preselect={preselect}
+      onChange={onChange}
+      onTogether={onTogether}
+      locked={locked}
+      moveHome={moveHome}
+      onClose={() => setOpen(false)}
+    />
+  ) : null;
+  if (invite && on.length === 0 && !locked) {
+    // Private said in words, and the way out of it beside them (H75).
+    return (
+      <>
+        <span data-audience-private className="inline-flex shrink-0 items-center gap-2">
+          <span className="bg-pool-100 text-ink inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm">
+            <Lock aria-hidden size={13} className="text-pool-500 shrink-0" />
+            Only me
+          </span>
+          <button
+            type="button"
+            data-audience-chip
+            aria-label="Share: Only me"
+            onClick={() => setOpen(true)}
+            className="text-main-900 text-sm font-semibold"
+          >
+            Share
+          </button>
+        </span>
+        {sheet}
+      </>
+    );
+  }
   return (
     <>
       <button
@@ -64,18 +102,7 @@ export function AudienceChip({
         <Users aria-hidden size={14} className="text-pool-500 shrink-0" />
         <span className="truncate">{chipLabel(on, pools)}</span>
       </button>
-      {open ? (
-        <AudienceSheet
-          pools={pools}
-          shared={on}
-          preselect={preselect}
-          onChange={onChange}
-          onTogether={onTogether}
-          locked={locked}
-          moveHome={moveHome}
-          onClose={() => setOpen(false)}
-        />
-      ) : null}
+      {sheet}
     </>
   );
 }

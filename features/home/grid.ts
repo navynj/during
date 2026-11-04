@@ -89,6 +89,8 @@ export type Card = {
   poolPhoto?: string | null;
   /** On Home, my record: every pool it is shared to now, each its monogram or photo (review). */
   sharedPools?: { name: string; photo: string | null }[];
+  /** On Home, my record shared to no pool (H75): a faint lock beside its words says so. */
+  onlyMe?: boolean;
   /**
    * Its calendar layout, set by hand (0025): only the fields someone set,
    * drawn over the automatic recipe; where it comes from ('pool' or 'home');

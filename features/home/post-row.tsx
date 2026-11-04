@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Lock } from 'lucide-react';
 
 import { CommitRing } from '@/components/ui/waves';
 import { Monogram } from '@/components/ui/monogram';
@@ -87,6 +87,12 @@ export function PostRow({
       >
         {title}
       </span>
+      {card.onlyMe ? (
+        // Mine and in no pool (H75): faint, the emoji's size.
+        <span role="img" aria-label="Only me" data-only-me className="flex shrink-0 opacity-50">
+          <Lock aria-hidden size={15} />
+        </span>
+      ) : null}
       {(card.pools ?? []).map((pool) => (
         // Shared to a pool (H23), in the lane chip's place on Home.
         <Monogram key={pool} name={pool} size="chip" photo={card.poolPhoto ?? null} />

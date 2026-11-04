@@ -157,3 +157,32 @@ describe('my record written in a pool: its Audience (0056, H45)', () => {
     expect(moved).toEqual([]);
   });
 });
+
+describe('my record shared nowhere, on its header (H75)', () => {
+  function header(shared: { poolId: string; poolLaneId: string }[]) {
+    return render(
+      <ToastProvider>
+        <PeopleProvider me="u-me" people={{}}>
+          <SplashAudience splashId="s1" myLaneId={null} shared={shared} pools={POOLS} invite />
+        </PeopleProvider>
+      </ToastProvider>,
+    );
+  }
+
+  it('reads Only me with a Share that opens the pools', () => {
+    const view = header([]);
+    const quiet = view.container.querySelector('[data-audience-private]')!;
+    expect(quiet.textContent).toBe('Only meShare');
+    fireEvent.click(view.getByText('Share'));
+    expect(toggle('p-alpha').getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(toggle('p-beta'));
+    fireEvent.click(document.querySelector('[data-audience-lane="b1"]')!);
+    expect(placed).toEqual([['s1', 'p-beta', true, 'b1']]);
+  });
+
+  it('keeps the pools chip once it is shared anywhere', () => {
+    const view = header([{ poolId: 'p-beta', poolLaneId: 'b1' }]);
+    expect(view.container.querySelector('[data-audience-private]')).toBeNull();
+    expect(view.container.querySelector('[data-audience-chip]')!.textContent).toBe('Beta · Walks');
+  });
+});

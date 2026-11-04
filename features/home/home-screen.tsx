@@ -493,7 +493,10 @@ export async function HomeScreen({
       return tags ? { ...card, origins: tags } : card;
     })
     .map((card) => {
-      const shared = mineIds.has(card.splash.id) ? sharedTo.get(card.splash.id) : undefined;
+      const mine = mineIds.has(card.splash.id);
+      const shared = mine ? sharedTo.get(card.splash.id) : undefined;
+      // Mine and in no pool: private, and said so on Home (H75).
+      if (mine && !shared && !card.pools?.length) return { ...card, onlyMe: true };
       return shared
         ? {
             ...card,

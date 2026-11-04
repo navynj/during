@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { Lock } from 'lucide-react';
+
 import { VideoThumb } from '@/components/ui/video-media';
 import {
   postIcon,
@@ -226,6 +228,23 @@ const SEPARATOR = '\u2002';
  * words resets it.
  */
 const NO_INDENT = 'indent-0';
+
+/**
+ * My Home record shared to no pool (H75): a lock after its words, the
+ * size of the line's emoji and faint, so private reads without shouting.
+ */
+function OnlyMeLock() {
+  return (
+    <span
+      role="img"
+      aria-label="Only me"
+      data-only-me
+      className={`ml-1 inline-flex h-[var(--line,13px)] shrink-0 items-center align-top opacity-50 ${NO_INDENT}`}
+    >
+      <Lock aria-hidden className="h-[calc(var(--line,13px)*0.8)] w-[calc(var(--line,13px)*0.8)]" />
+    </span>
+  );
+}
 
 /**
  * A joint splash's writers, stacked after its caption, whatever the label's
@@ -971,6 +990,7 @@ export function BoardPieceView({
                 </span>
               ) : null}
               {caption}
+              {card.onlyMe ? <OnlyMeLock /> : null}
               {card.joint || card.together || card.side ? (
                 // My side on someone's record shows its pool there (review).
                 <Faces card={card} ring={FACE_RING[piece.label]} />
@@ -1212,6 +1232,7 @@ export function BoardTapeView({
           ) : null}
           {/* A phone's month (review): the band and its icon, no words, no faces. */}
           {tape.compact ? null : <span className="min-w-0 truncate">{caption}</span>}
+          {!tape.compact && card.onlyMe ? <OnlyMeLock /> : null}
           {/* Over the band the water reads as the joint surface: the faces' ring takes it. */}
           {!tape.compact && (card.joint || card.together) ? (
             <Faces card={card} ring="ring-joint" />

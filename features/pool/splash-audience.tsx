@@ -27,6 +27,7 @@ export function SplashAudience({
   locked = null,
   moveHome = null,
   onMoved,
+  invite = false,
 }: {
   splashId: string;
   /** The record's lane: what my last pick is kept by. */
@@ -39,6 +40,8 @@ export function SplashAudience({
   moveHome?: Omit<MoveHome, 'onMove'> | null;
   /** Moved to Home: the record is a Home record now, so a sheet holding it closes. */
   onMoved?: () => void;
+  /** On the record's header: shared nowhere reads *Only me · Share* (H75). */
+  invite?: boolean;
 }) {
   const audience = useOptimisticAction(shared);
   const toast = useToast();
@@ -51,6 +54,7 @@ export function SplashAudience({
       <AudienceChip
         shared={audience.value}
         pools={pools}
+        invite={invite}
         locked={moved ? null : locked}
         moveHome={
           moveHome && !moved
