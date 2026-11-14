@@ -21,6 +21,8 @@ export type SampleSplash = {
   inline?: boolean;
   /** A label style set by hand, as a person can (0058): Outline. */
   outline?: boolean;
+  /** The whole piece moved by hand (0038): x in lane widths, a layer under 0 behind the rest. */
+  piece?: { x?: number; y?: number; layer?: number };
 };
 
 const NONE = (): void => {};
@@ -40,6 +42,7 @@ export function PoolBlock({ lanes, splashes }: { lanes: SampleLane[]; splashes: 
       ...placeCard(summaryOf(s), '', 'UTC'),
       together: s.together === true,
       layout: {
+        ...(s.piece ? { piece: s.piece } : {}),
         label: { width: 1, ...(s.outline ? { style: 'outline' as const } : {}) },
         ...(s.inline ? { icon: { inline: true } } : {}),
       },

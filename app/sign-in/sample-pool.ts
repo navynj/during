@@ -29,5 +29,13 @@ export const SAMPLE_SPLASHES: SampleSplash[] = [
   { id: 'sample-3', title: 'Shell', lane: 'place', day: '2026-10-11', photo: WELCOME_SPLASH.photo },
   { id: 'sample-4', title: 'Mix', lane: 'music', day: '2026-10-11', inline: true },
   { id: 'sample-5', title: 'Walk', lane: 'day', day: '2026-10-10', outline: true },
-  { id: 'sample-6', title: 'Brunch', lane: 'food', day: '2026-10-10', together: true },
+  {
+    id: 'sample-6',
+    title: 'Brunch',
+    lane: 'food',
+    day: '2026-10-10',
+    together: true,
+    // Tucked behind Walk, as a person can move and layer a piece (H78z).
+    piece: { x: -0.4, y: -0.6, layer: -1 },
+  },
 ];
