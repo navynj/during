@@ -17,13 +17,16 @@ export const SAMPLE_LANES: SampleLane[] = [
 /**
  * Newest first. Short titles: a lane on a phone here is about 64px wide.
  * Three pooled (filled), three one's own (no fill), and one carrying the
- * shell photo every new account's first splash has (H58).
+ * shell photo every new account's first splash has (H58). The board has no
+ * frame (H78w), so nothing may run past it: a label hangs from its lane's
+ * line one lane wide, so the last lane's is its words alone (Mix, inline),
+ * never a fill, which would run half a lane past the edge.
  */
 export const SAMPLE_SPLASHES: SampleSplash[] = [
   { id: 'sample-1', title: 'Sunrise', lane: 'day', day: '2026-10-12', inline: true },
   { id: 'sample-2', title: 'Steak', lane: 'food', day: '2026-10-12', together: true },
   { id: 'sample-3', title: 'Shell', lane: 'place', day: '2026-10-11', photo: WELCOME_SPLASH.photo },
-  { id: 'sample-4', title: 'Playlist', lane: 'music', day: '2026-10-11', together: true },
+  { id: 'sample-4', title: 'Mix', lane: 'music', day: '2026-10-11', inline: true },
   { id: 'sample-5', title: 'Walk', lane: 'day', day: '2026-10-10', together: true },
-  { id: 'sample-6', title: 'Brunch', lane: 'food', day: '2026-10-10' },
+  { id: 'sample-6', title: 'Brunch', lane: 'food', day: '2026-10-10', together: true },
 ];
