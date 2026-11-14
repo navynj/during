@@ -37,7 +37,8 @@ self.addEventListener('push', (event) => {
         body: data.body || '',
         tag: data.tag,
         icon: '/dida-icon-192.png',
-        // Android draws the badge from its alpha alone: the white mark, no tile.
+        // The ink mark on white (H78). Android draws the badge from its alpha
+        // alone: a white silhouette on transparent.
         badge: '/dida-badge-96.png',
         data: { url: samePath(data.url) },
       }),

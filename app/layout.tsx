@@ -46,10 +46,13 @@ export const metadata: Metadata = {
   // Installed on a phone it is an app, so it gets an app's name and an
   // app's status bar rather than a browser's.
   appleWebApp: { capable: true, title: 'Dida', statusBarStyle: 'default' },
-  // Dida's dark tile (H78): .ico for every browser, SVG where it is read.
+  // Dida's mark, no tile (H78): the SVG where it is read, ink on a light tab
+  // and white on a dark one; the ink mark as PNG and .ico for the rest.
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '16x16 32x32' },
+      { url: '/dida-favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/dida-favicon-32.png', sizes: '32x32', type: 'image/png' },
       { url: '/dida-favicon.svg', type: 'image/svg+xml' },
     ],
     apple: '/dida-apple-touch-icon.png',
