@@ -36,8 +36,9 @@ self.addEventListener('push', (event) => {
       self.registration.showNotification(data.title || 'Dida', {
         body: data.body || '',
         tag: data.tag,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        icon: '/dida-icon-192.png',
+        // Android draws the badge from its alpha alone: the white mark, no tile.
+        badge: '/dida-badge-96.png',
         data: { url: samePath(data.url) },
       }),
       badge(data.unread),

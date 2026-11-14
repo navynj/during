@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 
+import { DidaMark } from '@/components/ui/dida-mark';
 import { UnderlineTabs } from '@/components/ui/underline-tabs';
 import { SplashModal } from '@/features/splash/splash-modal';
 import { clearMediaUrls } from '@/lib/media-url-cache';
@@ -53,6 +54,11 @@ export function SettingsSheet({ title, tabs }: { title: string; tabs: SettingsTa
       </div>
       <div role="tabpanel" data-settings-panel={current.key} className="flex flex-col pb-10">
         {current.render()}
+        {/* Whose app this is, quietly, at the foot (H78): the light mark and the name. */}
+        <p data-settings-app className="text-pool-500 mt-12 flex items-center gap-2 text-xs">
+          <DidaMark height={16} />
+          Dida
+        </p>
       </div>
     </SplashModal>
   );

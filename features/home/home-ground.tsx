@@ -31,6 +31,7 @@ import { useLayoutDrafts } from '@/features/month-board/use-layout-drafts';
 import { useWide } from '@/components/ui/use-wide';
 import { monthKey } from '@/features/splash/summary';
 import { splashHref } from './scope';
+import { DidaMark } from '@/components/ui/dida-mark';
 import { PlaceHeader } from '@/features/header/place-header';
 import { usePeople } from '@/features/people/people-provider';
 import { ProfileSheet } from '@/features/people/profile-sheet';
@@ -368,6 +369,8 @@ export function HomeGround({
               face, the gear; the views beneath. */}
           <div data-home-header>
             <PlaceHeader
+              // Dida's mark beside Home (H78): the light mark, white on the dark ground.
+              mark={<DidaMark height={28} />}
               name="Home"
               faces={me ? [{ userId: me, initials }] : []}
               me={me}

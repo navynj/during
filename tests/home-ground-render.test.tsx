@@ -336,8 +336,9 @@ describe('the water ground (H22)', () => {
     const row = container.querySelector('[data-home-header] [data-place-header-row]')!;
     const title = row.querySelector('[data-place-title]')!;
     expect(title.textContent).toBe('Home');
-    // Nothing before the title: the face that stood beside it is gone.
-    expect(row.firstElementChild).toBe(title);
+    // Only Dida's mark before the title (H78): the face that stood beside it is gone.
+    expect(row.firstElementChild?.hasAttribute('data-dida-mark')).toBe(true);
+    expect(row.firstElementChild?.nextElementSibling).toBe(title);
     expect(row.querySelectorAll('[data-place-face]')).toHaveLength(1);
     expect(row.querySelector('[data-place-faces] [data-place-face="me"]')).not.toBeNull();
   });

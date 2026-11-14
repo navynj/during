@@ -1,3 +1,4 @@
+import { DidaTile } from '@/components/ui/dida-mark';
 import { PoolBlock } from '@/features/auth/pool-block';
 import { SignInButton } from '@/features/auth/sign-in-button';
 import { safeNext } from '@/lib/next-path';
@@ -27,6 +28,7 @@ export default async function SignInPage({ searchParams }: PageProps<'/sign-in'>
       {/* The dark tile, the name and the tagline (H78); then, as one unit,
           the sample diary, the note and the button (H65, revised). */}
       <div className="flex max-w-xs flex-col items-center gap-3">
+        <DidaTile size={64} />
         <h1 className="text-main-900 text-3xl font-semibold">Dida Diary</h1>
         <p className="text-pool-500 text-sm">A digital diary you decorate.</p>
       </div>

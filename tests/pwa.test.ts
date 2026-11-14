@@ -20,9 +20,11 @@ describe('the manifest reaches the browser', () => {
   });
 
   it('lets the icons through too, since the manifest names them', () => {
-    expect(guarded('/icon-192.png')).toBe(false);
-    expect(guarded('/icon-512.png')).toBe(false);
-    expect(guarded('/apple-touch-icon.png')).toBe(false);
+    expect(guarded('/dida-icon-192.png')).toBe(false);
+    expect(guarded('/dida-icon-512.png')).toBe(false);
+    expect(guarded('/dida-icon-maskable-512.png')).toBe(false);
+    expect(guarded('/dida-apple-touch-icon.png')).toBe(false);
+    expect(guarded('/dida-favicon.svg')).toBe(false);
     expect(guarded('/favicon.ico')).toBe(false);
   });
 
@@ -73,5 +75,13 @@ describe('Dida on the home screen (H78)', () => {
   it('is named Dida Diary, Dida under the icon', () => {
     expect(manifest().name).toBe('Dida Diary');
     expect(manifest().short_name).toBe('Dida');
+  });
+
+  it('names only icons that exist, each the size it says', async () => {
+    const { default: sharp } = await import('sharp');
+    for (const icon of manifest().icons ?? []) {
+      const meta = await sharp(`public${icon.src}`).metadata();
+      expect(`${meta.width}x${meta.height}`, icon.src).toBe(icon.sizes);
+    }
   });
 });

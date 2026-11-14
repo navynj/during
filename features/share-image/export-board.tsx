@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { WaveGlyph } from '@/components/ui/waves';
+import { DidaTile } from '@/components/ui/dida-mark';
 import type { GridColumn } from '@/features/home/grid';
 import { boardPhotos } from '@/features/month-board/board-layout';
 import {
@@ -242,7 +242,7 @@ function Fit({ room, height, children }: { room: number; height: number; childre
 function Wordmark() {
   return (
     <div data-export-wordmark className="flex items-center gap-1.5">
-      <WaveGlyph width={20} stroke="var(--color-white)" strokeWidth={1.6} />
+      <DidaTile size={20} />
       <span className="text-base font-semibold">Dida Diary</span>
     </div>
   );

@@ -361,6 +361,33 @@ body {
 }
 
 /*
+ * Dida's mark (H78): the light mark wherever the ground is light — ink front,
+ * an opaque light grey back — and the white mark on the dark water ground,
+ * its back page white at 20%, as exported. A white surface on the dark
+ * ground (a card, a sheet) is light again.
+ */
+.dida-mark-front {
+  fill: #161622;
+}
+.dida-mark-back {
+  fill: #d0d0d4;
+}
+[data-mode='dark'] .water-ground .dida-mark-front {
+  fill: #ffffff;
+}
+[data-mode='dark'] .water-ground .dida-mark-back {
+  fill: #ffffff;
+  opacity: 0.2;
+}
+[data-mode='dark'] .water-ground .surface .dida-mark-front {
+  fill: #161622;
+}
+[data-mode='dark'] .water-ground .surface .dida-mark-back {
+  fill: #d0d0d4;
+  opacity: 1;
+}
+
+/*
  * Light mode (0032, H26): the ground is white, and what was white on it —
  * labels, marks, ropes, words — takes the theme colour, while the colour
  * that sat inside those labels turns white. One swap of the two variables

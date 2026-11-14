@@ -27,7 +27,7 @@ const description = 'A digital diary you decorate.';
 // shell photo. The query is bumped when the image changes, so a platform's
 // cached preview is fetched again.
 const ogImage = {
-  url: '/og-image.png?v=2',
+  url: '/dida-og-image.png',
   width: 1200,
   height: 630,
   alt: 'Dida Diary: a digital diary you decorate.',
@@ -45,7 +45,14 @@ export const metadata: Metadata = {
   // Installed on a phone it is an app, so it gets an app's name and an
   // app's status bar rather than a browser's.
   appleWebApp: { capable: true, title: 'Dida', statusBarStyle: 'default' },
-  icons: { apple: '/apple-touch-icon.png' },
+  // Dida's dark tile (H78): .ico for every browser, SVG where it is read.
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32' },
+      { url: '/dida-favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/dida-apple-touch-icon.png',
+  },
   // Next emits only the modern `mobile-web-app-capable`. iOS before 16.4 reads
   // the Apple-prefixed name and nothing else, and 16.4+ ignores it in favour
   // of the manifest — so carrying both costs one tag and covers both.

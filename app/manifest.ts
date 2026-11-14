@@ -25,11 +25,16 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#ffffff',
     orientation: 'portrait',
     icons: [
-      { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      // Cropped to a circle by the launcher; the mark sits inside the safe
-      // zone and the blue takes whatever is trimmed.
-      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/dida-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/dida-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      // Cut to the launcher's own shape: the mark sits in the middle 60%,
+      // the tile's dark takes whatever is trimmed (scripts/make-icons.mjs).
+      {
+        src: '/dida-icon-maskable-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
     ],
   };
 }
