@@ -614,6 +614,14 @@ body {
 [data-mode='light'] .water-ground .surface-edge {
   box-shadow: 0 0 0 1px oklch(from var(--color-pool-200) l var(--edge-chroma) var(--theme-hue));
 }
+/* A back card's title on the light and pastel grounds (H78v): ink, so it
+   keeps 4.5:1 on the darkest step — the theme colour cannot on every theme. */
+[data-mode='light'] .water-ground [data-card-edge] .text-main-900,
+[data-mode='light'] .water-ground [data-card-edge].text-main-900,
+[data-mode='pastel'] .water-ground [data-card-edge] .text-main-900,
+[data-mode='pastel'] .water-ground [data-card-edge].text-main-900 {
+  color: var(--color-ink);
+}
 /* Secondary surfaces on the light ground (H78h): surface-1, words in the
    text tokens — the colour for what is chosen, muted for the rest. */
 [data-mode='light'] .water-ground .tint-1 {

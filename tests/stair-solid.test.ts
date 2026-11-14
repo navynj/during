@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { seat, upSolid, type Stair } from '@/features/home/stair-board';
+import { LIGHT_TINTS, seat, upSolid, type Stair } from '@/features/home/stair-board';
 
 /**
  * The read card's solid (review): what frosted glass reads as, so a card
@@ -32,5 +32,16 @@ describe('a card moving between the top and the read step without glass', () => 
     expect(seat(-1, STAIR, false, '#0507C9', upSolid('#0507C9', 'dark')).background).toBe(
       'rgb(55, 57, 212)',
     );
+  });
+});
+
+describe('the back cards on the light ground (H78v)', () => {
+  it('step 6%, 10% and 14% of the theme colour, wide enough to part without a line', () => {
+    const fill = (d: number): string =>
+      seat(d, STAIR, false, '#161621', upSolid('#161621', 'light'), LIGHT_TINTS).background;
+    expect(fill(0)).toBe('rgb(255, 255, 255)');
+    expect(fill(1)).toBe('rgb(241, 241, 242)');
+    expect(fill(2)).toBe('rgb(232, 232, 233)');
+    expect(fill(3)).toBe('rgb(222, 222, 224)');
   });
 });

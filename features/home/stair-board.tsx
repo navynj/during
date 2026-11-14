@@ -53,11 +53,12 @@ const MIN_CARD_WIDTH_PX = 320;
  */
 const DOWN_TINTS = [0, TINT_STEP, TINT_STEP * 2, TINT_STEP * 3] as const;
 /**
- * On the light ground the steps are much lighter (H78h): surface-2 and
- * surface-3 (7% and 9% of the theme colour in white), then one step more.
- * The dark ground keeps the 8% steps above, which read against the water.
+ * On the light ground the steps are light (H78h), and wide enough to part
+ * the back cards by fill alone, with no line (H78v): 6%, 10% and 14% of the
+ * theme colour in white. The dark ground keeps the 8% steps above, which
+ * read against the water.
  */
-export const LIGHT_TINTS = [0, 0.07, 0.09, 0.11] as const;
+export const LIGHT_TINTS = [0, 0.06, 0.1, 0.14] as const;
 const UP_ALPHA = 0.2;
 
 /**
@@ -467,15 +468,18 @@ function Step({
   const frostFill = frostGlass && !(moving && (from < 0 || to < 0));
   const { hex, theme } = useTheme();
   const solid = upSolid(hex, theme.mode);
-  const tints = theme.mode === 'light' ? LIGHT_TINTS : DOWN_TINTS;
+  const tints = theme.mode === 'dark' ? DOWN_TINTS : LIGHT_TINTS;
+  // Pastel steps from the theme colour too (H78v): its own pale fill at these
+  // steps parted nothing once the back cards lost their line.
+  const base = theme.mode === 'pastel' ? themeHex(theme.color) : hex;
 
   // The card's distance from the top as the stack's depth moves.
   const d = useTransform(p, (v) => (reducedMotion ? to : lerp(from, to, clamp01(v))));
-  const y = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).y);
-  const x = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).x);
-  const scale = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).scale);
+  const y = useTransform(d, (v) => seat(v, stair, frostFill, base, solid, tints).y);
+  const x = useTransform(d, (v) => seat(v, stair, frostFill, base, solid, tints).x);
+  const scale = useTransform(d, (v) => seat(v, stair, frostFill, base, solid, tints).scale);
   const opacity = useTransform([d, p], ([v, pv]) => {
-    const at = seat(v as number, stair, frostFill, hex, solid, tints).opacity;
+    const at = seat(v as number, stair, frostFill, base, solid, tints).opacity;
     if (!reducedMotion || !moving) return at;
     // Reduced motion: the old top fades out as the new one fades in.
     if (from === 0) return at * (1 - clamp01(pv as number));
@@ -484,13 +488,16 @@ function Step({
   });
   const background = useTransform(
     d,
-    (v) => seat(v, stair, frostFill, hex, solid, tints).background,
+    (v) => seat(v, stair, frostFill, base, solid, tints).background,
   );
   // A card moving to or from the top carries both faces and crossfades them
   // on its distance from the top, so nothing switches when it lands.
   const fullOpacity = useTransform(d, (v) => 1 - clamp01(Math.abs(v)));
   const edgeOpacity = useTransform(d, (v) => clamp01(Math.abs(v)));
-  const inkOpacity = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).ink);
+  // The front card alone keeps its hairline, white on a white page (H78v):
+  // full on top, gone a step away, so a flip fades it rather than pops it.
+  const frontEdge = useTransform(d, (v) => 1 - clamp01(Math.abs(v)));
+  const inkOpacity = useTransform(d, (v) => seat(v, stair, frostFill, base, solid, tints).ink);
   // Nearer the top, nearer the eye; a card rising from below over one sliding up.
   const zIndex = useTransform(d, (v) => Math.round((30 - Math.abs(v)) * 10) + (v >= 0 ? 1 : 0));
 
@@ -544,7 +551,7 @@ function Step({
         // A white surface on the ground (0032): it stays white with ink in
         // light mode, its edge a hairline; the frosted read card is the
         // ground's own glass and inverts with it.
-        className={`surface-edge absolute inset-0 overflow-hidden rounded-[24px] ${frosted ? 'frosted' : 'surface'}`}
+        className={`absolute inset-0 overflow-hidden rounded-[24px] ${frosted ? 'frosted' : 'surface'}`}
         style={{
           background,
           ['--face' as string]: background,
@@ -613,6 +620,13 @@ function Step({
           </motion.div>
         ) : null}
       </motion.div>
+      {/* The front card's hairline (H78v), outside the clipped face so it shows. */}
+      <motion.div
+        aria-hidden
+        data-front-edge
+        className="surface-edge pointer-events-none absolute inset-0 rounded-[24px]"
+        style={{ opacity: frontEdge }}
+      />
     </motion.div>
   );
 }
