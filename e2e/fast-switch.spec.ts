@@ -29,7 +29,7 @@ const admin = asAdmin();
 test.describe.configure({ mode: 'serial' });
 test.use({ hasTouch: true });
 const TZ = 'America/Vancouver';
-const PHOTO = readFileSync('public/icon-512.png');
+const PHOTO = readFileSync('public/dida-icon-512.png');
 const WIDE = widePng(300, 100);
 const POOLS: { name: string; color: ThemeColor; mode: ThemeMode }[] = [
   { name: 'Swims', color: 'pink', mode: 'light' },

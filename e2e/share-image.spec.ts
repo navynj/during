@@ -24,7 +24,7 @@ let pool = '';
 let cookie = '';
 let minaPath = '';
 const TZ = 'America/Vancouver';
-const PHOTO = readFileSync('public/icon-512.png');
+const PHOTO = readFileSync('public/dida-icon-512.png');
 const TEA_VIDEO = 'jNQXAC9IVRw';
 const MINA_VIDEO = 'SENTINEL123';
 
