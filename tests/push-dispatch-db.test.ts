@@ -130,7 +130,7 @@ describe('dispatching', () => {
     expect(sent).toHaveLength(1);
     const payload = JSON.parse(sent[0].body);
     expect(payload).toMatchObject({
-      title: 'Weming',
+      title: 'Dida',
       body: 'Ana invited you to add your side in Crew',
       // In its pool (H42d): Home's reader reads only my own records.
       url: expect.stringMatching(
