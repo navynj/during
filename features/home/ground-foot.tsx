@@ -47,9 +47,10 @@ function prefetchFull(router: Router, href: string, onInvalidate?: () => void): 
  * with the blue plus, outside the strip. I am a circle and a pool a rounded
  * square, so a pool never reads as a person (review). The place I am in wears
  * a white border; the others sit back, faded — the image only, so a pool's
- * dot for something new since my last visit stays at full strength. Tapping a place goes there; tapping the one
- * I am in walks its views (Home: Lane ↔ Date; a pool: Members → Lane →
- * Date). The strip scrolls sideways, one axis per gesture.
+ * dot for something new since my last visit stays at full strength. Tapping a place goes there. The one
+ * I am in is only a marker (H78g): no tap, no tab stop — the header's tabs
+ * are the one way between views. On a lane's page it is a plain link back
+ * to its place. The strip scrolls sideways, one axis per gesture.
  *
  * Two slots, CSS showing one per breakpoint so nothing moves after load: on
  * a phone a row at the foot of the board; on a wide screen a vertical rail at
@@ -59,24 +60,16 @@ export function GroundFoot({
   slot = 'phone',
   here,
   poolId = null,
-  onHome,
-  onPool,
   onCompose,
-  homeLabel,
-  poolLabel,
+  currentLinks = false,
 }: {
   slot?: 'phone' | 'wide';
   /** Where I am: Home, or a pool — `poolId` names which (none on the pool index). */
   here: 'home' | 'pool';
   poolId?: string | null;
-  /** Home's own tap, when Home is where we are: the view switch. */
-  onHome?: () => void;
   onCompose: () => void;
-  /** Home's accessible name, which says what a tap will do. */
-  homeLabel?: string;
-  /** The current pool's own tap: the view cycle (review). */
-  onPool?: () => void;
-  poolLabel?: string;
+  /** Below a place (a lane's page): the place I am in is a link back to it, not a marker. */
+  currentLinks?: boolean;
 }) {
   const wide = slot === 'wide';
   const strip = useRef<HTMLElement>(null);
@@ -135,9 +128,9 @@ export function GroundFoot({
       >
         <Place
           current={atHome}
-          label={atHome ? homeLabel : 'Home'}
+          label="Home"
           href="/"
-          onTap={atHome ? onHome : undefined}
+          linked={currentLinks}
           pending={<PendingPlace here="home" />}
           shape="circle"
           data={{ 'data-home-tab': '', 'data-strip-home': '' }}
@@ -154,9 +147,9 @@ export function GroundFoot({
             <Place
               key={pool.id}
               current={current}
-              label={current ? (poolLabel ?? pool.name) : pool.name}
+              label={pool.name}
               href={poolPath(pool.id)}
-              onTap={current ? onPool : undefined}
+              linked={currentLinks}
               dot={pool.fresh && !current}
               pending={<PendingPlace here="pool" poolId={pool.id} />}
               shape="square"
@@ -192,12 +185,12 @@ export function GroundFoot({
   );
 }
 
-/** One place on the strip: a link there, or — where I am — the view cycle. */
+/** One place on the strip: a link there, or — where I am — a marker (H78g). */
 function Place({
   current,
   label,
   href,
-  onTap,
+  linked = false,
   dot = false,
   pending,
   shape,
@@ -205,9 +198,10 @@ function Place({
   children,
 }: {
   current: boolean;
-  label?: string;
+  label: string;
   href: string;
-  onTap?: () => void;
+  /** Where I am, but below the place itself: still a link back to it. */
+  linked?: boolean;
   dot?: boolean;
   /** Drawn inside the link, so it can read whether a tap on it is waiting. */
   pending?: ReactNode;
@@ -228,24 +222,26 @@ function Place({
       {dot ? <UnseenDot label="New here" /> : null}
     </>
   );
-  if (current) {
+  if (current && !linked) {
+    // Where I am, and nothing to do: not a button, not a tab stop, no hover
+    // or press state. Its name read as the place, never as an action.
     return (
-      <button
-        type="button"
-        aria-current="page"
-        aria-label={label}
-        data-strip-current=""
-        onClick={onTap}
-        className={className}
-        {...data}
-      >
+      <span aria-current="page" data-strip-current="" className={className} {...data}>
         {body}
-      </button>
+        <span className="sr-only">{label}</span>
+      </span>
     );
   }
   return (
     // Never on sight (the storm), and never at the press: see GroundFoot.
-    <Link href={href} prefetch={false} aria-label={label} className={className} {...data}>
+    <Link
+      href={href}
+      prefetch={false}
+      aria-label={label}
+      aria-current={current ? 'page' : undefined}
+      className={className}
+      {...data}
+    >
       {body}
       {pending}
     </Link>

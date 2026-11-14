@@ -47,19 +47,8 @@ import { PoolSettingsSheet } from './settings';
 import { rememberVisit } from './remembered';
 import { PoolSheet, SheetTitle } from './sheet';
 
-/** The view after this one, in the toggle's order. */
-function nextView(view: PoolViewKind): PoolViewKind {
-  const at = VIEWS.findIndex((v) => v.value === view);
-  return VIEWS[(at + 1) % VIEWS.length].value;
-}
-
 import { POOL_VIEWS as VIEWS } from './pool-views';
 import { poolPath } from '@/lib/routes';
-
-/** What a view is called, for the foot's label. */
-function viewName(view: PoolViewKind): string {
-  return VIEWS.find((v) => v.value === view)?.label ?? view;
-}
 
 /** How many members' initials the header shows before the `+`. */
 const HEADER_AVATARS = 3;
@@ -242,7 +231,6 @@ export function PoolGround({
   }, [droppedId]);
 
   // Re-tapping Pool while in a pool walks the views; the toggle follows (review).
-  const cycleView = (): void => setKind(nextView(kind));
   // Compose from here defaults to this pool, its lanes as I linked them (H23).
   const composeHere = (): void => openSheet(poolScopeOf(view));
   // The Board view's month: that of the post on top, else this month.
@@ -439,24 +427,11 @@ export function PoolGround({
               onClose={() => setSheetOpen(false)}
             />
           ) : null}
-          <GroundFoot
-            here="pool"
-            poolId={poolId}
-            onPool={cycleView}
-            poolLabel={`Diary, showing ${viewName(kind)}; tap for ${viewName(nextView(kind))}`}
-            onCompose={composeHere}
-          />
+          <GroundFoot here="pool" poolId={poolId} onCompose={composeHere} />
         </div>
 
         {/* Wide: Home, Pool and compose stacked at the right edge. */}
-        <GroundFoot
-          slot="wide"
-          here="pool"
-          poolId={poolId}
-          onPool={cycleView}
-          poolLabel={`Diary, showing ${viewName(kind)}; tap for ${viewName(nextView(kind))}`}
-          onCompose={composeHere}
-        />
+        <GroundFoot slot="wide" here="pool" poolId={poolId} onCompose={composeHere} />
       </div>
 
       {sheet === 'members' ? (

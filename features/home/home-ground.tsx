@@ -20,7 +20,7 @@ import { LaneGrid, type GridHandle, type Ring } from './lane-grid';
 import { PinnedCards } from './pinned-cards';
 import { StairBoard } from './stair-board';
 import { useFlip } from './use-flip';
-import { homeViewName, nextHomeView, ViewToggle, type HomeView } from './view-toggle';
+import { ViewToggle, type HomeView } from './view-toggle';
 import { BoardFrame, MonthBoard } from '@/features/month-board/month-board';
 import { EditModeDone } from '@/features/month-board/edit-mode-done';
 import { LayoutPanel } from '@/features/month-board/layout-panel';
@@ -487,22 +487,11 @@ export function HomeGround({
 
           {/* The foot (H23): Home — each tap switches the view, Lane to
               Date and back (review) — then Pool, and compose at the right. */}
-          <GroundFoot
-            here="home"
-            homeLabel={`Home, showing ${homeViewName(view)}; tap for ${homeViewName(nextHomeView(view))}`}
-            onHome={() => setView(nextHomeView(view))}
-            onCompose={() => openSheet()}
-          />
+          <GroundFoot here="home" onCompose={() => openSheet()} />
         </div>
 
         {/* Wide: the same three, stacked at the right edge (review). */}
-        <GroundFoot
-          slot="wide"
-          here="home"
-          homeLabel={`Home, showing ${homeViewName(view)}; tap for ${homeViewName(nextHomeView(view))}`}
-          onHome={() => setView(nextHomeView(view))}
-          onCompose={() => openSheet()}
-        />
+        <GroundFoot slot="wide" here="home" onCompose={() => openSheet()} />
       </div>
 
       {newLane ? (

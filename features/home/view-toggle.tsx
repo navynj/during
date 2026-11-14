@@ -3,14 +3,6 @@
 export type { HomeView } from './scope';
 import type { HomeView } from './scope';
 
-/** The views in the toggle's order; re-tapping Home walks them (review). */
-export const HOME_VIEW_ORDER: readonly HomeView[] = ['board', 'lane', 'date'];
-
-/** The view after this one, in the toggle's order. */
-export function nextHomeView(view: HomeView): HomeView {
-  return HOME_VIEW_ORDER[(HOME_VIEW_ORDER.indexOf(view) + 1) % HOME_VIEW_ORDER.length];
-}
-
 /**
  * The header's segmented toggle, Calendar | Lane | List (round 3; Calendar first): the selected
  * segment white with blue words — on the water white carries what is
@@ -33,11 +25,6 @@ export const HOME_VIEWS = [
   { value: 'lane', label: 'Category' },
   { value: 'date', label: 'List' },
 ] as const;
-
-/** What a view is called, for the foot's label. */
-export function homeViewName(view: HomeView): string {
-  return HOME_VIEWS.find((v) => v.value === view)?.label ?? view;
-}
 
 /** The same toggle with any segments: a pool's Lane | Date | Members (H23). */
 export function SegmentedToggle<V extends string>({

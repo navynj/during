@@ -333,9 +333,8 @@ export function LanePage({
         slot="wide"
         here={pool ? 'pool' : 'home'}
         poolId={pool?.poolId ?? null}
-        homeLabel="Home"
-        onHome={() => router.push('/')}
-        onPool={pool ? () => router.push(poolPath(pool.poolId)) : undefined}
+        // Below its place: the place I am in is a link back to it (H78g).
+        currentLinks
         onCompose={() => openSheet(pool ?? null)}
       />
     </div>

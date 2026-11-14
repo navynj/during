@@ -685,8 +685,8 @@ describe('Just mine in the pool (0014)', () => {
   });
 });
 
-describe('re-tapping Pool (review)', () => {
-  it('opens every visit on the Calendar, whatever was viewed before, then cycles Members → Lane → List → Calendar', () => {
+describe('a diary’s views (review, H78g)', () => {
+  it('opens every visit on the Calendar, whatever was viewed before; only the tabs switch views', () => {
     // A view chosen on an earlier visit, as the old build kept it: no longer read.
     window.localStorage.setItem('weming.pool-view', 'members');
     const { container } = render(
@@ -696,7 +696,6 @@ describe('re-tapping Pool (review)', () => {
         </InputSheetProvider>
       </PoolActivityProvider>,
     );
-    const tab = container.querySelector('[data-home-foot="phone"] [data-pool-tab]') as HTMLElement;
     const selected = (): string | null =>
       container
         .querySelector('[data-view-option][aria-selected="true"]')!
@@ -711,19 +710,22 @@ describe('re-tapping Pool (review)', () => {
     expect(container.querySelector('[data-month-board]')).not.toBeNull();
     // The stack stays beside or beneath it, as in the Lane view.
     expect(container.querySelector('[data-stack-card]')).not.toBeNull();
-    fireEvent.click(tab);
+    // The diary's own icon is a marker, not a switch (H78g): no button, no
+    // tab stop, and a tap changes nothing, on a phone or the desktop rail.
+    for (const slot of ['phone', 'wide']) {
+      const mark = container.querySelector(`[data-home-foot="${slot}"] [data-pool-tab]`)!;
+      expect(mark.tagName).toBe('SPAN');
+      expect(mark.getAttribute('aria-current')).toBe('page');
+      expect(mark.hasAttribute('tabindex')).toBe(false);
+      expect(mark.getAttribute('role')).toBeNull();
+      fireEvent.click(mark);
+      expect(selected()).toBe('board');
+    }
+    // The tabs are the one way between views.
+    fireEvent.click(container.querySelector('[data-view-option="members"]')!);
     expect(selected()).toBe('members');
-    fireEvent.click(tab);
-    expect(selected()).toBe('lane');
-    fireEvent.click(tab);
-    expect(selected()).toBe('date');
     // Not kept on the device: the next visit opens on the Calendar again.
     expect(window.localStorage.getItem('weming.pool-view')).toBe('members');
-    fireEvent.click(tab);
-    expect(selected()).toBe('board');
-    // The desktop rail cycles too.
-    fireEvent.click(container.querySelector('[data-home-foot="wide"] [data-pool-tab]')!);
-    expect(selected()).toBe('members');
   });
 });
 

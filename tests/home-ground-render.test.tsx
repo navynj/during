@@ -1101,19 +1101,20 @@ describe('the Home button at the foot', () => {
     // Home is my face, first on the strip, ringed: I am here.
     const home = container.querySelector('[data-home-foot] [data-home-tab]')!;
     expect(home.getAttribute('aria-current')).toBe('page');
-    fireEvent.click(home);
-    expect(container.querySelector('[data-month-board]')).toBeNull();
-    expect(container.querySelector('[data-lane-piece]')).not.toBeNull();
-    fireEvent.click(home);
-    expect(container.querySelector('[data-pill]')).not.toBeNull();
-    expect(
-      container.querySelector('[data-view-option="date"]')!.getAttribute('aria-selected'),
-    ).toBe('true');
+    // A marker, not a switch (H78g): no button, no tab stop, its name the place.
+    expect(home.tagName).toBe('SPAN');
+    expect(home.hasAttribute('tabindex')).toBe(false);
+    expect(home.textContent).toContain('Home');
+    expect(home.textContent).not.toMatch(/tap|showing/i);
     fireEvent.click(home);
     expect(container.querySelector('[data-month-board]')).not.toBeNull();
     expect(
       container.querySelector('[data-view-option="board"]')!.getAttribute('aria-selected'),
     ).toBe('true');
+    // The tabs are the one way between views.
+    fireEvent.click(container.querySelector('[data-view-option="lane"]')!);
+    expect(container.querySelector('[data-month-board]')).toBeNull();
+    expect(container.querySelector('[data-lane-piece]')).not.toBeNull();
   });
 });
 
