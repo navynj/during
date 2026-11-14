@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { DidaWhiteTile } from '@/components/ui/dida-mark';
+import { DidaTile } from '@/components/ui/dida-mark';
 import type { GridColumn } from '@/features/home/grid';
 import { boardPhotos } from '@/features/month-board/board-layout';
 import {
@@ -238,11 +238,11 @@ function Fit({ room, height, children }: { room: number; height: number; childre
   );
 }
 
-/** The white tile and the full name, small (H78): the tile reads over any photo. */
+/** The dark tile and the full name, small (H78): the tile reads over any photo. */
 function Wordmark() {
   return (
     <div data-export-wordmark className="flex items-center gap-1.5">
-      <DidaWhiteTile size={20} />
+      <DidaTile size={20} />
       <span className="text-base font-semibold">Dida Diary</span>
     </div>
   );

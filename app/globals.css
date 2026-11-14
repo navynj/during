@@ -489,8 +489,7 @@ body {
 }
 /* Light and pastel (H78k): the front page in the accent, the back the accent
    at 20% over white (H78q), so the two pages always read apart. Black keeps
-   the exported ink and #D0D0D4. The ink mark (`tone="ink"`) and the white
-   tile never change. */
+   the exported ink and #D0D0D4. The dark tile never changes. */
 [data-mode='light'] .dida-mark-front,
 [data-mode='pastel'] .dida-mark-front {
   fill: var(--accent);

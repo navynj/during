@@ -7,57 +7,42 @@ const BACK =
 const FRONT =
   'M74.3081 76.5266C74.3081 67.69 81.4716 60.5266 90.3081 60.5266H172C207.346 60.5266 236 89.1804 236 124.527V219.609C236 254.956 207.346 283.609 172 283.609H90.3081C81.4715 283.609 74.3081 276.446 74.3081 267.609V76.5266Z';
 
-/** The ink mark's two greys (H78): fixed, for light grounds the theme does not reach. */
-const INK = { back: '#D0D0D4', front: '#161622' } as const;
-
 /**
- * Dida's mark, transparent (H78; no tile anywhere since 2026-11-14).
- * `theme` (the default) follows the place's theme through globals.css
- * (`.dida-mark`): the header and the settings foot. `ink` is the ink mark
- * whatever the theme — front #161622, back an opaque #D0D0D4, so a line
- * behind it never shows through — for sign-in and the invite. Decorative:
- * the name beside it says Dida.
+ * Dida's mark without its tile (H78, part 2b). On a light ground it is the
+ * light mark: the front page in ink, the back page an opaque light grey —
+ * opaque, so a photo or a line behind it never shows through. On the dark
+ * water ground it is the white mark, the back page white at 20%
+ * (globals.css, `.dida-mark`). Decorative: the name beside it says Dida.
  */
 export function DidaMark({
   height = 24,
-  tone = 'theme',
   className = '',
 }: {
   height?: number;
-  tone?: 'theme' | 'ink';
   className?: string;
 }): ReactElement {
-  const ink = tone === 'ink';
   return (
     <svg
       aria-hidden
-      data-dida-mark={tone}
+      data-dida-mark
       viewBox="0 0 236 284"
       height={height}
       width={(height * 236) / 284}
-      className={`${ink ? '' : 'dida-mark'}shrink-0 ${className}`}
+      className={`dida-mark shrink-0 ${className}`}
     >
-      <path
-        className={ink ? undefined : 'dida-mark-back'}
-        fill={ink ? INK.back : undefined}
-        d={BACK}
-      />
-      <path
-        className={ink ? undefined : 'dida-mark-front'}
-        fill={ink ? INK.front : undefined}
-        d={FRONT}
-      />
+      <path className="dida-mark-back" d={BACK} />
+      <path className="dida-mark-front" d={FRONT} />
     </svg>
   );
 }
 
 /**
- * A small white rounded tile with the ink mark: the share image's watermark,
- * which sits over photos of every colour (H78). The only tile left; the
- * dark one is retired.
+ * The dark tile (public/dida-full-logo.svg): the white mark on a rounded
+ * #161622 square, as exported plus its corners. For the places a first look
+ * lands on — sign-in, the invite — and over photos, which vary behind it.
  */
-export function DidaWhiteTile({
-  size = 20,
+export function DidaTile({
+  size = 48,
   className = '',
 }: {
   size?: number;
@@ -66,17 +51,17 @@ export function DidaWhiteTile({
   return (
     <svg
       aria-hidden
-      data-dida-tile="white"
+      data-dida-tile
       viewBox="0 0 441 441"
       width={size}
       height={size}
       className={`shrink-0 ${className}`}
     >
-      <rect width="441" height="441" rx="98" fill="#ffffff" />
-      {/* The mark at 62% of the tile, lifted 7.5 as the export is, as the favicon was. */}
-      <g transform="translate(106.9 76.3) scale(0.9627)">
-        <path d={BACK} fill={INK.back} />
-        <path d={FRONT} fill={INK.front} />
+      <rect width="441" height="441" rx="98" fill="#161622" />
+      {/* The mark at 58% of the tile, lifted 7.5 as the export is (scripts/make-icons.mjs). */}
+      <g transform="translate(114.2 85.1) scale(0.9006)">
+        <path d={BACK} fill="#ffffff" opacity={0.2} />
+        <path d={FRONT} fill="#ffffff" />
       </g>
     </svg>
   );

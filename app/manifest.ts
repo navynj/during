@@ -27,8 +27,8 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: '/dida-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/dida-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      // Cut to the launcher's own shape: the mark sits in the middle 80%,
-      // on white, which takes whatever is trimmed (scripts/make-icons.mjs).
+      // Cut to the launcher's own shape: the mark sits in the middle 60%,
+      // the tile's dark takes whatever is trimmed (scripts/make-icons.mjs).
       {
         src: '/dida-icon-maskable-512.png',
         sizes: '512x512',
