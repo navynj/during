@@ -140,7 +140,7 @@ export function SplashHeader({
         ) : (
           <button
             type="button"
-            aria-label="Edit the declared lane"
+            aria-label="Edit the declared category"
             data-lane-tags
             onClick={() => setEditingLane(true)}
             className="flex min-h-5 min-w-0 flex-1 flex-wrap items-center gap-1"
@@ -148,7 +148,9 @@ export function SplashHeader({
             {tags.map((lane) => (
               <OutlineChip key={lane.id} icon={lane.icon} name={lane.name} />
             ))}
-            {tags.length === 0 ? <span className="text-pool-500 text-[10px]">+ lane</span> : null}
+            {tags.length === 0 ? (
+              <span className="text-pool-500 text-[10px]">+ category</span>
+            ) : null}
           </button>
         )}
 

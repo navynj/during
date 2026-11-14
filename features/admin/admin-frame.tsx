@@ -5,7 +5,7 @@ import { formatAt, ZONES, type Zone } from '@/lib/admin/zones';
 
 const PAGES = [
   { href: '/admin', label: 'Overview' },
-  { href: '/admin/pools', label: 'Pools' },
+  { href: '/admin/pools', label: 'Diaries' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/notifications', label: 'Notifications' },
 ] as const;
@@ -58,8 +58,8 @@ export function AdminFrame({
         </span>
       </header>
       <p className="bg-pool-100 text-pool-500 mb-6 rounded px-3 py-2">
-        Splashes, ripples, replies, reactions and joins are read from their own timestamps, back to
-        each pool&apos;s start. App opens, notification sends and taps, and invite link opens are
+        Pages, notes, replies, reactions and joins are read from their own timestamps, back to each
+        diary&apos;s start. App opens, notification sends and taps, and invite link opens are
         recorded only from {formatAt(trackingStart, zone)}; before that they show as zero or —.
         Metadata only: no titles, words or photos are read here.
       </p>

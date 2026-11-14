@@ -40,9 +40,9 @@ export default async function AdminNotifications({
       >
         <Table head={HEAD} rows={[cells(notifyStats(sent))]} />
       </Section>
-      <Section title="Per pool">
+      <Section title="Per diary">
         <Table
-          head={['Pool', ...HEAD]}
+          head={['Diary', ...HEAD]}
           rows={notifyStatsBy(sent, (n) => n.pool_id).map((g) => [
             poolName.get(g.key) ?? g.key,
             ...cells(g.stats),

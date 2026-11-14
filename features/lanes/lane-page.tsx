@@ -151,7 +151,7 @@ export function LanePage({
         <header data-lane-tabs className="flex shrink-0 items-center gap-3 px-4 pt-3 pb-6">
           <Link
             href={pool ? poolPath(pool.poolId) : '/?settings=home'}
-            aria-label={pool ? 'Pool lanes' : 'Lanes'}
+            aria-label={pool ? 'Diary categories' : 'Categories'}
             className="flex h-9 w-9 shrink-0 items-center justify-center text-white"
           >
             <LaneIcon size={20} />
@@ -168,7 +168,7 @@ export function LanePage({
           {pool ? (
             <Link
               href={`${poolPath(pool.poolId)}?settings=pool`}
-              aria-label="Pool settings"
+              aria-label="Diary settings"
               className="flex h-9 w-9 shrink-0 items-center justify-center text-white"
             >
               <Settings aria-hidden size={20} />
@@ -193,11 +193,11 @@ export function LanePage({
         <header className="flex flex-col items-center gap-2 px-6 pt-6 pb-8">
           {editing ? (
             <div data-lane-edit className="flex w-full flex-col items-center gap-3">
-              <EmojiInput value={icon} onChange={setIcon} label="Lane icon" />
+              <EmojiInput value={icon} onChange={setIcon} label="Category icon" />
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                aria-label="Lane name"
+                aria-label="Category name"
                 maxLength={pool ? 40 : 24}
                 className="surface text-ink w-full max-w-60 rounded-full bg-white px-4 py-2 text-center text-base outline-none"
               />
@@ -219,7 +219,7 @@ export function LanePage({
             <>
               <button
                 type="button"
-                aria-label="Edit the lane icon"
+                aria-label="Edit the category icon"
                 data-lane-emoji
                 onClick={start}
                 className="flex h-20 w-20 items-center justify-center rounded-full bg-white/15 text-5xl/none"
@@ -228,7 +228,7 @@ export function LanePage({
               </button>
               <button
                 type="button"
-                aria-label="Edit the lane name"
+                aria-label="Edit the category name"
                 data-lane-name
                 onClick={start}
                 className="text-xl font-semibold text-white"
@@ -245,7 +245,9 @@ export function LanePage({
         </header>
 
         {days.length === 0 ? (
-          <p className="px-6 py-10 text-center text-sm text-white/60">Nothing on this lane yet.</p>
+          <p className="px-6 py-10 text-center text-sm text-white/60">
+            Nothing in this category yet.
+          </p>
         ) : (
           // The Date view's own day list: the rail, the rows, the month on
           // a line of its own (review).
@@ -279,7 +281,7 @@ export function LanePage({
             data-manage-lanes-link
             className="mt-10 block text-center text-sm text-white/70 underline-offset-4 hover:underline"
           >
-            Manage lanes
+            Manage categories
           </Link>
         )}
       </div>

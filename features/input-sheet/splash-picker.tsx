@@ -39,7 +39,7 @@ export function SplashPicker({
             {selected.title}
             <button
               type="button"
-              aria-label="Remove from splash"
+              aria-label="Remove from page"
               onClick={() => onSelect(null)}
               className="text-pool-500"
             >
@@ -59,7 +59,7 @@ export function SplashPicker({
       {open ? (
         <ul
           role="listbox"
-          aria-label="Splash"
+          aria-label="Page"
           className="border-pool-100 absolute bottom-full mb-2 flex max-h-48 w-56 flex-col overflow-y-auto rounded-xl border bg-white py-1 shadow-lg"
         >
           {splashes.map((splash) => (
@@ -89,7 +89,7 @@ export function SplashPicker({
               }}
               className="text-main-900 hover:bg-pool-100 w-full px-3 py-2 text-left text-sm font-medium"
             >
-              + New splash
+              + New page
             </button>
           </li>
         </ul>
@@ -101,7 +101,7 @@ export function SplashPicker({
         onClick={() => setOpen((v) => !v)}
         className="text-main-900 flex flex-col items-end text-base font-medium"
       >
-        + Add to Splash
+        + Add to page
         <Rule />
       </button>
     </div>

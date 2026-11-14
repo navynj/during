@@ -108,7 +108,7 @@ describe('my record written in a pool: its Audience (0056, H45)', () => {
     const item = document.querySelector('[data-audience-move-home]')!;
     expect(item.textContent).toContain('Move to Home');
     expect(item.textContent).toContain(
-      'Keeps it shared here, and lets you turn this Pool off later.',
+      'Keeps it shared here, and lets you turn this diary off later.',
     );
     cleanup();
     audience({ pool: false });
@@ -120,7 +120,7 @@ describe('my record written in a pool: its Audience (0056, H45)', () => {
     audience({ filed: 'c-swim' });
     openMove();
     const ask = document.querySelector('[data-move-to-home]')!;
-    expect(ask.textContent).toContain('Keep it in which of your lanes?');
+    expect(ask.textContent).toContain('Keep it in which of your categories?');
     const swim = [...ask.querySelectorAll('button')].find((b) => b.textContent?.includes('Swim'))!;
     expect(swim.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(ask.querySelector('[data-move-to-home-go]')!);
@@ -135,7 +135,7 @@ describe('my record written in a pool: its Audience (0056, H45)', () => {
     audience();
     openMove();
     fireEvent.click(document.querySelector('[data-move-new-lane]')!);
-    fireEvent.change(document.querySelector('[aria-label="New lane icon"]')!, {
+    fireEvent.change(document.querySelector('[aria-label="New category icon"]')!, {
       target: { value: '🌊' },
     });
     fireEvent.change(document.querySelector('[data-move-new-lane-name]')!, {

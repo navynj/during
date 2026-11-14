@@ -71,7 +71,7 @@ export function JoinFlow({
 
   return (
     // "Join Pool" names the place before anything else: the word a Pool is learnt by (review).
-    <StepPage step={null} title="Join Pool" onBack={() => router.replace('/')}>
+    <StepPage step={null} title="Join this shared diary" onBack={() => router.replace('/')}>
       <p className="text-pool-500 text-sm">You are invited to</p>
       <div className="mt-4 flex items-center gap-4">
         <Monogram name={poolName} size="tile" photo={photo} />
@@ -98,7 +98,7 @@ export function JoinFlow({
       </ul>
       {nameMissing ? (
         <label className="mt-10 flex flex-col gap-2">
-          <span className="text-pool-500 text-sm">Your name (shown in all your pools)</span>
+          <span className="text-pool-500 text-sm">Your name (shown in all your diaries)</span>
           <input
             data-join-name
             value={name}

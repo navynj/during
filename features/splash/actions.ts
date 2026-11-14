@@ -53,7 +53,7 @@ export async function dropSplash(input: Drop): Promise<SplashResult> {
 
 async function dropSplashWork(input: Drop): Promise<SplashResult> {
   const parsed = Drop.safeParse(input);
-  if (!parsed.success) return { ok: false, message: 'That post is incomplete.' };
+  if (!parsed.success) return { ok: false, message: 'That page is incomplete.' };
   const drop = parsed.data;
   const refused = refuseRange(drop);
   if (refused) return { ok: false, message: refused };
@@ -66,7 +66,7 @@ async function dropSplashWork(input: Drop): Promise<SplashResult> {
   if (!user) return { ok: false, message: 'Sign in again to drop this.' };
 
   const laneId = drop.declaredLaneId ?? (await residualLane(supabase));
-  if (!laneId) return { ok: false, message: 'There is no lane to drop into.' };
+  if (!laneId) return { ok: false, message: 'There is no category to drop into.' };
 
   const { data: splash, error } = await supabase
     .from('splashes')
@@ -140,7 +140,7 @@ async function setSplashDescriptionWork(id: string, text: string): Promise<Done>
     .eq('id', parsed.data.id)
     .select('id');
   if (error) return { ok: false, message: error.message };
-  if (!data?.length) return { ok: false, message: 'That splash is not yours to describe.' };
+  if (!data?.length) return { ok: false, message: 'That page is not yours to describe.' };
   revalidatePath('/');
   revalidatePath(splashPath(id));
   return { ok: true };

@@ -8,7 +8,7 @@ const counts = (...days: number[][]) => days as [number, number, number, number,
 const data: ActivityData = {
   days: ['2026-10-26', '2026-10-27', '2026-10-28'],
   trackingStartIndex: 1,
-  axisLabel: 'Actions in this pool',
+  axisLabel: 'Actions in this diary',
   rowLabel: 'Member',
   barsLabel: 'Per member',
   series: [
@@ -67,7 +67,7 @@ describe('the activity charts', () => {
     const headers = within(table)
       .getAllByRole('columnheader')
       .map((h) => h.textContent);
-    expect(headers).toEqual(['Member', 'Splash', 'Ripple', 'Reply', 'Reaction', 'Opens']);
+    expect(headers).toEqual(['Member', 'Page', 'Note', 'Reply', 'Reaction', 'Opens']);
     const rows = within(table)
       .getAllByRole('row')
       .slice(1)
@@ -134,7 +134,7 @@ describe('the activity charts', () => {
       .getAllByRole('row')
       .map((r) => r.textContent);
     expect(rows).toEqual([
-      'PlaceSplashRippleReplyReactionOpens',
+      'PlacePageNoteReplyReactionOpens',
       'Home1100—',
       'Crew1000—',
       'Unique (Ana)11002',

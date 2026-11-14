@@ -98,7 +98,7 @@ export function poolChart(
       counts: s.counts.map((c) => c[4]),
     })),
     trackingStartIndex: cal.trackingStartIndex,
-    axisLabel: 'Actions in this pool',
+    axisLabel: 'Actions in this diary',
     rowLabel: 'Member',
     barsLabel:
       'Per member, stacked by kind (same scale for everyone; shaded days are before they joined).',

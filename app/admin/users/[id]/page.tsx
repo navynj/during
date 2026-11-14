@@ -87,7 +87,7 @@ export default async function AdminUser({ params, searchParams }: PageProps<'/ad
           head={[
             'Signed up',
             'First record',
-            'First pool join',
+            'First diary join',
             'Sign-up → first record',
             'Last seen',
             'Last write',
@@ -107,7 +107,7 @@ export default async function AdminUser({ params, searchParams }: PageProps<'/ad
 
       <Section
         title="Back after sign-up"
-        note="Counted from sign-up, not per pool. Strict: any write anywhere or app open in the 24 hours starting N days after sign-up. Retained: any at all from day N on. Opens exist only from the tracking start."
+        note="Counted from sign-up, not per diary. Strict: any write anywhere or app open in the 24 hours starting N days after sign-up. Retained: any at all from day N on. Opens exist only from the tracking start."
       >
         <Table
           groups={[
@@ -121,10 +121,10 @@ export default async function AdminUser({ params, searchParams }: PageProps<'/ad
 
       <Section
         title="Records"
-        note="Records this person made, without the welcome splash. Home only: never shared to a pool."
+        note="Records this person made, without the welcome page. Home only: never shared to a diary."
       >
         <Table
-          head={['Total', 'Home only', 'Shared to 1 pool', 'Shared to 2+ pools']}
+          head={['Total', 'Home only', 'Shared to 1 diary', 'Shared to 2+ diaries']}
           rows={[
             [
               String(split.total),
@@ -138,18 +138,18 @@ export default async function AdminUser({ params, searchParams }: PageProps<'/ad
 
       <Section
         title="Activity"
-        note="One line per place: Home, then each pool from the day they joined it. A record shown in several places counts once in each; the faint dashed line counts each thing written once, so a record written on Home and shared into a pool later shows in that pool's count on the day it was shared (the hover says so: “+1 shared from Home”) and in the unique line on the day it was written. App opens sit in their own row under the axis. Hover a day for the breakdown."
+        note="One line per place: Home, then each diary from the day they joined it. A record shown in several places counts once in each; the faint dashed line counts each thing written once, so a record written on Home and shared into a diary later shows in that diary's count on the day it was shared (the hover says so: “+1 shared from Home”) and in the unique line on the day it was written. App opens sit in their own row under the axis. Hover a day for the breakdown."
       >
         <ActivityCharts data={chart} />
       </Section>
 
-      <Section title="Pools">
+      <Section title="Diaries">
         <Table
           groups={[
             { label: '', span: 4 },
             { label: 'Writing', span: 4 },
           ]}
-          head={['Pool', 'Status', 'Joined', 'Last write', 'Splash', 'Ripple', 'Reply', 'Reaction']}
+          head={['Diary', 'Status', 'Joined', 'Last write', 'Page', 'Note', 'Reply', 'Reaction']}
           rows={poolRows.map((p) => [
             <Link key="pool" className="underline" href={`/admin/pools/${p.poolId}?tz=${zone}`}>
               {p.name}
@@ -167,10 +167,10 @@ export default async function AdminUser({ params, searchParams }: PageProps<'/ad
 
       <Section
         title="Notifications"
-        note="Pushes to this person, by pool. Sent: a push service accepted it. Influenced: not tapped, and a direct open followed within 30 minutes."
+        note="Pushes to this person, by diary. Sent: a push service accepted it. Influenced: not tapped, and a direct open followed within 30 minutes."
       >
         <Table
-          head={['Pool', 'Sent', 'Tapped', 'Tap rate', 'Influenced', 'Median send → open']}
+          head={['Diary', 'Sent', 'Tapped', 'Tap rate', 'Influenced', 'Median send → open']}
           rows={notifyStatsBy(mine, (n) => n.pool_id).map((g) => [
             poolNames.get(g.key) ?? g.key,
             String(g.stats.sent),

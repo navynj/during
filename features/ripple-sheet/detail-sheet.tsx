@@ -82,7 +82,7 @@ export function DetailSheet({
 
       <section
         role="dialog"
-        aria-label="Ripple"
+        aria-label="Note"
         className={`sheet-rise relative mx-auto flex max-h-[82vh] w-full ${COLUMN_MAX_WIDTH} flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pt-5`}
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >

@@ -321,14 +321,14 @@ describe('a board in the sheet (H20d, H20e)', () => {
     const notes: string[] = [];
     const view = sheet({ onNewSplash: (note) => notes.push(note) });
     fireEvent.change(view.getByLabelText('Note'), { target: { value: 'first words' } });
-    fireEvent.click(view.getByText('+ Add to Splash'));
-    fireEvent.click(view.getByText('+ New splash'));
+    fireEvent.click(view.getByText('+ Add to page'));
+    fireEvent.click(view.getByText('+ New page'));
     expect(notes).toEqual(['first words']);
   });
 
   it('attaches from the picker and detaches from the chip', async () => {
     const view = sheet();
-    fireEvent.click(view.getByText('+ Add to Splash'));
+    fireEvent.click(view.getByText('+ Add to page'));
     fireEvent.click(view.getByText('During redesign'));
 
     const chip = view.container.querySelector('[data-splash-chip]')!;
@@ -345,9 +345,9 @@ describe('a board in the sheet (H20d, H20e)', () => {
     await waitFor(() => expect(commits).toHaveLength(1));
     expect(commits[0]).toMatchObject({ splashId: 's-free' });
 
-    fireEvent.click(view.getByLabelText('Remove from splash'));
+    fireEvent.click(view.getByLabelText('Remove from page'));
     expect(view.container.querySelector('[data-splash-chip]')).toBeNull();
-    expect(view.getByText('+ Add to Splash')).toBeTruthy();
+    expect(view.getByText('+ Add to page')).toBeTruthy();
   });
 
   it('presets the board when opened from +Drop', () => {
@@ -361,7 +361,7 @@ describe('a board in the sheet (H20d, H20e)', () => {
     const view = sheet({ prefill: { splashId: 's-one' } });
 
     // The row stays the author's, and the badge shows the default.
-    const row = view.getByRole('group', { name: 'Lane' });
+    const row = view.getByRole('group', { name: 'Category' });
     expect(row.textContent).toContain('Day');
     expect(view.container.querySelector('[data-lane-badge]')!.textContent).toBe('📍');
 
@@ -397,6 +397,6 @@ describe('the chip row (H20f)', () => {
     expect(view.getByLabelText('Search')).toBeTruthy();
 
     fireEvent.change(view.getByLabelText('Search'), { target: { value: 'Lane 3' } });
-    expect(view.getByRole('group', { name: 'Lane' }).textContent).toBe('📍Lane 3');
+    expect(view.getByRole('group', { name: 'Category' }).textContent).toBe('📍Lane 3');
   });
 });

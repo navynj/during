@@ -26,7 +26,7 @@ beforeAll(async () => {
 
   await admin
     .from('profiles')
-    .insert({ id: author, display_name: 'Splash', timezone: 'America/Vancouver' });
+    .insert({ id: author, display_name: 'Page', timezone: 'America/Vancouver' });
   await admin.from('my_categories').insert({ id: PLACE, user_id: author, name: 'Place' });
 });
 

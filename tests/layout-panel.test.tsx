@@ -288,7 +288,7 @@ describe('the Layout panel (review)', () => {
     expect(container.querySelector('[data-layout-source]')!.textContent).toBe('Home override');
     fireEvent.click(container.querySelector('[data-layout-use-pool]')!);
     expect(reverted).toEqual(['j1']);
-    expect(container.querySelector('[data-layout-source]')!.textContent).toBe('Using pool layout');
+    expect(container.querySelector('[data-layout-source]')!.textContent).toBe('Using diary layout');
   });
 });
 

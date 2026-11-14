@@ -8,8 +8,8 @@ export const WRITE_KIND_ORDER = ['splash', 'ripple', 'reply', 'reaction'] as con
 export type WriteKindName = (typeof WRITE_KIND_ORDER)[number];
 
 export const KIND_LABEL: Record<WriteKindName | 'opens', string> = {
-  splash: 'Splash',
-  ripple: 'Ripple',
+  splash: 'Page',
+  ripple: 'Note',
   reply: 'Reply',
   reaction: 'Reaction',
   opens: 'Opens',

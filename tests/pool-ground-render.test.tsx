@@ -590,8 +590,8 @@ describe('leaving (H23)', () => {
     // Another member's face opens the members (0059).
     fireEvent.click(container.querySelector('[data-place-face]:not([data-place-face="me"])')!);
     expect(container.ownerDocument.querySelector('[data-former-member]')).not.toBeNull();
-    fireEvent.click(getByText('Leave Pool'));
-    expect(getByText('Keep your records in this Pool?')).toBeTruthy();
+    fireEvent.click(getByText('Leave diary'));
+    expect(getByText('Keep your records in this diary?')).toBeTruthy();
     expect(getByText('Keep them')).toBeTruthy();
     expect(getByText('Remove them')).toBeTruthy();
   });
@@ -602,7 +602,7 @@ describe('the owner (0063)', () => {
     const { container, getByText, queryByText } = ground(A);
     fireEvent.click(container.querySelector('[data-place-face]:not([data-place-face="me"])')!);
     const doc = container.ownerDocument;
-    expect(queryByText('Leave Pool')).toBeNull();
+    expect(queryByText('Leave diary')).toBeNull();
     // Not on me, not on a former member: on Mina only.
     expect(
       [...doc.querySelectorAll('[data-remove-member]')].map((b) =>
@@ -654,15 +654,15 @@ describe('pool lanes (H23)', () => {
     const editor = doc.querySelector('[data-pool-lanes-editor]')!;
     const before = editor.querySelectorAll('[data-lane-row]').length;
     for (const name of ['Books', 'Walks']) {
-      fireEvent.click(getByText('+ Add lane'));
-      const fields = editor.querySelectorAll<HTMLInputElement>('[aria-label="Lane name"]');
+      fireEvent.click(getByText('+ Add category'));
+      const fields = editor.querySelectorAll<HTMLInputElement>('[aria-label="Category name"]');
       const field = fields[fields.length - 1]!;
       expect(field.value).toBe('');
       fireEvent.change(field, { target: { value: name } });
     }
-    const names = [...editor.querySelectorAll<HTMLInputElement>('[aria-label="Lane name"]')].map(
-      (f) => f.value,
-    );
+    const names = [
+      ...editor.querySelectorAll<HTMLInputElement>('[aria-label="Category name"]'),
+    ].map((f) => f.value);
     expect(names).toHaveLength(before + 2);
     expect(names.slice(-2)).toEqual(['Books', 'Walks']);
   });
@@ -1206,7 +1206,7 @@ describe('the header, Home’s in shape (0059)', () => {
       [...header.querySelectorAll('[data-place-tabs] [data-view-option]')].map(
         (o) => o.textContent,
       ),
-    ).toEqual(['Calendar', 'Members', 'Lane', 'List']);
+    ).toEqual(['Calendar', 'Members', 'Category', 'List']);
     // No lane glyph or settings link beside the views any more.
     expect(container.querySelector('[data-manage-pool-lanes], [data-pool-settings]')).toBeNull();
   });

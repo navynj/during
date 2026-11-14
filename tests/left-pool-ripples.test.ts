@@ -35,6 +35,6 @@ describe('a ripple from a pool I left, on Home (0041)', () => {
     const card = inLeftPool(placeCard(lone('r-1'), '', 'UTC'), 'p-left');
     expect(cardColumn(card)).toBe('pool:p-left');
     expect(isOrphanCard(card, [{ id: 'my-trips' }, { id: 'pool:p-left' }])).toBe(false);
-    expect(laneOfCard(card, [])).toEqual({ icon: null, name: 'A pool you left' });
+    expect(laneOfCard(card, [])).toEqual({ icon: null, name: 'A diary you left' });
   });
 });

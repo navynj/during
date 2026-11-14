@@ -112,7 +112,7 @@ describe('the Layout panel’s drafts (review)', () => {
   it('drops a draft once its save is refused, falling back to what was saved and saying why', async () => {
     answer = async () => ({
       ok: false,
-      message: 'Only a current member of this Pool can change its layout.',
+      message: 'Only a current member of this diary can change its layout.',
     });
     const api = mount([SAVED], 'p1');
     act(() => api().edit('s1', { label: { tilt: 5 } }));
@@ -121,7 +121,7 @@ describe('the Layout panel’s drafts (review)', () => {
       await Promise.resolve();
     });
     expect(api().unsaved).toEqual([]);
-    expect(api().message).toBe('Only a current member of this Pool can change its layout.');
+    expect(api().message).toBe('Only a current member of this diary can change its layout.');
     expect(api().drawn[0].layout).toEqual({ label: { x: 0.1 } });
     expect(refreshed).not.toHaveBeenCalled();
   });

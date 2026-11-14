@@ -601,7 +601,7 @@ export const LaneGrid = forwardRef<
                 <div className="flex items-start justify-center pb-2">
                   <button
                     type="button"
-                    aria-label="New lane"
+                    aria-label="New category"
                     data-new-lane
                     onClick={onCreateLane}
                     className="flex h-7 w-7 items-center justify-center rounded-full border border-white/40 text-white/60"

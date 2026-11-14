@@ -153,7 +153,7 @@ describe('every thread on the owner’s Home card, each said where it came from 
       null,
       'in Church',
       'in Book club',
-      'in a deleted Pool',
+      'in a deleted diary',
     ]);
     expect(groups[0].value.reactions.map((r) => r.user_id)).toEqual([ME]);
     expect(groups[1].value.replies.map((r) => r.id)).toEqual(['in-a']);

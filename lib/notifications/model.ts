@@ -28,7 +28,7 @@ export const APP_DEFAULTS: Record<NotificationType, NotificationValue> = {
 };
 
 export const TYPE_LABELS: Record<NotificationType, string> = {
-  new_post: 'New posts',
+  new_post: 'New pages',
   reply: 'Replies',
   reaction: 'Reactions',
 };

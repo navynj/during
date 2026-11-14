@@ -20,7 +20,7 @@ describe('the Audience chip (H23, 0033)', () => {
   it('says Only me, a pool’s name, or N pools — what the placements are', () => {
     expect(audienceLabel([])).toBe('Only me');
     expect(audienceLabel(['Our Pool'])).toBe('Our Pool');
-    expect(audienceLabel(['Our Pool', 'Crew'])).toBe('2 pools');
+    expect(audienceLabel(['Our Pool', 'Crew'])).toBe('2 diaries');
   });
 
   it('names one pool with its lane, emoji first when it has one', () => {
@@ -38,11 +38,11 @@ describe('the Audience chip (H23, 0033)', () => {
         ],
         pools,
       ),
-    ).toBe('2 pools');
+    ).toBe('2 diaries');
   });
 
   it('falls back to the pool’s name, or "A pool", when the lane or pool is unknown', () => {
     expect(chipLabel([{ poolId: 'p1', poolLaneId: 'gone' }], pools)).toBe('Our Pool');
-    expect(chipLabel([{ poolId: 'gone', poolLaneId: 'x' }], pools)).toBe('A pool');
+    expect(chipLabel([{ poolId: 'gone', poolLaneId: 'x' }], pools)).toBe('A diary');
   });
 });

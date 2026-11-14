@@ -135,7 +135,7 @@ export function JointCount({
         on === 'white' ? 'text-main-900/70' : 'text-white/70'
       }`}
     >
-      {count === 1 ? '1 ripple' : `${count} ripples`}
+      {count === 1 ? '1 note' : `${count} notes`}
     </span>
   );
 }

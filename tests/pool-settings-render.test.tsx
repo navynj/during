@@ -117,7 +117,7 @@ describe('the heading of the pool’s settings', () => {
     expect(form.getAttribute('action')).toBe('/auth/sign-out');
     expect(form.getAttribute('method')).toBe('post');
     // On the title's own line.
-    expect(form.parentElement?.querySelector('h2')?.textContent).toBe('Pool settings');
+    expect(form.parentElement?.querySelector('h2')?.textContent).toBe('Diary settings');
   });
 });
 
@@ -126,7 +126,7 @@ describe('renaming the pool in settings (0021, 0059)', () => {
     const { container } = settings(view('u-me'), 'pool');
     const save = container.querySelector<HTMLButtonElement>('[data-save-name]')!;
     expect(save.disabled).toBe(true);
-    const field = within(container).getByLabelText('Pool name') as HTMLInputElement;
+    const field = within(container).getByLabelText('Diary name') as HTMLInputElement;
     fireEvent.change(field, { target: { value: '  Sarang  ' } });
     fireEvent.click(save);
     expect(field.value).toContain('Sarang');
@@ -136,7 +136,7 @@ describe('renaming the pool in settings (0021, 0059)', () => {
   it('is any current member’s too, not only its creator’s (0059)', async () => {
     const { container } = settings(view('u-other'), 'pool');
     expect(container.querySelector('[data-settings-name]')).not.toBeNull();
-    fireEvent.change(within(container).getByLabelText('Pool name'), { target: { value: 'Ours' } });
+    fireEvent.change(within(container).getByLabelText('Diary name'), { target: { value: 'Ours' } });
     fireEvent.click(container.querySelector('[data-save-name]')!);
     await waitFor(() => expect(renamed).toEqual([['p-a', 'Ours']]));
   });
@@ -157,10 +157,10 @@ describe('inviting everyone to new posts by default (0033)', () => {
 
   it('starts as the pool has it, and saves a flip at once', async () => {
     const { container } = settings(view('u-other'), 'advanced');
-    expect(container.textContent).toContain('Invite everyone to new posts by default');
+    expect(container.textContent).toContain('Invite everyone to new pages by default');
     // Any member changes it for all (H61): the hint says it is the pool's.
     expect(container.textContent).toContain(
-      'This is the Pool’s setting: changing it changes it for every member.',
+      'This is the diary’s setting: changing it changes it for every member.',
     );
     expect(toggle(container).getAttribute('aria-checked')).toBe('false');
     fireEvent.click(toggle(container));
@@ -204,7 +204,7 @@ describe('my own settings for a pool (0039)', () => {
     const member = settings(view('u-other'), 'advanced');
     expect(member.container.querySelector('[data-delete-pool]')).toBeNull();
     fireEvent.click(member.container.querySelector('[data-settings-leave-pool]')!);
-    expect(member.getByText('Keep your records in this Pool?')).toBeTruthy();
+    expect(member.getByText('Keep your records in this diary?')).toBeTruthy();
     member.unmount();
     const creator = settings(view('u-me'), 'advanced');
     expect(creator.container.querySelector('[data-delete-pool]')).not.toBeNull();
@@ -386,9 +386,9 @@ describe('the pool’s lanes are Home’s lane rows (H42b)', () => {
     const { container } = settings(withLanes('u-me'), 'pool');
     const editor = container.querySelector('[data-pool-lanes-editor]') as HTMLElement;
     fireEvent.click(editor.querySelector('[data-add-lane]')!);
-    const names = within(editor).getAllByLabelText('Lane name') as HTMLInputElement[];
+    const names = within(editor).getAllByLabelText('Category name') as HTMLInputElement[];
     expect(names).toHaveLength(3);
-    const description = within(editor).getAllByLabelText('Lane description')[0]!;
+    const description = within(editor).getAllByLabelText('Category description')[0]!;
     fireEvent.change(description, { target: { value: 'Office days' } });
     fireEvent.blur(description);
     await waitFor(() =>

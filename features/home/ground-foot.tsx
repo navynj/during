@@ -171,7 +171,7 @@ export function GroundFoot({
         })}
         <Link
           href="/pool/new"
-          aria-label="Open a new Pool"
+          aria-label="New shared diary"
           data-strip-new
           // A pool to be: the pools' rounded square, dashed (review).
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-white/40 text-white/80"
@@ -181,7 +181,7 @@ export function GroundFoot({
       </nav>
       <button
         type="button"
-        aria-label="Drop a splash"
+        aria-label="Add new page"
         data-compose
         onClick={onCompose}
         className="text-main-900 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white"

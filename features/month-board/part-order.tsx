@@ -51,8 +51,8 @@ export function PartOrder({
 
   // Its own heading, as the panel's groups have: none for a post of one part.
   return (
-    <section data-layout-group="Within this post" className="flex flex-col gap-1.5">
-      <h3 className="text-xs font-semibold text-white">Within this post</h3>
+    <section data-layout-group="Within this page" className="flex flex-col gap-1.5">
+      <h3 className="text-xs font-semibold text-white">Within this page</h3>
       <div data-part-order className="flex items-start gap-2">
         <ol className="flex min-w-0 flex-1 flex-col gap-1">
           {[...order].reverse().map((key) => (

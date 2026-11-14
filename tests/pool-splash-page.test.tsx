@@ -153,7 +153,7 @@ describe('adding yours, not replying (H75)', () => {
 
   it('adds to my own splash', () => {
     const view = page([ripple('r-me', ME, 'mine')], { ...POOL, scope: 'mine' });
-    expect(field(view).placeholder).toBe('Add to this splash');
+    expect(field(view).placeholder).toBe('Add to this page');
   });
 
   it('opens the row with the photos picked on it', () => {
@@ -194,7 +194,7 @@ describe('who wrote it, at the top of the left column', () => {
     });
     expect(authors(view)).toEqual([MINA, ME]);
     expect(view.container.querySelector('[data-splash-authors-label]')!.textContent).toBe(
-      'In this splash',
+      'In this page',
     );
   });
 
@@ -230,7 +230,7 @@ describe('a pool’s splash on Home’s page (review)', () => {
     const { container, queryByLabelText, getByLabelText } = page();
     expect(getByLabelText('Edit the title')).toBeTruthy();
     expect(queryByLabelText('Edit the declared date')).not.toBeNull();
-    expect(queryByLabelText('Edit the declared lane')).toBeNull();
+    expect(queryByLabelText('Edit the declared category')).toBeNull();
     fireEvent.click(getByLabelText('More'));
     expect(container.querySelector('[data-header-menu]')!.textContent).not.toContain('Delete');
   });

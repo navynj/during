@@ -6,7 +6,7 @@ import type { PoolViewKind } from './pool-cards';
 export const POOL_VIEWS = [
   { value: 'board', label: 'Calendar' },
   { value: 'members', label: 'Members' },
-  { value: 'lane', label: 'Lane' },
+  { value: 'lane', label: 'Category' },
   { value: 'date', label: 'List' },
 ] as const satisfies readonly { value: PoolViewKind; label: string }[];
 

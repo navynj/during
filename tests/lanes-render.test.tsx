@@ -104,15 +104,15 @@ describe('the matrix keeps its labels in view', () => {
 
     fireEvent.click(getByText('Focus'));
 
-    expect(getByLabelText('Edit this lane')).toBeTruthy();
-    expect((getByLabelText('Lane name') as HTMLInputElement).value).toBe('Focus');
+    expect(getByLabelText('Edit this category')).toBeTruthy();
+    expect((getByLabelText('Category name') as HTMLInputElement).value).toBe('Focus');
   });
 });
 
 describe('a lane that does not exist yet', () => {
   it('suggests its glyph rather than filling one in', () => {
     const { getByLabelText } = matrix(new Map([['2027-07-08', { [FOCUS]: 1 }]]));
-    fireEvent.click(getByLabelText('New lane'));
+    fireEvent.click(getByLabelText('New category'));
 
     const icon = getByLabelText('Icon') as HTMLInputElement;
     expect(icon.value).toBe('');
@@ -122,9 +122,9 @@ describe('a lane that does not exist yet', () => {
   it('takes the suggestion when the author never picks one', () => {
     saved.length = 0;
     const { getByLabelText, getByText } = matrix(new Map([['2027-07-08', { [FOCUS]: 1 }]]));
-    fireEvent.click(getByLabelText('New lane'));
-    fireEvent.change(getByLabelText('Lane name'), { target: { value: 'Reading' } });
-    fireEvent.click(getByText('Add lane'));
+    fireEvent.click(getByLabelText('New category'));
+    fireEvent.change(getByLabelText('Category name'), { target: { value: 'Reading' } });
+    fireEvent.click(getByText('Add category'));
 
     expect(saved[0]).toMatchObject({ id: null, name: 'Reading', icon: '🌊' });
   });

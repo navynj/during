@@ -102,7 +102,7 @@ export function HeaderMenu({
           className="border-pool-100 absolute top-full right-0 z-10 flex w-60 flex-col gap-2 rounded-xl border bg-white px-3 py-2 text-sm shadow-lg"
         >
           <p data-delete-confirm className="text-pool-500">
-            Deletes the post and its {count} block{count === 1 ? '' : 's'}.
+            Deletes the page and its {count} block{count === 1 ? '' : 's'}.
           </p>
           <span className="flex gap-3">
             <button

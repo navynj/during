@@ -26,17 +26,17 @@ export function DeletePool({ poolId, poolName }: { poolId: string; poolName: str
         onClick={() => setOpen(true)}
         className="text-pool-500 self-start py-2 text-sm"
       >
-        Delete Pool
+        Delete diary
       </button>
       {open ? (
-        <PoolSheet label="Delete Pool" onClose={() => setOpen(false)}>
+        <PoolSheet label="Delete diary" onClose={() => setOpen(false)}>
           <SheetTitle>Delete {poolName} for everyone?</SheetTitle>
           <p className="text-pool-500 -mt-2 mb-5 text-sm/relaxed">
-            Joint splashes go back to each writer as their own records. Splashes shared from your
-            lanes stay on their authors&apos; Home.
+            Joint pages go back to each writer as their own records. Pages shared from your
+            categories stay on their authors&apos; Home.
           </p>
           <label className="flex flex-col gap-2">
-            <span className="text-pool-500 text-xs">Type the Pool’s name to confirm</span>
+            <span className="text-pool-500 text-xs">Type the diary’s name to confirm</span>
             <input
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
@@ -67,7 +67,7 @@ export function DeletePool({ poolId, poolName }: { poolId: string; poolName: str
             }}
             className="bg-ink mt-5 h-14 w-full rounded-full font-semibold text-white disabled:opacity-30"
           >
-            {busy ? 'Deleting…' : 'Delete Pool'}
+            {busy ? 'Deleting…' : 'Delete diary'}
           </button>
         </PoolSheet>
       ) : null}

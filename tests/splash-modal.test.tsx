@@ -162,7 +162,7 @@ describe('deleting from inside the sheet (review)', () => {
   function Deleting({ gone }: { gone: boolean }) {
     return (
       <InputSheetProvider>
-        <SplashModal closeTo={null}>{gone ? <p>This splash is gone.</p> : <Inside />}</SplashModal>
+        <SplashModal closeTo={null}>{gone ? <p>This page is gone.</p> : <Inside />}</SplashModal>
       </InputSheetProvider>
     );
   }
@@ -172,7 +172,7 @@ describe('deleting from inside the sheet (review)', () => {
     fireEvent.click(view.getByText('delete'));
     // The delete's re-read lands while the sheet is still on its way out.
     view.rerender(<Deleting gone />);
-    expect(view.queryByText('This splash is gone.')).toBeNull();
+    expect(view.queryByText('This page is gone.')).toBeNull();
     expect(view.getByText('first')).toBeTruthy();
     await waitFor(() => expect(router.back).toHaveBeenCalled(), { timeout: 3000 });
   });

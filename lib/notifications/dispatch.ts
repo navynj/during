@@ -98,7 +98,7 @@ export async function dispatchPushes(actorId: string): Promise<void> {
       .is('read_at', null);
     const payload = pushPayload(row as PushRow, {
       actorName: actor.data?.display_name ?? 'Someone',
-      poolName: poolNames.get(row.pool_id) ?? 'a pool',
+      poolName: poolNames.get(row.pool_id) ?? 'a diary',
       title: showsTitles.has(row.recipient_id) ? (titles.get(row.splash_id) ?? null) : null,
       unread: unread ?? 0,
     });

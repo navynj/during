@@ -299,7 +299,7 @@ export function SplashModal({
             ref={panel}
             role="dialog"
             aria-modal="true"
-            aria-label="Splash"
+            aria-label="Page"
             tabIndex={-1}
             data-splash-sheet
             onKeyDown={trapTab}

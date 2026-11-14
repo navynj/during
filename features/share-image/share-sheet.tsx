@@ -99,8 +99,8 @@ export function ShareSheet({
       </div>
       {poolName !== null ? (
         <label className="text-ink mb-4 flex items-center justify-between gap-3 text-sm">
-          Show pool name and faces
-          <Switch on={faces} onChange={setFaces} label="Show pool name and faces" tone="ink" />
+          Show diary name and faces
+          <Switch on={faces} onChange={setFaces} label="Show diary name and faces" tone="ink" />
         </label>
       ) : null}
       <div

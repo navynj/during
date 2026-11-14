@@ -44,7 +44,7 @@ export function GlobalNotificationSwitches() {
       <label className="flex items-center justify-between gap-4">
         <span className="flex flex-col gap-0.5">
           <span className="text-ink text-sm font-medium">Pause all notifications</span>
-          <span className="text-pool-500 text-xs">Nothing arrives from any Pool while on.</span>
+          <span className="text-pool-500 text-xs">Nothing arrives from any diary while on.</span>
         </span>
         <Switch
           on={settings?.paused ?? false}

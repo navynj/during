@@ -63,14 +63,14 @@ export default async function AdminPool({ params, searchParams }: PageProps<'/ad
 
       <Section
         title="Activity"
-        note="Each line is one member's actions in this pool per day: splashes, ripples, replies and reactions together. Days before someone joined are blank. App opens are not tied to a pool, so they sit in their own rows under the axis. Hover a day for the breakdown."
+        note="Each line is one member's actions in this diary per day: pages, notes, replies and reactions together. Days before someone joined are blank. App opens are not tied to a diary, so they sit in their own rows under the axis. Hover a day for the breakdown."
       >
         <ActivityCharts data={chart} />
       </Section>
 
       <Section
         title="Members"
-        note="Counts are this pool's. Photo splash: one where its maker added a photo. Opens are across all pools; influenced: a direct open within 30 minutes of a push that was not tapped. Last write is tinted when it is more than 3 days old."
+        note="Counts are this diary's. Photo page: one where its maker added a photo. Opens are across all diaries; influenced: a direct open within 30 minutes of a push that was not tapped. Last write is tinted when it is more than 3 days old."
       >
         <Table
           groups={[
@@ -85,9 +85,9 @@ export default async function AdminPool({ params, searchParams }: PageProps<'/ad
             'Joined',
             'Last seen',
             'Last write',
-            'Join → first splash',
-            'Splash',
-            'Ripple',
+            'Join → first page',
+            'Page',
+            'Note',
             'Reply',
             'Reaction',
             'Photo / text',

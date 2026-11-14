@@ -55,7 +55,7 @@ export function CategorySheet({
 
       <section
         role="dialog"
-        aria-label={category ? 'Edit this lane' : 'New lane'}
+        aria-label={category ? 'Edit this category' : 'New category'}
         className="surface sheet-rise relative flex flex-col gap-4 rounded-t-3xl bg-white px-5 pt-5"
         style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
@@ -64,8 +64,8 @@ export function CategorySheet({
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            aria-label="Lane name"
-            placeholder="Enter the lane name"
+            aria-label="Category name"
+            placeholder="Enter the category name"
             maxLength={24}
             className="text-ink placeholder:text-pool-500 min-w-0 flex-1 text-base outline-none"
           />
@@ -133,7 +133,7 @@ export function CategorySheet({
             }}
             className="bg-main-900 rounded-full px-6 py-3 text-base font-medium text-white disabled:opacity-50"
           >
-            {category ? 'Save' : 'Add lane'}
+            {category ? 'Save' : 'Add category'}
           </button>
         </div>
       </section>

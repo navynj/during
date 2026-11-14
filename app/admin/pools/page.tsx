@@ -31,7 +31,7 @@ export default async function AdminPools({ searchParams }: PageProps<'/admin/poo
       query={notIn ? { notin: '1' } : {}}
     >
       <Section
-        title={`Pools (${shown.length} of ${all.length})`}
+        title={`Diaries (${shown.length} of ${all.length})`}
         note="Sorted by last activity by others: anyone but you. Status is active when someone else wrote in the last 3 days."
       >
         <p className="mb-3 flex gap-4">
@@ -39,22 +39,22 @@ export default async function AdminPools({ searchParams }: PageProps<'/admin/poo
             href={`/admin/pools?tz=${zone}`}
             className={notIn ? 'text-pool-500' : 'font-semibold underline'}
           >
-            All pools
+            All diaries
           </Link>
           <Link
             href={`/admin/pools?tz=${zone}&notin=1`}
             className={notIn ? 'font-semibold underline' : 'text-pool-500'}
           >
-            Pools I&apos;m not in
+            Diaries I&apos;m not in
           </Link>
         </p>
         <Table
           head={[
-            'Pool',
+            'Diary',
             'Members',
             'Created',
-            'Splashes',
-            'Ripples',
+            'Pages',
+            'Notes',
             'Replies',
             'Reactions',
             'Status',

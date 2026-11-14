@@ -128,7 +128,7 @@ function Header({
       <button
         type="button"
         onClick={onCreate}
-        aria-label="New lane"
+        aria-label="New category"
         className="flex shrink-0 flex-col items-center gap-1.5 pt-4"
         style={{ width: LANE_COL }}
       >

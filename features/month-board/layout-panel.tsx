@@ -70,7 +70,7 @@ export function LayoutPanel({
 /** "Layout · Calendar", "Layout · Lane", "Layout · Members". */
 export function layoutTitle(view: 'calendar' | 'lane' | 'members'): string {
   return view === 'lane'
-    ? 'Layout · Lane'
+    ? 'Layout · Category'
     : view === 'members'
       ? 'Layout · Members'
       : 'Layout · Calendar';

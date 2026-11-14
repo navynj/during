@@ -133,7 +133,7 @@ describe('the views’ tabs on a lane’s page (review)', () => {
     const tabs = container.querySelector('[data-lane-tabs]')!;
     expect([...tabs.querySelectorAll('[data-view-option]')].map((o) => o.textContent)).toEqual([
       'Calendar',
-      'Lane',
+      'Category',
       'List',
     ]);
     expect(tabs.querySelector('[data-view-option="lane"]')!.getAttribute('aria-selected')).toBe(
@@ -162,7 +162,7 @@ describe('the views’ tabs on a lane’s page (review)', () => {
     expect([...tabs.querySelectorAll('[data-view-option]')].map((o) => o.textContent)).toEqual([
       'Calendar',
       'Members',
-      'Lane',
+      'Category',
       'List',
     ]);
     fireEvent.click(tabs.querySelector('[data-view-option="members"]')!);
@@ -207,7 +207,9 @@ describe('a lane’s page (round 3)', () => {
     expect(rail!.getAttribute('data-day-row')).toBe('2026-10-03');
     expect(rail!.textContent).toBe('3SAT');
     expect(container.querySelector('[data-lane-post="ramen"]')!.textContent).not.toContain('Oct');
-    expect(container.querySelector('[data-manage-lanes-link]')!.textContent).toBe('Manage lanes');
+    expect(container.querySelector('[data-manage-lanes-link]')!.textContent).toBe(
+      'Manage categories',
+    );
   });
 
   it('sets the lane\u2019s card stack at the foot: the top card\u2019s row at full white, the rest quiet, no pill', async () => {
@@ -254,8 +256,8 @@ describe('a lane’s page (round 3)', () => {
       </InputSheetProvider>,
     );
     fireEvent.click(container.querySelector('[data-lane-name]')!);
-    fireEvent.change(getByLabelText('Lane icon'), { target: { value: '🍜🍣' } });
-    fireEvent.change(getByLabelText('Lane name'), { target: { value: 'Meals' } });
+    fireEvent.change(getByLabelText('Category icon'), { target: { value: '🍜🍣' } });
+    fireEvent.change(getByLabelText('Category name'), { target: { value: 'Meals' } });
     fireEvent.click(getByText('Save'));
     expect(container.querySelector('[data-lane-name]')!.textContent).toBe('Meals');
     expect(container.querySelector('[data-lane-emoji]')!.textContent).toBe('🍣');
@@ -270,7 +272,7 @@ describe('a lane’s page (round 3)', () => {
       </InputSheetProvider>,
     );
     fireEvent.click(container.querySelector('[data-lane-emoji]')!);
-    fireEvent.change(getByLabelText('Lane name'), { target: { value: 'Meals' } });
+    fireEvent.change(getByLabelText('Category name'), { target: { value: 'Meals' } });
     fireEvent.click(getByText('Cancel'));
     expect(container.querySelector('[data-lane-name]')!.textContent).toBe('Food');
     expect(saved).toEqual([]);
@@ -307,7 +309,7 @@ describe('a pool lane’s page (review)', () => {
     poolSaved.length = 0;
     const { container, getByText, getByLabelText } = page();
     fireEvent.click(container.querySelector('[data-lane-name]')!);
-    fireEvent.change(getByLabelText('Lane name'), { target: { value: '말씀 묵상' } });
+    fireEvent.change(getByLabelText('Category name'), { target: { value: '말씀 묵상' } });
     fireEvent.click(getByText('Save'));
     expect(container.querySelector('[data-lane-name]')!.textContent).toBe('말씀 묵상');
     await waitFor(() =>

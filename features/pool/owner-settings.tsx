@@ -52,7 +52,7 @@ export function OwnerSection({ view, me }: { view: PoolView; me: string }) {
             Transfer ownership to leave
           </button>
           <p data-delete-pool-blocked className="text-pool-500 py-2 text-sm">
-            Remove everyone else or transfer ownership first to delete this Pool.
+            Remove everyone else or transfer ownership first to delete this diary.
           </p>
         </>
       ) : (
@@ -68,7 +68,7 @@ export function OwnerSection({ view, me }: { view: PoolView; me: string }) {
         <section data-removed-members className="mt-6 w-full">
           <h3 className="text-ink mb-1 text-sm font-medium">Removed</h3>
           <p className="text-pool-500 mb-2 text-xs">
-            They can’t join this Pool with any link until you allow them back.
+            They can’t join this diary with any link until you allow them back.
           </p>
           <ul className="flex flex-col">
             {removed.value.map((person) => (
@@ -140,8 +140,8 @@ function TransferSheet({
     <PoolSheet label="Make someone else the owner" onClose={onClose}>
       <SheetTitle>Who owns {poolName} next?</SheetTitle>
       <p className="text-pool-500 -mt-2 mb-4 text-sm/relaxed">
-        The owner can remove members and delete the Pool, and sets the members’ notification
-        defaults. You stay in the Pool as a member.
+        The owner can remove members and delete the diary, and sets the members’ notification
+        defaults. You stay in the diary as a member.
       </p>
       <ul className="flex flex-col" data-transfer-candidates>
         {candidates.map((member) => (

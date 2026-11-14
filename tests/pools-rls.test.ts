@@ -818,7 +818,7 @@ describe('writing', () => {
 
     // Ben cannot delete what Ana wrote along with his own.
     const refused = await asUser(ben).rpc('delete_joint_splash', { p_splash: joint });
-    expect(refused.error?.message).toMatch(/1 ripple by other members/);
+    expect(refused.error?.message).toMatch(/1 note by other members/);
   });
 
   it('refuses a joint splash on another pool’s lane', async () => {

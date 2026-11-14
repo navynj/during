@@ -77,7 +77,7 @@ function DeleteAccountSheet({ onClose }: { onClose: () => void }) {
                 Your replies ({preview.replies}) and reactions ({preview.reactions})
               </li>
               <li>Your photos ({preview.photos}) and your profile photo</li>
-              <li>Your lanes ({preview.lanes}), layouts, filings and settings</li>
+              <li>Your categories ({preview.lanes}), layouts, filings and settings</li>
               <li>Notifications to and from you, on every device</li>
               <li>Invite links you made</li>
             </ul>
@@ -85,13 +85,13 @@ function DeleteAccountSheet({ onClose }: { onClose: () => void }) {
           <div>
             <h3 className="mb-1 font-semibold">What stays</h3>
             <p className="text-pool-500">
-              What others wrote on your records stays with them, as a joint record of that Pool.
-              Layouts you edited in a Pool stay with the Pool.
+              What others wrote on your records stays with them, as a joint record of that diary.
+              Layouts you edited in a diary stay with the diary.
             </p>
           </div>
           {handed.length > 0 || deleted.length > 0 ? (
             <div data-delete-account-pools>
-              <h3 className="mb-1 font-semibold">Pools you own</h3>
+              <h3 className="mb-1 font-semibold">Diaries you own</h3>
               <ul className="text-pool-500 flex flex-col gap-1">
                 {handed.map((pool) => (
                   <li key={pool.poolId} data-pool-heir={pool.poolId}>

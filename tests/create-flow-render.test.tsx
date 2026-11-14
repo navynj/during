@@ -26,7 +26,9 @@ function addLane(root: HTMLElement, name: string): void {
   // With no lanes yet the editor's form is already open; after that, + Add lane.
   const add = root.querySelector('[data-add-lane]');
   if (add) fireEvent.click(add);
-  fireEvent.change(root.querySelector('[aria-label="Lane name"]')!, { target: { value: name } });
+  fireEvent.change(root.querySelector('[aria-label="Category name"]')!, {
+    target: { value: name },
+  });
   fireEvent.click(root.querySelector('[data-save-lane]')!);
 }
 
@@ -81,7 +83,7 @@ describe('opening a new pool (review)', () => {
     expect(button(container).disabled).toBe(true);
     addLane(container, 'Trips');
     expect(button(container).disabled).toBe(false);
-    expect(button(container).textContent).toBe('Open the Pool');
+    expect(button(container).textContent).toBe('Open the shared diary');
   });
 
   it('sends the name and the pool lanes only: no lane of mine, no earlier records', async () => {

@@ -21,7 +21,7 @@ export type Lane = z.infer<typeof Lane>;
 /** Creates a lane, or renames and re-icons an existing one. */
 export async function saveLane(input: Lane): Promise<LaneResult> {
   const parsed = Lane.safeParse(input);
-  if (!parsed.success) return { ok: false, message: 'A lane needs a name and an icon.' };
+  if (!parsed.success) return { ok: false, message: 'A category needs a name and an icon.' };
   const lane = parsed.data;
 
   const supabase = await createClient();
@@ -73,7 +73,7 @@ export async function saveLane(input: Lane): Promise<LaneResult> {
  */
 export async function reorderLanes(ids: string[]): Promise<LaneResult> {
   const parsed = z.array(z.uuid()).min(1).max(64).safeParse(ids);
-  if (!parsed.success) return { ok: false, message: 'That order is not a list of lanes.' };
+  if (!parsed.success) return { ok: false, message: 'That order is not a list of categories.' };
 
   const supabase = await createClient();
   for (const [position, id] of parsed.data.entries()) {
@@ -106,7 +106,7 @@ export async function deleteLane(id: string): Promise<LaneResult> {
   if (count && count > 0) {
     return {
       ok: false,
-      message: `This lane holds ${count} post${count === 1 ? '' : 's'}, so it stays.`,
+      message: `This category holds ${count} page${count === 1 ? '' : 's'}, so it stays.`,
     };
   }
 
@@ -114,7 +114,7 @@ export async function deleteLane(id: string): Promise<LaneResult> {
   // A block written here before H24 still names it, frozen, until that
   // column goes (release 2): the database refuses, and so does the lane.
   if (error?.code === '23503') {
-    return { ok: false, message: 'Records written in this lane still name it, so it stays.' };
+    return { ok: false, message: 'Records written in this category still name it, so it stays.' };
   }
   if (error) return { ok: false, message: error.message };
 

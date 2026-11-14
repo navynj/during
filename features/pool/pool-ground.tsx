@@ -339,8 +339,8 @@ export function PoolGround({
 
           {shown.length === 0 && !boardView ? (
             <p data-pool-empty className="px-6 pt-6 text-sm/relaxed text-white/80">
-              Nothing in this Pool yet. Splashes in your connected lanes land here, and so do joint
-              splashes anyone opens.
+              Nothing in this diary yet. Pages in your connected categories land here, and so do
+              joint pages anyone opens.
             </p>
           ) : null}
 
@@ -443,7 +443,7 @@ export function PoolGround({
             here="pool"
             poolId={poolId}
             onPool={cycleView}
-            poolLabel={`Pool, showing ${viewName(kind)}; tap for ${viewName(nextView(kind))}`}
+            poolLabel={`Diary, showing ${viewName(kind)}; tap for ${viewName(nextView(kind))}`}
             onCompose={composeHere}
           />
         </div>
@@ -454,7 +454,7 @@ export function PoolGround({
           here="pool"
           poolId={poolId}
           onPool={cycleView}
-          poolLabel={`Pool, showing ${viewName(kind)}; tap for ${viewName(nextView(kind))}`}
+          poolLabel={`Diary, showing ${viewName(kind)}; tap for ${viewName(nextView(kind))}`}
           onCompose={composeHere}
         />
       </div>

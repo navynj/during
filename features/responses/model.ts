@@ -76,7 +76,8 @@ export function byThread(value: RippleResponsesValue, labels: ThreadLabels): Thr
   const group = (key: string): ThreadGroup => {
     let found = groups.get(key);
     if (!found) {
-      const label = key === 'closed' ? 'in a deleted Pool' : `in ${labels.pools[key] ?? 'a Pool'}`;
+      const label =
+        key === 'closed' ? 'in a deleted diary' : `in ${labels.pools[key] ?? 'a diary'}`;
       found = { key, label, value: { reactions: [], replies: [] } };
       groups.set(key, found);
     }

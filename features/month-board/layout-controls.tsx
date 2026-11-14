@@ -244,7 +244,7 @@ export function LayoutControls({
       {home && card.joint ? (
         <div className="flex items-center justify-between gap-2 text-xs">
           <span data-layout-source className="text-white/80">
-            {source === 'home' ? 'Home override' : 'Using pool layout'}
+            {source === 'home' ? 'Home override' : 'Using diary layout'}
           </span>
           {source === 'home' && pooled ? (
             <button
@@ -253,7 +253,7 @@ export function LayoutControls({
               onClick={onRevert}
               className="rounded-full bg-white/30 px-3 py-1 font-medium text-white"
             >
-              Use pool layout
+              Use diary layout
             </button>
           ) : null}
         </div>

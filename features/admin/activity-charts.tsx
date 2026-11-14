@@ -249,7 +249,7 @@ export function ActivityCharts({ data }: { data: ActivityData }) {
           {dayLabels(axisY + 15)}
           {opensRows.length > 0 ? (
             <text x={0} y={opensTop - 6} fontSize={10} fill={MUTED} pointerEvents="none">
-              App opens (any pool)
+              App opens (any diary)
             </text>
           ) : null}
           {opensRows.map((row, k) => {

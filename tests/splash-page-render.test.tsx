@@ -387,7 +387,7 @@ describe('writing on the page, in place', () => {
     const { container, getByText, getByLabelText } = page();
     fireEvent.click(container.querySelector('[data-block="first"]')!);
     const editor = container.querySelector<HTMLElement>('[data-block-editor="first"]')!;
-    expect(editor.querySelector('[role="group"][aria-label="Lane"]')).toBeNull();
+    expect(editor.querySelector('[role="group"][aria-label="Category"]')).toBeNull();
     expect(within(editor).queryByText('+ Add Time')).toBeNull();
     // Its day, Aug 17, picked among the range's days only.
     const day = within(editor).getByLabelText('Day') as HTMLSelectElement;
@@ -427,7 +427,7 @@ describe('writing on the page, in place', () => {
     const row = slot.querySelector('[data-add-row]')!;
     expect(row.hasAttribute('data-open')).toBe(false);
     expect(row.querySelector<HTMLTextAreaElement>('[data-add-field]')!.placeholder).toBe(
-      'Add to this splash',
+      'Add to this page',
     );
     expect(row.querySelector('[data-add-photo]')).not.toBeNull();
     expect(row.querySelector('[data-add-drop]')).toBeNull();
@@ -459,7 +459,7 @@ describe('writing on the page, in place', () => {
     const row = container.querySelector<HTMLElement>('[data-add-row]')!;
     const field = row.querySelector<HTMLTextAreaElement>('[data-add-field]')!;
     fireEvent.focus(field);
-    expect(row.querySelector('[role="group"][aria-label="Lane"]')).toBeNull();
+    expect(row.querySelector('[role="group"][aria-label="Category"]')).toBeNull();
     // Today (Sep 25) is past Aug 17–20: the range's last day.
     expect((within(row).getByLabelText('Day') as HTMLSelectElement).value).toBe('2026-08-20');
     fireEvent.change(field, { target: { value: 'the drive home' } });
@@ -618,7 +618,7 @@ describe('the header menu', () => {
     fireEvent.click(getByLabelText('More'));
     fireEvent.click(getByText('Delete'));
     expect(container.querySelector('[data-delete-confirm]')!.textContent).toBe(
-      'Deletes the post and its 3 blocks.',
+      'Deletes the page and its 3 blocks.',
     );
     fireEvent.click(container.querySelector('[role="alertdialog"] .text-main-900')!);
     await waitFor(() => expect(calls.some((c) => c.name === 'deleteSplash')).toBe(true));

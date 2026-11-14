@@ -65,15 +65,17 @@ export function CreateFlow() {
     <StepPage step={null} wide onBack={() => router.back()}>
       <div className="flex min-h-0 flex-1 flex-col">
         <section data-create-step="1" className="flex min-h-0 flex-1 flex-col">
-          <h1 className="text-main-900 text-3xl/tight font-semibold">Open a new Pool</h1>
-          <p className="text-pool-500 mt-3 text-sm">A pool for the people you keep records with.</p>
+          <h1 className="text-main-900 text-3xl/tight font-semibold">New shared diary</h1>
+          <p className="text-pool-500 mt-3 text-sm">
+            A shared diary for the people you keep records with.
+          </p>
 
           <div className="mt-10 flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:gap-12">
             <div className="flex items-start gap-4">
               {/* The pool's photo (0024): the tile, the letters until one is picked. */}
               <PoolPhotoField name={name} current={null} change={photo} onChange={setPhoto} />
               <label className="flex min-w-0 flex-1 flex-col gap-2">
-                <span className="text-pool-500 text-xs">Pool name</span>
+                <span className="text-pool-500 text-xs">Diary name</span>
                 <input
                   value={name}
                   onChange={(event) => setName(event.target.value)}
@@ -85,7 +87,7 @@ export function CreateFlow() {
             </div>
 
             <div>
-              <span className="text-pool-500 text-xs">Pool lanes</span>
+              <span className="text-pool-500 text-xs">Categories</span>
               <LaneEditor lanes={lanes} onChange={setLanes} />
             </div>
           </div>
@@ -97,7 +99,7 @@ export function CreateFlow() {
               </p>
             ) : null}
             <PrimaryButton disabled={busy || !ready} onClick={() => void create()}>
-              {busy ? 'Opening the Pool…' : 'Open the Pool'}
+              {busy ? 'Opening the shared diary…' : 'Open the shared diary'}
             </PrimaryButton>
           </div>
         </section>

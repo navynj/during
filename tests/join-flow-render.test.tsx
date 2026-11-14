@@ -94,7 +94,7 @@ describe('joining a pool asks nothing about lanes (hotfix)', () => {
     const view = invite('  ');
     const field = view.container.querySelector('[data-join-name]') as HTMLInputElement;
     expect(field.required).toBe(true);
-    expect(field.closest('label')?.textContent).toContain('Your name (shown in all your pools)');
+    expect(field.closest('label')?.textContent).toContain('Your name (shown in all your diaries)');
     expect((view.getByText('Join').closest('button') as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(field, { target: { value: ' Sora ' } });
     fireEvent.click(view.getByText('Join'));
@@ -105,7 +105,9 @@ describe('joining a pool asks nothing about lanes (hotfix)', () => {
 
   it('names the place, and shows each member as a face and a name (0067)', () => {
     const { container } = invite();
-    expect(container.querySelector('[data-step-title]')?.textContent).toBe('Join Pool');
+    expect(container.querySelector('[data-step-title]')?.textContent).toBe(
+      'Join this shared diary',
+    );
     const members = [...container.querySelectorAll('[data-invite-member]')];
     expect(members.map((m) => m.querySelector('[data-invite-member-name]')?.textContent)).toEqual([
       'Yoonji Lee',

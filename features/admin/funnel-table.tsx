@@ -6,7 +6,7 @@ import { Table } from './admin-frame';
 export const FUNNEL_HEAD = [
   'Invited',
   'Joined',
-  'First splash',
+  'First page',
   'Day 3 strict',
   'Day 3 retained',
   'Day 7 strict',

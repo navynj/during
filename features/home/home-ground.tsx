@@ -513,7 +513,7 @@ export function HomeGround({
             label: 'Home',
             render: () => (
               <section data-settings-lanes className="flex flex-col gap-3">
-                <h2 className="text-ink font-semibold">My lanes</h2>
+                <h2 className="text-ink font-semibold">My categories</h2>
                 <LanesSheet categories={lanes.value} apply={lanes.run} message={lanes.message} />
               </section>
             ),

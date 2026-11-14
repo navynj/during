@@ -71,7 +71,7 @@ export async function setMyNotificationPref(input: z.input<typeof Pref>): Promis
       : await supabase
           .from('member_notification_prefs')
           .upsert({ pool_id: poolId, user_id: user.id, type, value });
-  if (error) return refused(error.code === '42501' ? 'You’re not in this Pool.' : error.message);
+  if (error) return refused(error.code === '42501' ? 'You’re not in this diary.' : error.message);
   revalidatePath(poolPath(poolId));
   return { ok: true };
 }
@@ -91,7 +91,7 @@ export async function setPoolNotificationDefault(
       : await supabase.from('pool_notification_defaults').upsert({ pool_id: poolId, type, value });
   if (error) {
     return refused(
-      error.code === '42501' ? 'Only the Pool’s creator sets its defaults.' : error.message,
+      error.code === '42501' ? 'Only the diary’s creator sets its defaults.' : error.message,
     );
   }
   revalidatePath(poolPath(poolId));
@@ -159,7 +159,7 @@ export async function removePushSubscription(endpoint: string): Promise<ActionOu
 
 /** One pool's notification settings for me (0059): read when the bell's gear opens them. */
 export async function loadPoolNotificationPrefs(poolId: string): Promise<PoolNotificationPrefs> {
-  if (!z.uuid().safeParse(poolId).success) throw new Error('That Pool is not known.');
+  if (!z.uuid().safeParse(poolId).success) throw new Error('That diary is not known.');
   const supabase = await createClient();
   const user = await getAuthUser(supabase);
   if (!user) throw new Error('Sign in again.');

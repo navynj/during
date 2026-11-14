@@ -65,10 +65,10 @@ describe('the origin tag (0015)', () => {
 describe('Delete Pool (0015)', () => {
   it('stays shut until the pool’s name is typed exactly', () => {
     const view = render(<DeletePool poolId="p" poolName="Our Pool" />);
-    fireEvent.click(view.getByText('Delete Pool'));
+    fireEvent.click(view.getByText('Delete diary'));
     expect(view.getByText('Delete Our Pool for everyone?')).toBeTruthy();
     expect(
-      view.getByText(/Joint splashes go back to each writer as their own records\./),
+      view.getByText(/Joint pages go back to each writer as their own records\./),
     ).toBeTruthy();
     const confirm = view.container.ownerDocument.querySelector(
       '[data-delete-pool-confirm]',

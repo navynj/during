@@ -92,7 +92,7 @@ export function PoolNotifications({
                   data={`mine-${type}-default`}
                   onClick={() => setMine((current) => without(current, type), type, null)}
                 >
-                  Pool default ({VALUE_LABELS[poolValue(type)]})
+                  Diary default ({VALUE_LABELS[poolValue(type)]})
                 </Chip>
                 {VALUES[type].map((value) => (
                   <Chip
@@ -122,7 +122,7 @@ export function PoolNotifications({
           <p className="text-pool-500 mt-3 text-xs">
             {isCreator
               ? 'What everyone here gets until they choose their own.'
-              : 'Set by the Pool’s owner; what you get until you choose your own.'}
+              : 'Set by the diary’s owner; what you get until you choose your own.'}
           </p>
           <div className="mt-2 flex flex-col gap-4">
             {NOTIFICATION_TYPES.map((type) =>

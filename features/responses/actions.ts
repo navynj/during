@@ -56,7 +56,7 @@ export async function setReaction(input: z.input<typeof Reaction>): Promise<Acti
         .delete()
         .match({ ripple_id: rippleId, user_id: user.id, emoji });
   if (error)
-    return refused(error.code === '42501' ? 'You can’t react to this ripple.' : error.message);
+    return refused(error.code === '42501' ? 'You can’t react to this note.' : error.message);
   revalidate();
   return { ok: true };
 }

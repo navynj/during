@@ -95,7 +95,7 @@ export function ThemePicker() {
               onClick={() => setPoolOpen((open) => !open)}
               className="text-main-900 flex w-full items-center gap-2 text-left text-sm font-semibold"
             >
-              <span className="min-w-0 flex-1">Set default color for this Pool</span>
+              <span className="min-w-0 flex-1">Set default color for this diary</span>
               {place.colors.pool ? (
                 <span
                   aria-label={THEMES.find((t) => t.key === place.colors.pool)?.name}
@@ -118,7 +118,7 @@ export function ThemePicker() {
             {poolOpen ? (
               <>
                 <Colours
-                  name="Pool default color"
+                  name="Diary default color"
                   hint="Everyone here sees it, unless they choose their own."
                   value={place.colors.pool}
                   mode={place.colors.poolMode ?? theme.mode}
@@ -159,11 +159,11 @@ export function ThemePicker() {
           {offering ? (
             <div
               role="dialog"
-              aria-label="Apply to all pools"
+              aria-label="Apply to all diaries"
               data-theme-everywhere-ask
               className="bg-pool-100 flex flex-col gap-3 rounded-2xl p-4"
             >
-              <p className="text-ink text-sm">Apply to all pools too? Only you will see it.</p>
+              <p className="text-ink text-sm">Apply to all diaries too? Only you will see it.</p>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -174,7 +174,7 @@ export function ThemePicker() {
                   }}
                   className="bg-main-900 rounded-full px-4 py-2 text-sm font-semibold text-white"
                 >
-                  Apply to all pools
+                  Apply to all diaries
                 </button>
                 <button
                   type="button"

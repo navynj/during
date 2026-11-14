@@ -26,9 +26,9 @@ import { PoolLanesSheet } from './pool-lanes-sheet';
 export function PoolSettingsSheet({ view, me }: { view: PoolView; me: string }) {
   return (
     <SettingsSheet
-      title="Pool settings"
+      title="Diary settings"
       tabs={[
-        { key: 'pool', label: 'Pool', render: () => <PoolTab view={view} /> },
+        { key: 'pool', label: 'Diary', render: () => <PoolTab view={view} /> },
         { key: 'theme', label: 'Theme', render: () => <ThemePicker /> },
         { key: 'advanced', label: 'Advanced', render: () => <AdvancedTab view={view} me={me} /> },
       ]}
@@ -74,7 +74,7 @@ function PoolTab({ view }: { view: PoolView }) {
       />
 
       <section data-settings-lanes className="mt-10 lg:mt-0 lg:min-w-0">
-        <h2 className="text-ink mb-3 font-semibold">Lanes</h2>
+        <h2 className="text-ink mb-3 font-semibold">Categories</h2>
         <PoolLanesSheet poolId={poolId} lanes={view.lanes} />
       </section>
     </div>
@@ -95,7 +95,7 @@ function AdvancedTab({ view, me }: { view: PoolView; me: string }) {
           <span className="flex flex-col gap-0.5">
             <span className="text-ink text-sm font-medium">Show on my Home</span>
             <span className="text-pool-500 text-xs">
-              What you write in this Pool also shows on your Home. Only you see this choice.
+              What you write in this diary also shows on your Home. Only you see this choice.
             </span>
           </span>
           <Switch
@@ -121,16 +121,16 @@ function AdvancedTab({ view, me }: { view: PoolView; me: string }) {
         <label className="flex items-center justify-between gap-4">
           <span className="flex flex-col gap-0.5">
             <span className="text-ink text-sm font-medium">
-              Invite everyone to new posts by default
+              Invite everyone to new pages by default
             </span>
             <span className="text-pool-500 text-xs">
-              New posts here start with everyone in the Pool invited. This is the Pool’s setting:
+              New pages here start with everyone in the diary invited. This is the diary’s setting:
               changing it changes it for every member.
             </span>
           </span>
           <Switch
             on={inviteAll.value}
-            label="Invite everyone to new posts by default"
+            label="Invite everyone to new pages by default"
             onChange={(on) =>
               inviteAll.run(
                 () => on,
@@ -157,7 +157,7 @@ function AdvancedTab({ view, me }: { view: PoolView; me: string }) {
             onClick={() => setLeaving(true)}
             className="text-pool-500 self-start py-2 text-sm"
           >
-            Leave Pool
+            Leave diary
           </button>
         )}
       </section>
@@ -194,7 +194,7 @@ function PoolName({
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           maxLength={60}
-          aria-label="Pool name"
+          aria-label="Diary name"
           className="border-pool-200 text-ink h-12 min-w-0 flex-1 rounded-xl border px-3 outline-none"
         />
         <button

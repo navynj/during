@@ -18,7 +18,7 @@ export const NOBODY: PickTogether = { everyone: false, picked: [] };
 export function audienceLabel(poolNames: string[]): string {
   if (poolNames.length === 0) return 'Only me';
   if (poolNames.length === 1) return poolNames[0];
-  return `${poolNames.length} pools`;
+  return `${poolNames.length} diaries`;
 }
 
 /**

@@ -335,7 +335,7 @@ export async function HomeScreen({
       const name = poolName.get(id);
       return {
         id: ownPoolColumn(id),
-        name: name ?? 'A pool you left',
+        name: name ?? 'A diary you left',
         icon: null,
         monogram: name ?? '',
         photo: name ? (columnPhotos[id] ?? null) : null,
@@ -378,7 +378,7 @@ export async function HomeScreen({
   for (const r of theirs) {
     if (!r.splash_id || !r.thread_pool_id || !mineIds.has(r.splash_id)) continue;
     const list = sidesOf.get(r.splash_id) ?? [];
-    const label = poolName.get(r.thread_pool_id) ?? 'A pool you left';
+    const label = poolName.get(r.thread_pool_id) ?? 'A diary you left';
     const at = list.find((x) => x.label === label);
     if (at) at.count += 1;
     else list.push({ label, count: 1 });
@@ -437,7 +437,7 @@ export async function HomeScreen({
         // Someone's record I wrote on in one pool (0035): that pool's, read as
         // it reads it, opening there while shared; never mine to pin or edit.
         const home = filings[friend.splashId] ?? null;
-        const name = friend.poolName ?? 'A pool you left';
+        const name = friend.poolName ?? 'A diary you left';
         return {
           ...card,
           side: true,
@@ -467,7 +467,7 @@ export async function HomeScreen({
           column: home ?? ownPoolColumn(shownIn),
           lane: {
             icon: ownLaneIcon.get(summary.id) ?? null,
-            name: poolName.get(shownIn) ?? 'A pool you left',
+            name: poolName.get(shownIn) ?? 'A diary you left',
           },
         };
       }

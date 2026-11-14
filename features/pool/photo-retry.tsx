@@ -38,7 +38,7 @@ export function dropHeldPhoto(): void {
   set(null);
 }
 
-export const PHOTO_FAILED = 'The pool was created, but the photo didn’t upload.';
+export const PHOTO_FAILED = 'The diary was created, but the photo didn’t upload.';
 
 /**
  * The toast on the new pool (review): it says the pool is there without its

@@ -41,7 +41,7 @@ export function useStripPools(): (MyPoolName & { fresh: boolean })[] {
  * The notification dot (review): small, white with the water's blue ring so
  * it reads on the ground, at the top right of what it marks.
  */
-export function UnseenDot({ label = 'New in your Pools' }: { label?: string }) {
+export function UnseenDot({ label = 'New in your diaries' }: { label?: string }) {
   return (
     <span
       role="status"

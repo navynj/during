@@ -94,7 +94,7 @@ export function MembersSheet({
                 onClick={() => setRemoving(member)}
                 className="text-pool-500 py-1 text-xs"
               >
-                Remove from Pool
+                Remove from diary
               </button>
             ) : null}
           </li>
@@ -107,7 +107,7 @@ export function MembersSheet({
           onClick={() => setLeaving(true)}
           className="text-pool-500 mt-6 self-start py-2 text-sm"
         >
-          Leave Pool
+          Leave diary
         </button>
       )}
     </PoolSheet>
@@ -131,12 +131,12 @@ function RemoveSheet({
   onConfirm: () => void;
 }) {
   return (
-    <PoolSheet label="Remove from Pool" onClose={onClose}>
+    <PoolSheet label="Remove from diary" onClose={onClose}>
       <SheetTitle>
         Remove {name} from {poolName}?
       </SheetTitle>
       <p className="text-pool-500 -mt-2 mb-6 text-sm/relaxed">
-        They lose access at once. What they wrote here is hidden from the Pool, never deleted, and
+        They lose access at once. What they wrote here is hidden from the diary, never deleted, and
         comes back if they join again. They can’t join with any link until you allow them back in
         Advanced.
       </p>
@@ -147,7 +147,7 @@ function RemoveSheet({
           onClick={onConfirm}
           className="bg-ink h-14 rounded-full font-semibold text-white"
         >
-          Remove from Pool
+          Remove from diary
         </button>
         <button type="button" onClick={onClose} className="text-pool-500 py-2 text-sm">
           Cancel
@@ -177,11 +177,11 @@ export function LeaveSheet({ poolId, onClose }: { poolId: string; onClose: () =>
     router.replace('/pool');
   };
   return (
-    <PoolSheet label="Leave Pool" onClose={onClose}>
-      <SheetTitle>Keep your records in this Pool?</SheetTitle>
+    <PoolSheet label="Leave diary" onClose={onClose}>
+      <SheetTitle>Keep your records in this diary?</SheetTitle>
       <p className="text-pool-500 -mt-2 mb-6 text-sm/relaxed">
-        Your splashes always stay on your own Home. Members of this Pool keep seeing them only if
-        you keep them here.
+        Your pages always stay on your own Home. Members of this diary keep seeing them only if you
+        keep them here.
       </p>
       {message ? (
         <p role="alert" className="text-pool-500 mb-3 text-sm">
@@ -208,7 +208,7 @@ export function LeaveSheet({ poolId, onClose }: { poolId: string; onClose: () =>
           Remove them
         </button>
         <button type="button" onClick={onClose} className="text-pool-500 py-2 text-sm">
-          Stay in the Pool
+          Stay in the diary
         </button>
       </div>
     </PoolSheet>

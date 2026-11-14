@@ -15,7 +15,7 @@ export const EMPTY = {
   futureQuiet: 'Nothing planned yet.',
   lanes: 'Waves gather here as you drop.',
   /** The bell's sheet (H32): what will arrive, not what hasn't. */
-  notifications: 'Invites, replies and reactions from your Pools gather here.',
+  notifications: 'Invites, replies and reactions from your diaries gather here.',
 } as const;
 
 /**

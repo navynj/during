@@ -162,7 +162,7 @@ describe('the composer’s top line and the description (review)', () => {
     const composer = view.container.querySelector('[data-splash-composer]')!;
     expect(composer.firstElementChild).toBe(titleRow);
     expect(view.container.querySelector('[data-compose-description-field]')).toBeNull();
-    expect(view.container.textContent).not.toContain('Add splash description');
+    expect(view.container.textContent).not.toContain('Add page description');
   });
 
   it('adds the description from `…`, faint until written, and saves it after the splash', async () => {
@@ -417,7 +417,7 @@ describe('the sheet’s shape', () => {
     expect(container.querySelector('[data-audience-chip]')).toBeNull();
     expect(queryByText(/everyone/i)).toBeNull();
     expect(queryByRole('group', { name: 'View' })).toBeNull();
-    expect(queryByText('+ Add to Splash')).toBeNull();
+    expect(queryByText('+ Add to page')).toBeNull();
   });
 });
 
@@ -558,7 +558,7 @@ describe('the Share to row (H75, revising H45(b))', () => {
     expect(kept()).toEqual([]);
     // On a phone the lanes were a bottom sheet.
     fireEvent.click(chip(view, 'p-crew').querySelector('[data-share-lane]')!);
-    expect(document.querySelector('[data-pool-sheet="Lane in Crew"]')).not.toBeNull();
+    expect(document.querySelector('[data-pool-sheet="Category in Crew"]')).not.toBeNull();
     fireEvent.click(document.querySelector('[data-share-lanes="p-crew"] button')!);
     // Off again: nothing is shared.
     turn(view, 'p-crew');
@@ -719,7 +719,7 @@ describe('compose from a pool (H23, 0033)', () => {
   it('shows the pool’s lanes alone, with no My lanes tab, no Audience and no Just mine', () => {
     const view = poolSheet();
     expect(view.container.querySelector('[data-share-to]')).toBeNull();
-    expect(view.queryByRole('tab', { name: 'My lanes' })).toBeNull();
+    expect(view.queryByRole('tab', { name: 'My categories' })).toBeNull();
     expect(view.container.querySelectorAll('[data-pick-pool-lane]')).toHaveLength(2);
     expect(view.container.querySelector('[data-audience-chip]')).toBeNull();
     expect(view.queryByRole('switch', { name: 'Just mine' })).toBeNull();

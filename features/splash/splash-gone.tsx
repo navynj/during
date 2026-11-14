@@ -6,7 +6,7 @@
 export function SplashGone() {
   return (
     <p data-splash-gone className="text-pool-500 py-10 text-center text-sm">
-      This splash is gone.
+      This page is gone.
     </p>
   );
 }

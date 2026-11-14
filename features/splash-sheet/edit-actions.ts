@@ -80,7 +80,7 @@ export type SplashEditState =
  * returns; nothing here depends on another answer but the split at the end.
  */
 export async function loadSplashEdit(id: string): Promise<SplashEditState> {
-  if (!z.uuid().safeParse(id).success) return { ok: false, message: 'No such splash.' };
+  if (!z.uuid().safeParse(id).success) return { ok: false, message: 'No such page.' };
   const supabase = await createClient();
   const [
     user,
@@ -120,7 +120,7 @@ export async function loadSplashEdit(id: string): Promise<SplashEditState> {
       .order('created_at'),
   ]);
   if (!user) return { ok: false, message: 'Sign in again to edit this.' };
-  if (!splash) return { ok: false, message: 'That splash is gone.' };
+  if (!splash) return { ok: false, message: 'That page is gone.' };
 
   const joint = splash.owner_id === null;
   const theirs = !joint && splash.owner_id !== user.id;
@@ -128,7 +128,7 @@ export async function loadSplashEdit(id: string): Promise<SplashEditState> {
     ? ((myThread ?? []).find((r) => r.author_id === user.id)?.thread_pool_id ?? null)
     : null;
   if (theirs && !sidePool) {
-    return { ok: false, message: 'Only its author edits this splash.' };
+    return { ok: false, message: 'Only its author edits this page.' };
   }
   const ownPool = splash.pool_id ?? splash.own_pool_id ?? sidePool;
   const placed = (placements ?? []).find((p) => p.pool_id === splash.own_pool_id);
@@ -219,7 +219,7 @@ async function homeFiling(
     ? await signPoolPhotos(supabase, [{ id: pool.id, version: pool.photo_version }])
     : {};
   return {
-    pool: { id: poolId, name: pool?.name ?? 'A pool you left', photo: photos[poolId] ?? null },
+    pool: { id: poolId, name: pool?.name ?? 'A diary you left', photo: photos[poolId] ?? null },
     poolLane: lane ? { name: lane.name, icon: lane.icon } : null,
     filed,
   };

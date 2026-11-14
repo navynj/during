@@ -116,7 +116,7 @@ export function chipLabel(shared: AudiencePick[], pools: AudiencePool[]): string
     if (pool && lane) return `${pool.name} · ${lane.icon ? `${lane.icon} ` : ''}${lane.name}`;
   }
   return audienceLabel(
-    shared.map((pick) => pools.find((p) => p.id === pick.poolId)?.name ?? 'A pool'),
+    shared.map((pick) => pools.find((p) => p.id === pick.poolId)?.name ?? 'A diary'),
   );
 }
 
@@ -186,7 +186,7 @@ function AudienceSheet({
               >
                 <span>Move to Home</span>
                 <span className="text-xs text-white/70">
-                  Keeps it shared here, and lets you turn this Pool off later.
+                  Keeps it shared here, and lets you turn this diary off later.
                 </span>
               </button>
             </li>
@@ -208,10 +208,10 @@ function AudienceSheet({
         </div>
       ) : null}
       <p className="text-pool-500 -mt-2 mb-5 text-sm">
-        Every ripple on this splash follows it. With every switch off, it is yours alone.
+        Every note on this page follows it. With every switch off, it is yours alone.
       </p>
-      <section data-audience-section="Pools" className="mb-6">
-        <h3 className="text-pool-500 mb-1 text-xs">Pools</h3>
+      <section data-audience-section="Diaries" className="mb-6">
+        <h3 className="text-pool-500 mb-1 text-xs">Diaries</h3>
         <ul className="flex flex-col">
           {pools.map((pool) => {
             const lane = laneOf(pool.id);
@@ -282,7 +282,7 @@ function AudienceSheet({
             );
           })}
           {pools.length === 0 ? (
-            <li className="text-pool-500 py-3 text-sm">You are in no Pool yet.</li>
+            <li className="text-pool-500 py-3 text-sm">You are in no diary yet.</li>
           ) : null}
         </ul>
       </section>

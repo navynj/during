@@ -5,9 +5,9 @@ import { todayIn } from '@/lib/time';
 
 /** The welcome splash's words, icon and photo (H58). */
 export const WELCOME_SPLASH = {
-  title: 'Drop Your Splash',
+  title: 'Add new page',
   icon: '🌊',
-  note: "What's your today? Leave a ripple.",
+  note: "What's your today? Leave a note.",
   // public/welcome/shell.png: one copy shipped with the app, never uploaded per account.
   photo: `${APP_ASSET_PREFIX}welcome/shell.png`,
 } as const;

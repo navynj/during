@@ -194,7 +194,7 @@ export function SplashPage({
   // stack says it (H75); a pool's own tab needs none.
   const labelOf = (poolId: string | null): string | null => {
     if (threads.length === 0 || tab !== ALL_TAB || !poolId) return null;
-    return `in ${threads.find((t) => t.poolId === poolId)?.label ?? 'a Pool'}`;
+    return `in ${threads.find((t) => t.poolId === poolId)?.label ?? 'a diary'}`;
   };
   // Opened at a reply from the board: its block, brought into view.
   const openedRipple = thread.replies.find((r) => `reply-${r.id}` === openedAt)?.ripple_id;
@@ -628,7 +628,7 @@ export function SplashPage({
           byline={
             <SplashAuthors
               ids={authorIds}
-              label="In this splash"
+              label="In this page"
               initialsOf={{
                 ...pool?.initialsOf,
                 ...initialsOf,
@@ -766,7 +766,7 @@ export function SplashPage({
           am invited on it in this pool (0035). */}
         {(scope === 'theirs' && !sidePool) || orphan ? null : (
           <AddRow
-            label={ownRecord ? 'Add to this splash' : 'Add yours too'}
+            label={ownRecord ? 'Add to this page' : 'Add yours too'}
             me={pool?.me ?? me}
             initials={initials}
             range={page.splash.declaredRange}

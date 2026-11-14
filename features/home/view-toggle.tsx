@@ -30,7 +30,7 @@ export function ViewToggle({
 // the tests' names, the labels what the hand reads.
 export const HOME_VIEWS = [
   { value: 'board', label: 'Calendar' },
-  { value: 'lane', label: 'Lane' },
+  { value: 'lane', label: 'Category' },
   { value: 'date', label: 'List' },
 ] as const;
 

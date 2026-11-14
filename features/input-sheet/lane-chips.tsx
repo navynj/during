@@ -53,7 +53,7 @@ export function LaneChips({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search Lanes"
+            placeholder="Search categories"
             aria-label="Search"
             className="placeholder:text-pool-500 text-ink min-w-0 flex-1 bg-transparent outline-none placeholder:opacity-60"
           />
@@ -64,7 +64,7 @@ export function LaneChips({
           which law 2 forbids. They scroll silently. */}
       <div
         role="group"
-        aria-label="Lane"
+        aria-label="Category"
         className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1"
       >
         {shown.map((category) => (

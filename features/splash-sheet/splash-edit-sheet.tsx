@@ -54,7 +54,7 @@ export function SplashEditSheet({
         else setMessage(state.message);
       })
       .catch(() => {
-        if (live) setMessage('This splash did not open. Try again.');
+        if (live) setMessage('This page did not open. Try again.');
       });
     return () => {
       live = false;
@@ -63,7 +63,7 @@ export function SplashEditSheet({
 
   return (
     <SheetFrame
-      label="Edit splash"
+      label="Edit page"
       onClose={onClose}
       data={{ 'data-edit-sheet': '' }}
       // The form ends in its pinned Cancel and Save; the loading line does not.
@@ -183,7 +183,7 @@ function EditForm({
   const [annotation, setAnnotation] = useState<Annotation | null>(initial.annotation);
   const mine = initial.kind === 'mine';
   const joint = initial.kind === 'joint';
-  const poolName = pools.find((p) => p.id === initial.poolId)?.name ?? 'its pool';
+  const poolName = pools.find((p) => p.id === initial.poolId)?.name ?? 'its diary';
   const laneId = mine && lanes.laneId !== null ? lanes.laneId : initial.declaredLaneId;
   const shared = lanes.shared;
 
@@ -258,8 +258,7 @@ function EditForm({
 
       {joint ? (
         <p className="text-pool-500 text-xs">
-          A joint splash belongs to {poolName}: its title, icon and dates are everyone&apos;s to
-          edit.
+          A joint page belongs to {poolName}: its title, icon and dates are everyone&apos;s to edit.
         </p>
       ) : null}
 

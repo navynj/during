@@ -53,7 +53,7 @@ test.afterAll(async () => {
 /** The rows' names, top to bottom, as the editor shows them. */
 function shown(page: Page): Promise<string[]> {
   return page
-    .locator('[data-lane-row] input[aria-label="Lane name"]')
+    .locator('[data-lane-row] input[aria-label="Category name"]')
     .evaluateAll((inputs) => inputs.map((i) => (i as HTMLInputElement).value));
 }
 

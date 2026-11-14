@@ -74,7 +74,7 @@ export function PoolPhotoField({
       ) : (
         <button
           type="button"
-          aria-label="Choose a photo for the Pool"
+          aria-label="Choose a photo for the diary"
           data-pool-photo-pick
           onClick={() => picker.current?.click()}
           className="flex w-fit rounded-2xl"

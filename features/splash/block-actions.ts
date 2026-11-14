@@ -30,10 +30,10 @@ const Block = z.object({
 
 /** The database's refusals, said plainly. */
 function said(message: string): string {
-  return /outside this splash's range/.test(message)
-    ? 'That day is outside this splash’s range.'
+  return /outside this (splash|page)'s range/.test(message)
+    ? 'That day is outside this page’s range.'
     : /has no range/.test(message)
-      ? 'This splash has no range to date an entry in.'
+      ? 'This page has no range to date an entry in.'
       : message;
 }
 

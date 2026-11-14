@@ -204,7 +204,7 @@ export function LaneRows<T extends EditableLane>({
         if (!result.ok) return result;
         if (!fresh) return { ok: true };
         // A new lane is named by the database: the order then names it too.
-        if (!result.id) return { ok: false, message: 'That lane was not added. Try again.' };
+        if (!result.id) return { ok: false, message: 'That category was not added. Try again.' };
         const real = sequence
           .filter((s) => !s.startsWith(DRAFT) || s === id)
           .map((s) => (s === id ? result.id! : s));
@@ -256,7 +256,7 @@ export function LaneRows<T extends EditableLane>({
     apply(
       (current) => current.filter((lane) => lane.id !== id),
       () => remove(id),
-      'Lane deleted',
+      'Category deleted',
     );
   }
 
@@ -338,7 +338,7 @@ export function LaneRows<T extends EditableLane>({
           >
             <button
               type="button"
-              aria-label={`Move ${row.name || 'this lane'}`}
+              aria-label={`Move ${row.name || 'this category'}`}
               data-lane-grip
               onPointerDown={(event) => dragFrom(row.id, event)}
               onKeyDown={(event) => {
@@ -361,7 +361,7 @@ export function LaneRows<T extends EditableLane>({
                 edit(row.id, { icon });
                 commitRow(row.id, { icon });
               }}
-              label={`Icon for ${row.name || 'this lane'}`}
+              label={`Icon for ${row.name || 'this category'}`}
             />
             <span className="flex min-w-0 flex-1 flex-col">
               <input
@@ -369,8 +369,8 @@ export function LaneRows<T extends EditableLane>({
                 onChange={(event) => type(row.id, { name: event.target.value })}
                 onBlur={() => leave(row.id)}
                 onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
-                aria-label="Lane name"
-                placeholder="Enter the lane name"
+                aria-label="Category name"
+                placeholder="Enter the category name"
                 maxLength={maxName}
                 // A row just added opens ready to type.
                 autoFocus={row.id.startsWith(DRAFT)}
@@ -382,8 +382,8 @@ export function LaneRows<T extends EditableLane>({
                   onChange={(event) => type(row.id, { description: event.target.value })}
                   onBlur={() => leave(row.id)}
                   onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
-                  aria-label="Lane description"
-                  placeholder="A line about this lane (optional)"
+                  aria-label="Category description"
+                  placeholder="A line about this category (optional)"
                   maxLength={80}
                   className="text-pool-500 placeholder:text-pool-500/70 min-w-0 py-1 text-xs outline-none"
                 />
@@ -405,7 +405,7 @@ export function LaneRows<T extends EditableLane>({
             ) : (
               <button
                 type="button"
-                aria-label={`Delete ${row.name || 'this lane'}`}
+                aria-label={`Delete ${row.name || 'this category'}`}
                 onClick={() => (added.includes(row.id) ? drop(row.id) : setConfirming(row.id))}
                 className="text-pool-500 flex h-8 w-8 shrink-0 items-center justify-center"
               >
@@ -422,7 +422,7 @@ export function LaneRows<T extends EditableLane>({
         onClick={add}
         className="text-main-900 self-start py-2 text-sm font-semibold"
       >
-        + Add lane
+        + Add category
       </button>
 
       {message ? (

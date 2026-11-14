@@ -48,7 +48,7 @@ export function ComposeTop({
                 }}
                 className="text-ink hover:bg-pool-100 flex w-full items-center px-3 py-2 text-left"
               >
-                {describing ? 'Hide splash description' : 'Add splash description'}
+                {describing ? 'Hide page description' : 'Add page description'}
               </button>
             </li>
           </ul>

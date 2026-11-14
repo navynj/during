@@ -41,11 +41,13 @@ export function withPoolBadge(card: Card, joint: JointOnHome | undefined): Card 
     // In its pool's column there is no lane of mine to lend an emoji: the
     // mark falls back to the pool lane's (review), named by the pool.
     ...(joint.linkedLane === null && joint.poolLane
-      ? { lane: { icon: joint.poolLane.icon, name: name ?? 'A pool you left' } }
+      ? { lane: { icon: joint.poolLane.icon, name: name ?? 'A diary you left' } }
       : {}),
     ...(joint.poolLane
       ? {
-          origins: [originTag(name ?? 'A pool you left', joint.poolLane.icon, joint.poolLane.name)],
+          origins: [
+            originTag(name ?? 'A diary you left', joint.poolLane.icon, joint.poolLane.name),
+          ],
         }
       : {}),
   };

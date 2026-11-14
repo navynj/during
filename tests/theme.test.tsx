@@ -129,9 +129,9 @@ describe('the Theme tab on Home (0059)', () => {
     expect(swatch('pink').getAttribute('aria-checked')).toBe('true');
     await waitFor(() => expect(saved).toEqual([{ home: 'pink', mode: 'dark', everywhere: false }]));
     const ask = container.querySelector('[data-theme-everywhere-ask]')!;
-    expect(ask.textContent).toContain('Apply to all pools too? Only you will see it.');
+    expect(ask.textContent).toContain('Apply to all diaries too? Only you will see it.');
     expect(container.querySelector('[data-theme-everywhere]')!.textContent).toBe(
-      'Apply to all pools',
+      'Apply to all diaries',
     );
     // With the offer up, another colour still takes (the bug: it did nothing).
     fireEvent.click(swatch('mint'));
@@ -202,13 +202,13 @@ describe('the Theme tab in a pool (0059)', () => {
     );
     expect(container.querySelector('[data-theme-colors="pool"]')).toBeNull();
     const row = container.querySelector('[data-theme-pool-open]')!;
-    expect(row.textContent).toBe('Set default color for this Pool');
+    expect(row.textContent).toBe('Set default color for this diary');
     expect(row.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(row);
     expect(row.getAttribute('aria-expanded')).toBe('true');
     // Its heading and description inside, under the row: the label not said twice.
     const section = container.querySelector('[data-theme-pool]')!;
-    expect(section.textContent).toContain('Pool default color');
+    expect(section.textContent).toContain('Diary default color');
     expect(section.textContent).toContain('Everyone here sees it');
     fireEvent.click(
       container.querySelector('[data-theme-colors="pool"] [data-theme-swatch="mint"]')!,
@@ -281,7 +281,7 @@ describe('the Theme tab in a pool (0059)', () => {
       expect(container.querySelector('[data-theme-pool-swatch="mint"]')).not.toBeNull(),
     );
     const row = container.querySelector('[data-theme-pool-open]')!;
-    expect(row.textContent).toBe('Set default color for this Pool');
+    expect(row.textContent).toBe('Set default color for this diary');
     expect(row.querySelector('[data-theme-pool-swatch="mint"]')!.nextElementSibling!.tagName).toBe(
       'svg',
     );

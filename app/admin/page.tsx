@@ -44,8 +44,8 @@ export default async function AdminOverview({ searchParams }: PageProps<'/admin'
       query={withoutMe ? { me: 'out' } : {}}
     >
       <Section
-        title="Funnel, all pools"
-        note="Each membership counted once per pool. Owners are left out of Invited only, and count from Joined on, from their own join (or the pool's creation when they have none). Day N strict: any write in the pool or app open in the 24 hours starting N days after joining. Retained: any at all from day N on. Shown as yes/eligible: a member counts once the window can be answered. Opens only exist from the tracking start, so earlier returns rely on writes."
+        title="Funnel, all diaries"
+        note="Each membership counted once per diary. Owners are left out of Invited only, and count from Joined on, from their own join (or the diary's creation when they have none). Day N strict: any write in the diary or app open in the 24 hours starting N days after joining. Retained: any at all from day N on. Shown as yes/eligible: a member counts once the window can be answered. Opens only exist from the tracking start, so earlier returns rely on writes."
       >
         <FunnelTable
           rows={[
@@ -57,11 +57,11 @@ export default async function AdminOverview({ searchParams }: PageProps<'/admin'
       </Section>
 
       <Section
-        title={`Pools: ${active.length} active, ${inactive.length} inactive`}
-        note="Inactive: no splash, ripple, reply or reaction by anyone but you in the last 3 days. Your own writes do not count: you post to every pool."
+        title={`Diaries: ${active.length} active, ${inactive.length} inactive`}
+        note="Inactive: no page, note, reply or reaction by anyone but you in the last 3 days. Your own writes do not count: you post to every diary."
       >
         <Table
-          head={['Pool', 'Status', 'Last activity by others', 'Last activity (all)']}
+          head={['Diary', 'Status', 'Last activity by others', 'Last activity (all)']}
           rows={summaries.map((s) => [
             poolLink(s.pool.pool_id, s.pool.name),
             s.active ? 'active' : 'inactive',
@@ -74,8 +74,8 @@ export default async function AdminOverview({ searchParams }: PageProps<'/admin'
       </Section>
 
       <Section
-        title="Funnel per pool"
-        note="Link opens: visits to the pool's invite links, signed out included, one per browser per 30 minutes."
+        title="Funnel per diary"
+        note="Link opens: visits to the diary's invite links, signed out included, one per browser per 30 minutes."
       >
         <p className="mb-2 flex gap-4">
           <Link
@@ -92,7 +92,7 @@ export default async function AdminOverview({ searchParams }: PageProps<'/admin'
           </Link>
         </p>
         <Table
-          head={['Pool', 'Link opens', ...FUNNEL_HEAD]}
+          head={['Diary', 'Link opens', ...FUNNEL_HEAD]}
           rows={summaries.map((s) => [
             poolLink(s.pool.pool_id, s.pool.name),
             String(s.linkVisits),

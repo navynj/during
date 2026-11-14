@@ -111,7 +111,7 @@ describe('a ripple’s own day inside a range (0031)', () => {
     expect(done).toEqual({
       ok: false,
       reason: 'error',
-      message: 'That day is outside this splash’s range.',
+      message: 'That day is outside this page’s range.',
     });
   });
 

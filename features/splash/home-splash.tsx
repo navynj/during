@@ -160,7 +160,7 @@ export async function HomeSplash({ id }: { id: string }) {
           )
           .map((p) => ({
             poolId: p.poolId,
-            label: pools.find((x) => x.id === p.poolId)?.name ?? 'A pool you left',
+            label: pools.find((x) => x.id === p.poolId)?.name ?? 'A diary you left',
             count: threadCount(p.poolId, profile.id, others, responses.replies),
             off: !p.shared,
           }));

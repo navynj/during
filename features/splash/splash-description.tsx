@@ -63,7 +63,7 @@ export function SplashDescription({
           maxLength={2000}
           aria-label="Description"
           data-splash-description-field
-          placeholder="Describe this splash"
+          placeholder="Describe this page"
           onChange={(event) => setDraft(event.target.value)}
           onBlur={() => close(true)}
           onKeyDown={(event) => {

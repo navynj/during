@@ -71,7 +71,7 @@ export function NotificationSettingsSheet({
         />
       ) : loaded.kind === 'home' ? (
         loaded.pools.length === 0 ? (
-          <p className="text-pool-500 mt-6 text-sm">You are in no Pool yet.</p>
+          <p className="text-pool-500 mt-6 text-sm">You are in no diary yet.</p>
         ) : (
           <HomePools pools={loaded.pools} />
         )
@@ -99,7 +99,7 @@ function HomePools({
         tabs={pools.map((pool) => ({ key: pool.poolId, label: pool.name }))}
         current={current}
         onSelect={setPicked}
-        label="Pools"
+        label="Diaries"
         data="notification-pool"
       />
       {pools.map((pool) => (

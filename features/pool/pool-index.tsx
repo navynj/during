@@ -32,17 +32,17 @@ export function PoolIndex({ poolIds }: { poolIds: string[] }) {
       >
         {poolIds.length === 0 ? (
           <div data-no-pool className="flex flex-1 flex-col justify-center gap-6 px-8 text-white">
-            <h1 className="text-3xl/tight font-semibold">No Pool yet</h1>
+            <h1 className="text-3xl/tight font-semibold">No diary yet</h1>
             <p className="text-sm/relaxed text-white/80">
-              A Pool is a space for the people you keep records with. Only the lanes you connect
-              flow into it; everything else stays yours.
+              A diary is a space for the people you keep records with. Only the categories you
+              connect flow into it; everything else stays yours.
             </p>
             <Link
               href="/pool/new"
               data-open-new-pool
               className="text-main-900 flex h-14 items-center justify-center rounded-full bg-white font-semibold"
             >
-              Open a new Pool
+              New shared diary
             </Link>
           </div>
         ) : (

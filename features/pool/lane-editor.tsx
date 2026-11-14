@@ -93,7 +93,7 @@ export function LaneEditor({
             onClick={() => setEditing('new')}
             className="border-pool-200 text-pool-500 h-12 rounded-2xl border border-dashed px-5 text-sm"
           >
-            + Add lane
+            + Add category
           </button>
         )}
       </div>
@@ -125,7 +125,7 @@ export function LaneEditor({
           onClick={clearAll}
           className="text-pool-500 self-start text-sm"
         >
-          Delete all lanes
+          Delete all categories
         </button>
       ) : cleared ? (
         <button
@@ -165,7 +165,7 @@ function LaneForm({
   return (
     <div data-lane-form className="border-pool-200 flex flex-col gap-3 rounded-2xl border p-4">
       <div className="flex items-center gap-3">
-        <EmojiInput value={icon} onChange={setIcon} label="Lane emoji" placeholder="🙂" />
+        <EmojiInput value={icon} onChange={setIcon} label="Category emoji" placeholder="🙂" />
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
@@ -173,8 +173,8 @@ function LaneForm({
             if (event.key === 'Enter' && !event.nativeEvent.isComposing) save();
           }}
           maxLength={40}
-          aria-label="Lane name"
-          placeholder="Lane name"
+          aria-label="Category name"
+          placeholder="Category name"
           className="border-pool-200 text-ink h-12 min-w-0 flex-1 rounded-xl border px-3 outline-none"
         />
       </div>
@@ -182,8 +182,8 @@ function LaneForm({
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         maxLength={80}
-        aria-label="Lane description"
-        placeholder="A line about this lane (optional)"
+        aria-label="Category description"
+        placeholder="A line about this category (optional)"
         className="border-pool-200 text-ink h-11 rounded-xl border px-3 text-sm outline-none"
       />
       <div className="flex items-center justify-between text-sm">

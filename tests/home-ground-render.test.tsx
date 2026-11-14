@@ -520,8 +520,8 @@ describe('the lane grid', () => {
     window.history.replaceState(null, '', '/');
     cleanup();
     const again = ground();
-    fireEvent.click(again.getByLabelText('New lane'));
-    expect(again.getByRole('dialog', { name: 'New lane' })).toBeTruthy();
+    fireEvent.click(again.getByLabelText('New category'));
+    expect(again.getByRole('dialog', { name: 'New category' })).toBeTruthy();
     void getByLabelText;
     void getByRole;
   });
@@ -669,7 +669,7 @@ describe('the diving board, a staircase', () => {
     fireEvent.click(topCard(container).querySelector('[data-card-menu-button]')!);
     fireEvent.click(getByRole('menuitem', { name: 'Delete' }));
     expect(container.querySelector('[data-card-delete-confirm]')!.textContent).toContain(
-      'Deletes the post and its 1 block.',
+      'Deletes the page and its 1 block.',
     );
     fireEvent.click(getByText('Delete', { selector: '[data-card-delete-confirm] button' }));
     await waitFor(() => expect(container.querySelector('[data-lane-piece="late"]')).toBeNull());
@@ -970,7 +970,7 @@ describe('the header and the Date view (round 3)', () => {
       [...header.querySelectorAll('[data-place-tabs] [data-view-option]')].map(
         (o) => o.textContent,
       ),
-    ).toEqual(['Calendar', 'Lane', 'List']);
+    ).toEqual(['Calendar', 'Category', 'List']);
     const lanes = header.querySelector('[data-view-option="lane"]')!;
     expect(lanes.getAttribute('aria-selected')).toBe('true');
     expect(lanes.className).toContain('bg-white');
@@ -1195,9 +1195,9 @@ describe('Just mine on Home (0014)', () => {
   });
 
   it('reads "A pool you left" with a neutral tile once the pool is gone from me', () => {
-    const { container } = homeWith([{ id: 'pool:p-ours', name: 'A pool you left', monogram: '' }]);
+    const { container } = homeWith([{ id: 'pool:p-ours', name: 'A diary you left', monogram: '' }]);
     const header = container.querySelector('[data-lane-header="pool:p-ours"]')!;
-    expect(header.textContent).toContain('A pool you left');
+    expect(header.textContent).toContain('A diary you left');
     expect(header.querySelector('[data-monogram=""]')).not.toBeNull();
   });
 });

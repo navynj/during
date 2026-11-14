@@ -157,7 +157,7 @@ export function InputSheet({
 
       <section
         role="dialog"
-        aria-label={isEdit ? 'Edit this ripple' : 'Drop a ripple'}
+        aria-label={isEdit ? 'Edit this note' : 'Drop a note'}
         className={`sheet-rise bg-pool-100 relative mx-auto flex max-h-[88vh] w-full ${COLUMN_MAX_WIDTH} flex-col overflow-hidden rounded-t-[32px]`}
       >
         {/* The post's declared lane is where the selection starts (H21f). */}

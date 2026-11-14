@@ -97,7 +97,7 @@ export function ShareToRow({
                 data-share-lane={lane.id}
                 aria-haspopup="dialog"
                 aria-expanded={choosing === pool.id}
-                aria-label={`Lane in ${pool.name}: ${lane.name}. Change it`}
+                aria-label={`Category in ${pool.name}: ${lane.name}. Change it`}
                 onSelect={() => setChoosing(choosing === pool.id ? null : pool.id)}
                 trailing={<ChevronDown aria-hidden size={12} className="-mr-0.5 opacity-80" />}
                 className="min-w-0"

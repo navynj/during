@@ -591,7 +591,7 @@ describe('converting from the edit sheet (0022, 0033)', () => {
   it('from Home: turning a pool off in Audience saves it off', async () => {
     const view = await sheet(MINE_SHARED, null);
     const chip = view.container.querySelector('[data-audience-chip]') as HTMLButtonElement;
-    expect(chip.textContent).toBe('2 pools');
+    expect(chip.textContent).toBe('2 diaries');
     fireEvent.click(chip);
     fireEvent.click(view.getByRole('switch', { name: 'Shared to Other Pool' }));
     expect(chip.textContent).toBe('Our Pool · 🎲 Games');

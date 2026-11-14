@@ -267,7 +267,7 @@ export function ownPoolColumn(poolId: string): string {
  * pool's column, never laneless (H24 release 2 leaves it no lane of its own).
  */
 export function inLeftPool(card: Card, poolId: string): Card {
-  return { ...card, column: ownPoolColumn(poolId), lane: { icon: null, name: 'A pool you left' } };
+  return { ...card, column: ownPoolColumn(poolId), lane: { icon: null, name: 'A diary you left' } };
 }
 
 /** The column a mark sits in: the pool's choice where there is one (H23), else its lane. */

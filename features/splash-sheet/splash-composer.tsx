@@ -429,7 +429,7 @@ export function SplashComposer({
           autoFocus
           rows={1}
           maxLength={2000}
-          placeholder="Describe this splash"
+          placeholder="Describe this page"
           aria-label="Description"
           data-compose-description-field
           className="text-ink placeholder:text-ink border-pool-100 -mt-2 w-full resize-none border-b pb-4 text-sm/relaxed outline-none placeholder:opacity-30"

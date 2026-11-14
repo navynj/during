@@ -40,7 +40,7 @@ export function MoveToHome({ move, onCancel }: { move: MoveHome; onCancel: () =>
     const made = await saveLane({ id: null, name: name.trim(), icon: icon.trim() });
     setSaving(false);
     if (!made.ok || !made.id) {
-      setMessage(made.ok ? 'That lane didn’t save. Try again.' : made.message);
+      setMessage(made.ok ? 'That category didn’t save. Try again.' : made.message);
       return;
     }
     move.onMove(made.id);
@@ -49,24 +49,24 @@ export function MoveToHome({ move, onCancel }: { move: MoveHome; onCancel: () =>
   return (
     <div
       role="alertdialog"
-      aria-label="Keep it in which of your lanes?"
+      aria-label="Keep it in which of your categories?"
       data-move-to-home
       className="bg-pool-100 flex flex-col gap-3 rounded-2xl p-4"
     >
-      <p className="text-ink text-sm font-semibold">Keep it in which of your lanes?</p>
+      <p className="text-ink text-sm font-semibold">Keep it in which of your categories?</p>
       <p className="text-pool-500 -mt-2 text-xs">
-        It stays shared everywhere it is now, and becomes a record of that lane.
+        It stays shared everywhere it is now, and becomes a record of that category.
       </p>
       {making ? (
         <div className="flex items-center gap-2">
-          <EmojiInput value={icon} onChange={setIcon} label="New lane icon" placeholder="🙂" />
+          <EmojiInput value={icon} onChange={setIcon} label="New category icon" placeholder="🙂" />
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={24}
-            aria-label="New lane name"
+            aria-label="New category name"
             data-move-new-lane-name
-            placeholder="Lane name"
+            placeholder="Category name"
             className="text-ink min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm outline-none"
           />
         </div>
@@ -84,7 +84,7 @@ export function MoveToHome({ move, onCancel }: { move: MoveHome; onCancel: () =>
             onClick={() => setMaking(true)}
             className="text-pool-500 h-9 shrink-0 text-sm"
           >
-            + New lane
+            + New category
           </button>
         </div>
       )}

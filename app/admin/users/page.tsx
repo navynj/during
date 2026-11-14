@@ -39,7 +39,7 @@ export default async function AdminUsers({ searchParams }: PageProps<'/admin/use
     >
       <Section
         title={`Users (${rows.length})`}
-        note="Sorted by last write, oldest first: people going quiet are at the top, and anyone who has not written yet above them. Records leave out the welcome splash every new account starts with."
+        note="Sorted by last write, oldest first: people going quiet are at the top, and anyone who has not written yet above them. Records leave out the welcome page every new account starts with."
       >
         <p className="text-pool-500 mb-1">{LOCKED_ON_USER_PAGES}</p>
         <p className="text-pool-500 mb-3">{PUSH_NOTE}</p>
@@ -61,7 +61,7 @@ export default async function AdminUsers({ searchParams }: PageProps<'/admin/use
           groups={[
             { label: '', span: 1 },
             { label: 'Timing', span: 3 },
-            { label: 'Pools', span: 1 },
+            { label: 'Diaries', span: 1 },
             { label: 'Records', span: 4 },
             { label: 'Push', span: 2 },
           ]}
@@ -70,10 +70,10 @@ export default async function AdminUsers({ searchParams }: PageProps<'/admin/use
             'Signed up',
             'Last seen',
             'Last write',
-            'In pools',
+            'In diaries',
             'Total',
             'Home only',
-            'Shared to 1 pool',
+            'Shared to 1 diary',
             'Shared to 2+',
             'Subscription',
             'Permission',

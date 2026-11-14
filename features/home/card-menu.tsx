@@ -128,7 +128,7 @@ export function CardMenu({
           className="bg-ink absolute top-full right-0 z-20 flex w-56 flex-col gap-2 rounded-xl px-3 py-2 text-sm text-white shadow-lg"
         >
           <p className="text-white/70">
-            Deletes the post and its {count} block{count === 1 ? '' : 's'}.
+            Deletes the page and its {count} block{count === 1 ? '' : 's'}.
           </p>
           <span className="flex gap-3">
             <button

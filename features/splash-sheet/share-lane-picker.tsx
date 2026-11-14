@@ -28,7 +28,7 @@ export function ShareLanePicker({
     <div
       data-share-lanes={pool.id}
       role="group"
-      aria-label={`Lane in ${pool.name}`}
+      aria-label={`Category in ${pool.name}`}
       className="flex flex-wrap gap-1.5"
     >
       {pool.lanes.map((lane) => (
@@ -47,8 +47,8 @@ export function ShareLanePicker({
   );
   if (!wide) {
     return (
-      <PoolSheet label={`Lane in ${pool.name}`} onClose={onClose}>
-        <SheetTitle>Lane in {pool.name}</SheetTitle>
+      <PoolSheet label={`Category in ${pool.name}`} onClose={onClose}>
+        <SheetTitle>Category in {pool.name}</SheetTitle>
         <div className="pb-8">{chips}</div>
       </PoolSheet>
     );

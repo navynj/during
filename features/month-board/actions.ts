@@ -51,7 +51,7 @@ export async function setBoardLayout(input: z.input<typeof Write>): Promise<Layo
       message:
         where === 'patch' || where === 'clear'
           ? 'That layout is out of range.'
-          : 'That splash is not known.',
+          : 'That page is not known.',
     };
   }
   const { splashId, poolId, patch, clear, view } = parsed.data;
@@ -69,7 +69,7 @@ export async function setBoardLayout(input: z.input<typeof Write>): Promise<Layo
       ok: false,
       message:
         error.code === '42501'
-          ? 'Only a current member of this Pool can change its layout.'
+          ? 'Only a current member of this diary can change its layout.'
           : error.code === '23514'
             ? 'That layout is out of range.'
             : 'The layout could not be saved.',
@@ -86,7 +86,7 @@ export async function revertToPoolLayout(
   view: BoardView = 'calendar',
 ): Promise<LayoutResult> {
   if (!Id.safeParse(splashId).success) {
-    return { ok: false, message: 'That splash is not known.' };
+    return { ok: false, message: 'That page is not known.' };
   }
   const supabase = await createClient();
   const { error } = await supabase

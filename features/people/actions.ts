@@ -145,7 +145,9 @@ export async function setPoolTheme(
     return {
       ok: false,
       message:
-        error.code === '42501' ? 'Only someone in this Pool can change its colour.' : error.message,
+        error.code === '42501'
+          ? 'Only someone in this diary can change its colour.'
+          : error.message,
     };
   }
   revalidatePath(poolPath(parsed.data.poolId));

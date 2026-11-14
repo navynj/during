@@ -26,7 +26,7 @@ export function SplashSheet({
   pool?: PoolScope | null;
 }) {
   return (
-    <SheetFrame label="Drop a splash" onClose={onClose} data={{ 'data-splash-sheet': '' }} footer>
+    <SheetFrame label="Add new page" onClose={onClose} data={{ 'data-splash-sheet': '' }} footer>
       <SplashComposer context={context} onDrop={onDrop} pool={pool} />
     </SheetFrame>
   );
