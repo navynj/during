@@ -88,8 +88,14 @@
   /* The grey ramp's surface step is surface-1 (H78h): every secondary fill — the
      splash sheet, settings, profile, admin rows — on the one light scale. */
   --theme-gray-100: var(--surface-1);
+  /* The card stack's edge chroma (H78i): Black's stays under the lavender test's 0.03. */
+  --edge-chroma: 0.05;
+}
+[data-theme='black'] {
+  --edge-chroma: 0.025;
 }
 [data-theme='blue'] {
+  --theme-hue: 264.7;
   --theme-900: #0507c9;
   --theme-gray-200: #d8dce8;
   --theme-gray-500: #6b79a3;
@@ -101,6 +107,7 @@
   --pastel-rule: #edf2fe;
 }
 [data-theme='red'] {
+  --theme-hue: 29.5;
   --theme-900: #d92d20;
   --pastel-tone: #f58880;
   --theme-pastel: #ffd1cd;
@@ -110,6 +117,7 @@
   --pastel-rule: #ffedeb;
 }
 [data-theme='orange'] {
+  --theme-hue: 41.7;
   --theme-900: #d9540f;
   --pastel-tone: #e29942;
   --theme-pastel: #fed6ad;
@@ -119,6 +127,7 @@
   --pastel-rule: #fbf0e4;
 }
 [data-theme='yellow'] {
+  --theme-hue: 78.1;
   --theme-900: #c08600;
   --pastel-tone: #d0a535;
   --theme-pastel: #f2dca9;
@@ -128,6 +137,7 @@
   --pastel-rule: #f8f1e3;
 }
 [data-theme='green'] {
+  --theme-hue: 154.8;
   --theme-900: #14804a;
   --pastel-tone: #5cc486;
   --theme-pastel: #baecca;
@@ -137,6 +147,7 @@
   --pastel-rule: #e8f6ec;
 }
 [data-theme='lime'] {
+  --theme-hue: 134.4;
   --theme-900: #4e8a1a;
   --pastel-tone: #93bb5a;
   --theme-pastel: #d1e8b6;
@@ -146,6 +157,7 @@
   --pastel-rule: #eef5e6;
 }
 [data-theme='sky'] {
+  --theme-hue: 243.3;
   --theme-900: #0b7fc2;
   --pastel-tone: #59b5ef;
   --theme-pastel: #90c5ea;
@@ -155,6 +167,7 @@
   --pastel-rule: #eef6fc;
 }
 [data-theme='mint'] {
+  --theme-hue: 189.1;
   --theme-900: #14857f;
   --pastel-tone: #4dbcbe;
   --theme-pastel: #a6e3e3;
@@ -164,6 +177,7 @@
   --pastel-rule: #f2fbfb;
 }
 [data-theme='purple'] {
+  --theme-hue: 287.3;
   --theme-900: #6338d8;
   --pastel-tone: #a18aeb;
   --theme-pastel: #d6cefc;
@@ -173,6 +187,7 @@
   --pastel-rule: #f2f0ff;
 }
 [data-theme='pink'] {
+  --theme-hue: 355.6;
   --theme-900: #e5318c;
   --pastel-tone: #de8acf;
   --theme-pastel: #fbcdf2;
@@ -182,6 +197,7 @@
   --pastel-rule: #fbedf8;
 }
 [data-theme='brown'] {
+  --theme-hue: 62.8;
   --theme-900: #8a5a2b;
   --pastel-tone: #b4967a;
   --theme-pastel: #dcc8b4;
@@ -191,6 +207,7 @@
   --pastel-rule: #f6f1ec;
 }
 [data-theme='black'] {
+  --theme-hue: 284.1;
   --theme-900: #161621;
   --pastel-tone: #a6a6a6;
   --theme-pastel: #dadada;
@@ -513,15 +530,21 @@ body {
 }
 /* A card's edge on the white ground: a hairline in the faintest tint. */
 [data-mode='pastel'] .water-ground .surface-edge {
-  box-shadow: 0 0 0 1px var(--pastel-rule);
+  box-shadow: 0 0 0 1px oklch(from var(--pastel-rule) l var(--edge-chroma) var(--theme-hue));
 }
 /* A filled label in its first style takes the pastel, grey words on it. */
 [data-mode='pastel'] .water-ground .label-fill {
   background-color: var(--theme-pastel);
   color: var(--pastel-ink);
 }
+/*
+ * The card stack's edge (H78i): the border's own lightness, the theme's hue,
+ * more chroma than the surfaces — so the edge carries the colour and stays a
+ * light line. Only the stack's and the page panel's cards; every other
+ * hairline keeps the plain border.
+ */
 [data-mode='light'] .water-ground .surface-edge {
-  box-shadow: 0 0 0 1px var(--color-pool-200);
+  box-shadow: 0 0 0 1px oklch(from var(--color-pool-200) l var(--edge-chroma) var(--theme-hue));
 }
 /* Secondary surfaces on the light ground (H78h): surface-1, words in the
    text tokens — the colour for what is chosen, muted for the rest. */

@@ -4,15 +4,17 @@ import { expect, test, type Page } from '@playwright/test';
 import { asAdmin } from '../tests/as-user';
 import { splashPath } from '@/lib/routes';
 
+import { isLavender } from './lavender';
+
 config({ path: '.env.local', quiet: true });
 
 /**
  * Black + Light draws no blue (H78, review): the card stack once showed
  * lavender — its back cards, the top card's edge, its ••• — from a grey
  * ramp tinted blue whatever the theme. Every colour the stack and a page's
- * panel compute is read here, and none may sit in the blue–violet hues.
- * Near-black ink (#161621, #161622) carries a trace of blue by design and
- * reads as black, so a colour counts only past a chroma of 12/255. One
+ * panel compute is read here, and none may read as blue or violet. Ink and
+ * the cool greys carry a trace of blue by design and read as grey: a colour
+ * counts only past an OKLCH chroma of 0.03 (`e2e/lavender.ts`). One
  * throwaway person, removed after.
  */
 const admin = asAdmin();
@@ -85,12 +87,11 @@ test.afterAll(async () => {
   if (me) await admin.auth.admin.deleteUser(me);
 });
 
-/** Every computed colour under `selector` with a blue or violet hue (200–280°), as "prop value". */
-function blueIn(page: Page, selector: string): Promise<string[]> {
-  return page.evaluate((selector) => {
+/** Every computed colour under `selector` that reads blue or violet (`isLavender`), as "prop value". */
+async function blueIn(page: Page, selector: string): Promise<string[]> {
+  const seen = await page.evaluate((selector) => {
     const found = new Set<string>();
-    const roots = [...document.querySelectorAll(selector)];
-    for (const root of roots) {
+    for (const root of document.querySelectorAll(selector)) {
       for (const el of [root, ...root.querySelectorAll('*')]) {
         // Google's own logo keeps its brand colours (its button, sign-in).
         if (el.closest('[data-google-sign-in] svg')) continue;
@@ -104,29 +105,21 @@ function blueIn(page: Page, selector: string): Promise<string[]> {
           'stroke',
           'box-shadow',
         ]) {
-          const value = style.getPropertyValue(prop);
-          for (const m of value.matchAll(
-            /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/g,
-          )) {
-            const [r, g, b] = [Number(m[1]), Number(m[2]), Number(m[3])];
+          for (const m of style
+            .getPropertyValue(prop)
+            .matchAll(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/g)) {
             if (m[4] !== undefined && Number(m[4]) === 0) continue;
-            const max = Math.max(r, g, b);
-            const chroma = max - Math.min(r, g, b);
-            if (chroma <= 12) continue;
-            let hue =
-              max === r
-                ? ((g - b) / chroma) % 6
-                : max === g
-                  ? (b - r) / chroma + 2
-                  : (r - g) / chroma + 4;
-            hue = (hue * 60 + 360) % 360;
-            if (hue >= 200 && hue <= 280) found.add(`${prop} ${m[0]}`);
+            found.add(`${prop} ${m[0]}`);
           }
         }
       }
     }
     return [...found];
   }, selector);
+  return seen.filter((entry) => {
+    const [r, g, b] = entry.match(/[\d.]+/g)!.map(Number);
+    return isLavender(r, g, b);
+  });
 }
 
 test('Black + Light: the card stack and a page panel draw no blue', async ({
