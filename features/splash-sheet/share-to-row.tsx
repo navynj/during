@@ -62,7 +62,7 @@ export function ShareToRow({
                 aria-pressed={false}
                 disabled={!start}
                 onClick={() => onTurn(pool.id, start)}
-                className="border-pool-200 text-ink inline-flex h-8 max-w-[14rem] items-center gap-1.5 rounded-full border px-3 text-sm disabled:opacity-40"
+                className="bg-pool-100 hover:text-ink inline-flex max-w-[14rem] items-center gap-1 rounded-full px-2.5 py-1 text-xs text-(--text-inactive) disabled:opacity-40"
               >
                 {face}
                 <span className="truncate">{pool.name}</span>
@@ -74,7 +74,7 @@ export function ShareToRow({
               key={pool.id}
               data-share-pool={pool.id}
               data-on=""
-              className="bg-ink inline-flex h-8 max-w-[18rem] items-center gap-1.5 rounded-full pr-1 text-sm text-white"
+              className="bg-ink inline-flex max-w-[18rem] items-center gap-1 rounded-full pr-1 text-xs text-white"
             >
               <button
                 type="button"
@@ -84,7 +84,7 @@ export function ShareToRow({
                   setChoosing(null);
                   onTurn(pool.id, null);
                 }}
-                className="inline-flex min-w-0 items-center gap-1.5 py-1 pl-3"
+                className="inline-flex min-w-0 items-center gap-1 py-1 pl-2.5"
               >
                 {face}
                 <span className="truncate">{pool.name}</span>

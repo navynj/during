@@ -73,7 +73,7 @@ export function AudienceChip({
     return (
       <>
         <span data-audience-private className="inline-flex shrink-0 items-center gap-2">
-          <span className="bg-pool-100 text-ink inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm">
+          <span className="bg-pool-100 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-(--text-inactive)">
             <Lock aria-hidden size={13} className="text-pool-500 shrink-0" />
             Only me
           </span>
@@ -98,9 +98,12 @@ export function AudienceChip({
         data-audience-chip
         aria-label={`Audience: ${chipLabel(on, pools)}`}
         onClick={() => setOpen(true)}
-        className="border-pool-200 text-ink inline-flex h-8 max-w-[12rem] shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm"
+        // As Share to's chip (H78m): ink when shared, surface-1 when not.
+        className={`inline-flex max-w-[12rem] shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
+          on.length > 0 ? 'bg-ink text-white' : 'bg-pool-100 hover:text-ink text-(--text-inactive)'
+        }`}
       >
-        <Users aria-hidden size={14} className="text-pool-500 shrink-0" />
+        <Users aria-hidden size={12} className="shrink-0 opacity-70" />
         <span className="truncate">{chipLabel(on, pools)}</span>
       </button>
       {sheet}
@@ -235,6 +238,7 @@ function AudienceSheet({
                   <Switch
                     on={on}
                     disabled={pool.id === locked}
+                    tone="ink"
                     label={`Shared to ${pool.name}`}
                     onChange={(next) => {
                       if (!next) {

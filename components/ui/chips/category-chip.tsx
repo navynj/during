@@ -39,7 +39,7 @@ export function CategoryChip({
       // chip the size of a button showed three of them before scrolling.
       className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors ${
         onInk
-          ? 'bg-white/20 text-white hover:bg-white/30'
+          ? 'bg-white/15 text-white hover:bg-white/25'
           : selected
             ? 'bg-(--accent-fill) text-(--accent-contrast)'
             : 'bg-pool-100 hover:text-ink text-(--text-inactive)'
