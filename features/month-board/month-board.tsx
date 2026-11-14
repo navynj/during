@@ -482,7 +482,7 @@ export function MonthBoard({
               data-board-span-option={option}
               onClick={() => switchSpan(option)}
               // On the water, white carries what is chosen (H21c), as the header's toggle.
-              className={`rounded-full px-3 py-1 ${span === option ? 'text-main-900 bg-white' : 'text-white/70'}`}
+              className={`cursor-pointer rounded-full px-3 py-1 ${span === option ? 'text-main-900 bg-white' : 'text-white/70'}`}
             >
               {option === 'week' ? 'Week' : 'Month'}
             </button>

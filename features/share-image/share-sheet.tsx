@@ -91,7 +91,7 @@ export function ShareSheet({
             data-share-span={option.span}
             onClick={() => setSpan(option.span)}
             // Selection takes the accent (H78j).
-            className={`rounded-full px-4 py-2 text-sm font-medium ${span === option.span ? 'bg-(--accent-fill) text-(--accent-contrast)' : 'bg-pool-100 hover:text-ink text-(--text-inactive)'}`}
+            className={`cursor-pointer rounded-full px-4 py-2 text-sm font-medium ${span === option.span ? 'bg-(--accent-fill) text-(--accent-contrast)' : 'bg-pool-100 text-(--text-inactive)'}`}
           >
             {option.name}
           </button>

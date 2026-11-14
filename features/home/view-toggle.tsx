@@ -53,7 +53,7 @@ export function SegmentedToggle<V extends string>({
             aria-selected={selected}
             data-view-option={option.value}
             onClick={() => onChange(option.value)}
-            className={`flex-1 rounded-full px-3 py-1.5 ${selected ? 'text-main-900 bg-white' : 'text-white/70'}`}
+            className={`flex-1 cursor-pointer rounded-full px-3 py-1.5 ${selected ? 'text-main-900 bg-white' : 'text-white/70'}`}
           >
             {option.label}
           </button>

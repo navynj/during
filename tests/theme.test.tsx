@@ -107,6 +107,11 @@ describe('the Theme tab on Home (0059)', () => {
     expect(container.querySelector('[data-theme-mode="dark"]')!.className).toContain(
       'bg-(--accent-fill)',
     );
+    // An inactive segment keeps text-inactive under the pointer (H78u).
+    const light = container.querySelector('[data-theme-mode="light"]')!.className;
+    expect(light).toContain('text-(--text-inactive)');
+    expect(light).not.toContain('hover:');
+    expect(light).toContain('cursor-pointer');
   });
 
   it('stands the swatches and the mode on their own: no "My color" or "Mode" label (H43)', () => {

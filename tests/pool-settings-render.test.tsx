@@ -321,6 +321,9 @@ describe('the pool settings sheet’s shape (review)', () => {
     expect(tab('pool').className).toContain('text-(--accent)');
     expect(tab('pool').querySelector('.bg-\\(--accent\\)')).not.toBeNull();
     expect(tab('theme').className).toContain('text-(--text-inactive)');
+    // No hover colour on an inactive tab, the pointer kept (H78u).
+    expect(tab('theme').className).not.toContain('hover:');
+    expect(tab('theme').className).toContain('cursor-pointer');
     // Photo and name narrow at the left, the lanes wide at the right.
     const columns = pool.container.querySelector<HTMLElement>('[data-settings-pool]')!;
     expect(columns.className).toContain('lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]');

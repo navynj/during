@@ -240,7 +240,7 @@ function Modes({
             disabled={disabled}
             data-theme-mode={mode}
             onClick={() => onPick(mode)}
-            className={`flex-1 rounded-full py-1.5 ${on ? 'bg-(--accent-fill) text-(--accent-contrast)' : 'hover:text-ink text-(--text-inactive)'}`}
+            className={`flex-1 cursor-pointer rounded-full py-1.5 ${on ? 'bg-(--accent-fill) text-(--accent-contrast)' : 'text-(--text-inactive)'}`}
           >
             {label}
           </button>

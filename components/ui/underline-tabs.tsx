@@ -36,8 +36,8 @@ export function UnderlineTabs<K extends string>({
             aria-selected={on}
             {...{ [`data-${data}`]: tab.key }}
             onClick={() => onSelect(tab.key)}
-            className={`relative flex h-10 shrink-0 items-center px-3 text-sm font-semibold ${
-              on ? 'text-(--accent)' : 'hover:text-ink text-(--text-inactive)'
+            className={`relative flex h-10 shrink-0 cursor-pointer items-center px-3 text-sm font-semibold ${
+              on ? 'text-(--accent)' : 'text-(--text-inactive)'
             }`}
           >
             {tab.label}

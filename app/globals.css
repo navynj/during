@@ -625,18 +625,12 @@ body {
 /*
  * An inactive label in a tab bar or a segmented control (H78l): the accent's
  * hue at more chroma than muted text, a little lighter, 4.5:1 on surface-1
- * and on pastel's track in every theme; the text colour under a hovering
- * pointer.
+ * and on pastel's track in every theme. It stays text-inactive under a
+ * hovering pointer until chosen (H78u).
  */
 [data-mode='light'] .water-ground .tint-1 [aria-selected='false'],
 [data-mode='pastel'] .water-ground .tint-1 [aria-selected='false'][aria-selected] {
   color: var(--text-inactive);
-}
-@media (hover: hover) {
-  [data-mode='light'] .water-ground .tint-1 [aria-selected='false']:hover,
-  [data-mode='pastel'] .water-ground .tint-1 [aria-selected='false']:hover {
-    color: var(--color-ink);
-  }
 }
 /* A face with no photo: surface-1, muted initials — white on a surface-1
    card, so it keeps its circle. */
