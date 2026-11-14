@@ -65,7 +65,7 @@ export function PinnedCards({
                 type="button"
                 data-pinned-card={card.splash.id}
                 onClick={() => onPick(card.splash.id)}
-                className="flex w-full flex-col gap-1 rounded-[28px] bg-white/20 px-5 py-4 text-left text-white"
+                className="tint-1 flex w-full flex-col gap-1 rounded-[28px] bg-white/20 px-5 py-4 text-left text-white"
               >
                 {lane ? (
                   <span data-pinned-lane className="flex min-w-0 items-center gap-1 text-sm">

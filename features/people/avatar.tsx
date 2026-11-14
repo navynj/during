@@ -45,7 +45,7 @@ export function Avatar({
     );
   }
   return (
-    <span aria-hidden className={className} style={style}>
+    <span aria-hidden data-avatar-blank className={className} style={style}>
       {person ? initialsOf(person.name) : initials}
     </span>
   );

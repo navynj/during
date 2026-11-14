@@ -41,7 +41,7 @@ export function SegmentedToggle<V extends string>({
       role="tablist"
       aria-label="View"
       data-view-toggle
-      className="flex w-full rounded-full bg-white/15 p-0.5 text-sm font-medium"
+      className="tint-1 flex w-full rounded-full bg-white/15 p-0.5 text-sm font-medium"
     >
       {options.map((option) => {
         const selected = option.value === view;

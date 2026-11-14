@@ -41,7 +41,7 @@ export function LayoutPanel({
     <section
       data-layout-panel={controls.card.splash.id}
       aria-label="Layout"
-      className="mt-3 rounded-[24px] bg-white/10 text-white"
+      className="tint-1 mt-3 rounded-[24px] bg-white/10 text-white"
     >
       <button
         type="button"

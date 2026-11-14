@@ -52,6 +52,12 @@ const MIN_CARD_WIDTH_PX = 320;
  * glass reads as (`upSolid`); its words white at 60%.
  */
 const DOWN_TINTS = [0, TINT_STEP, TINT_STEP * 2, TINT_STEP * 3] as const;
+/**
+ * On the light ground the steps are much lighter (H78h): surface-2 and
+ * surface-3 (7% and 9% of the theme colour in white), then one step more.
+ * The dark ground keeps the 8% steps above, which read against the water.
+ */
+export const LIGHT_TINTS = [0, 0.07, 0.09, 0.11] as const;
 const UP_ALPHA = 0.2;
 
 /**
@@ -100,6 +106,8 @@ export function seat(
   base = themeHex(DEFAULT_THEME.color),
   /** The read card's solid (upSolid), when glass is not drawn. */
   solid = upSolid(base, 'dark'),
+  /** The steps below the top card: DOWN_TINTS, or LIGHT_TINTS on the light ground. */
+  tints: readonly number[] = DOWN_TINTS,
 ): {
   x: number;
   y: number;
@@ -124,13 +132,9 @@ export function seat(
   else opacity = steps <= stair.up ? 1 : Math.max(0, 1 - (steps - stair.up) * 2);
   if (d >= 0) {
     // The fill, read off the ramp between its two nearest steps.
-    const at = Math.min(steps, DOWN_TINTS.length - 1);
+    const at = Math.min(steps, tints.length - 1);
     const low = Math.floor(at);
-    const tint = lerp(
-      DOWN_TINTS[low],
-      DOWN_TINTS[Math.min(low + 1, DOWN_TINTS.length - 1)],
-      at - low,
-    );
+    const tint = lerp(tints[low], tints[Math.min(low + 1, tints.length - 1)], at - low);
     return { x, y, scale, opacity, background: face(tint, base), ink: 1 };
   }
   const rise = Math.min(1, steps);
@@ -463,26 +467,30 @@ function Step({
   const frostFill = frostGlass && !(moving && (from < 0 || to < 0));
   const { hex, theme } = useTheme();
   const solid = upSolid(hex, theme.mode);
+  const tints = theme.mode === 'light' ? LIGHT_TINTS : DOWN_TINTS;
 
   // The card's distance from the top as the stack's depth moves.
   const d = useTransform(p, (v) => (reducedMotion ? to : lerp(from, to, clamp01(v))));
-  const y = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid).y);
-  const x = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid).x);
-  const scale = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid).scale);
+  const y = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).y);
+  const x = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).x);
+  const scale = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).scale);
   const opacity = useTransform([d, p], ([v, pv]) => {
-    const at = seat(v as number, stair, frostFill, hex, solid).opacity;
+    const at = seat(v as number, stair, frostFill, hex, solid, tints).opacity;
     if (!reducedMotion || !moving) return at;
     // Reduced motion: the old top fades out as the new one fades in.
     if (from === 0) return at * (1 - clamp01(pv as number));
     if (to === 0) return at * clamp01(pv as number);
     return at;
   });
-  const background = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid).background);
+  const background = useTransform(
+    d,
+    (v) => seat(v, stair, frostFill, hex, solid, tints).background,
+  );
   // A card moving to or from the top carries both faces and crossfades them
   // on its distance from the top, so nothing switches when it lands.
   const fullOpacity = useTransform(d, (v) => 1 - clamp01(Math.abs(v)));
   const edgeOpacity = useTransform(d, (v) => clamp01(Math.abs(v)));
-  const inkOpacity = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid).ink);
+  const inkOpacity = useTransform(d, (v) => seat(v, stair, frostFill, hex, solid, tints).ink);
   // Nearer the top, nearer the eye; a card rising from below over one sliding up.
   const zIndex = useTransform(d, (v) => Math.round((30 - Math.abs(v)) * 10) + (v >= 0 ? 1 : 0));
 

@@ -471,7 +471,7 @@ export function MonthBoard({
         <div
           role="tablist"
           aria-label="Board span"
-          className="flex rounded-full bg-white/15 p-0.5 text-xs font-medium"
+          className="tint-1 flex rounded-full bg-white/15 p-0.5 text-xs font-medium"
         >
           {(['week', 'month'] as const).map((option) => (
             <button

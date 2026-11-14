@@ -35,7 +35,7 @@
   /* Gray ramp — structure */
   /* The grey ramp follows the theme (H78): see [data-theme] below. The
      fallbacks are Blue's own, the ramp as it was. */
-  --color-pool-100: var(--theme-gray-100, #f1f3f7); /* surfaces */
+  --color-pool-100: var(--theme-gray-100, #f2f3fc); /* surfaces */
   --color-pool-200: var(--theme-gray-200, #d8dce8); /* deeper surfaces, dividers, lane ropes */
   --color-pool-500: var(--theme-gray-500, #6b79a3); /* muted and secondary text */
 
@@ -73,13 +73,24 @@
  * Muted words clear 4.5:1 on white in every theme.
  */
 [data-theme] {
-  --theme-gray-100: color-mix(in srgb, var(--theme-900) 4%, #f2f2f2);
   --theme-gray-200: color-mix(in srgb, var(--theme-900) 8%, #dadada);
   --theme-gray-500: color-mix(in srgb, var(--theme-900) 18%, #6a6a6a);
+  /*
+   * Secondary surfaces on the light ground (H78h): the theme colour mixed
+   * into white at a very low amount — tab tracks, the pinned card, the
+   * Layout panel, a face with no photo (1); the stack's back cards (2, 3).
+   * They were white at 15–25% over the swapped ground: 15–25% of the
+   * colour itself, heavy grey on Black and lavender on Blue.
+   */
+  --surface-1: color-mix(in srgb, var(--theme-900) 5%, #ffffff);
+  --surface-2: color-mix(in srgb, var(--theme-900) 7%, #ffffff);
+  --surface-3: color-mix(in srgb, var(--theme-900) 9%, #ffffff);
+  /* The grey ramp's surface step is surface-1 (H78h): every secondary fill — the
+     splash sheet, settings, profile, admin rows — on the one light scale. */
+  --theme-gray-100: var(--surface-1);
 }
 [data-theme='blue'] {
   --theme-900: #0507c9;
-  --theme-gray-100: #f1f3f7;
   --theme-gray-200: #d8dce8;
   --theme-gray-500: #6b79a3;
   --pastel-tone: #8ba6ff;
@@ -511,6 +522,30 @@ body {
 }
 [data-mode='light'] .water-ground .surface-edge {
   box-shadow: 0 0 0 1px var(--color-pool-200);
+}
+/* Secondary surfaces on the light ground (H78h): surface-1, words in the
+   text tokens — the colour for what is chosen, muted for the rest. */
+[data-mode='light'] .water-ground .tint-1 {
+  background-color: var(--surface-1);
+}
+[data-mode='light'] .water-ground .tint-1 [aria-selected='false'],
+[data-mode='light'] .water-ground .tint-1 [class*='text-white/'] {
+  color: var(--color-pool-500);
+}
+/* A face with no photo: surface-1, muted initials — white on a surface-1
+   card, so it keeps its circle. */
+[data-mode='light'] .water-ground [data-avatar-blank] {
+  background-color: var(--surface-1);
+  color: var(--color-pool-500);
+}
+[data-mode='light'] .water-ground .tint-1 [data-avatar-blank] {
+  background-color: #ffffff;
+}
+/* A diary's tile with no photo: surface-1, muted letters, the plain border. */
+[data-mode='light'] .water-ground span[data-monogram] {
+  background-color: var(--surface-1);
+  color: var(--color-pool-500);
+  border-color: var(--color-pool-200);
 }
 /* An ink fill on the light ground — a label in its ink style, a menu —
    keeps white words: the swap's white is the theme colour, which on a dark
