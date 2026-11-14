@@ -48,7 +48,7 @@ import { LAYOUT_SAVE_MS, useLayoutDrafts } from '@/features/month-board/use-layo
 import { ThemeProvider } from '@/features/people/theme-provider';
 import { summarizeSplash, type Splash } from '@/features/splash/summary';
 import type { MyCategory } from '@/lib/queries/profile';
-import { DEFAULT_THEME } from '@/lib/theme';
+import type { ThemeMode } from '@/lib/theme';
 import { written } from './written-on';
 
 const TZ = 'America/Vancouver';
@@ -128,9 +128,10 @@ const TWO = [
 ];
 
 /** Home, on a phone in its edit mode (review, 2026-10-31) unless `editMode` is false. */
-function home(cards: Card[] = TWO, mode = DEFAULT_THEME.mode, { editMode = true } = {}) {
+// The blue water these were written on, named, not the app's default (H78x).
+function home(cards: Card[] = TWO, mode: ThemeMode = 'dark', { editMode = true } = {}) {
   const view = render(
-    <ThemeProvider initial={{ home: DEFAULT_THEME.color, mode, everywhere: false }}>
+    <ThemeProvider initial={{ home: 'blue', mode, everywhere: false }}>
       <InputSheetProvider>
         <HomeGround
           cards={cards}
@@ -642,7 +643,7 @@ describe('direct manipulation: the page around it', () => {
   });
 
   it('on a phone, a tap opens the record’s sheet: no flip, no handles (review, 2026-10-31)', () => {
-    const { container } = home(TWO, DEFAULT_THEME.mode, { editMode: false });
+    const { container } = home(TWO, 'dark', { editMode: false });
     fireEvent.click(label(container, 's1'));
     expect(pushed).toEqual(['/splash/s1']);
     expect(q(container, '[data-stack-card="s2"]').dataset.stair).toBe('top');
@@ -651,7 +652,7 @@ describe('direct manipulation: the page around it', () => {
   });
 
   it('on a phone, edit mode puts Done editing in the stack’s place; a tap edits any piece at once', () => {
-    const { container } = home(TWO, DEFAULT_THEME.mode, { editMode: false });
+    const { container } = home(TWO, 'dark', { editMode: false });
     const toggle = q(container, '[data-board-edit-mode]');
     expect(toggle.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(toggle);

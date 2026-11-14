@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { ThemeProvider } from '@/features/people/theme-provider';
-import { DEFAULT_THEME, type Theme } from '@/lib/theme';
+import type { Theme } from '@/lib/theme';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -115,7 +115,10 @@ function media(wide: boolean): void {
   });
 }
 
-function home(cards: Card[], theme: Theme = DEFAULT_THEME) {
+/** The blue water these were written on, named, not the app's default (H78x). */
+const BLUE_WATER: Theme = { color: 'blue', mode: 'dark' };
+
+function home(cards: Card[], theme: Theme = BLUE_WATER) {
   return render(
     <ThemeProvider initial={{ home: theme.color, mode: theme.mode, everywhere: false }}>
       <InputSheetProvider>

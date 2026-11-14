@@ -78,8 +78,8 @@ describe('the twelve colours', () => {
     expect(css).toContain(`--pastel-ink: ${PASTEL_INK.toLowerCase()};`);
   });
 
-  it('reads anything unknown as the blue water, dark', () => {
-    expect(asTheme('teal', 'dim')).toEqual({ color: 'blue', mode: 'dark' });
+  it('reads anything unknown as the default, Black on the light ground (H78x)', () => {
+    expect(asTheme('teal', 'dim')).toEqual({ color: 'black', mode: 'light' });
     expect(asTheme('pink', 'light')).toEqual({ color: 'pink', mode: 'light' });
     expect(asTheme('sky', 'pastel')).toEqual({ color: 'sky', mode: 'pastel' });
   });

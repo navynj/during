@@ -9,8 +9,8 @@ export type DayCounts = [number, number, number, number, number];
 
 /** The colour of Home on a person's page; pools take PERSON_COLORS in turn. */
 export const HOME_COLOR = '#161621';
-/** The faint line counting each record once. */
-export const UNIQUE_COLOR = '#6B79A3';
+/** The faint line counting each record once: Black's muted grey (H78x), no blue cast. */
+export const UNIQUE_COLOR = '#5b5b5d';
 
 type Clock = { now: number; zone: Zone; trackingStart: string | null };
 

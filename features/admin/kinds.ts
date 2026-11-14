@@ -36,4 +36,4 @@ export const PERSON_COLORS = [
   '#EDC948',
   '#FF9DA7',
 ];
-export const ADMIN_COLOR = '#B8BECC';
+export const ADMIN_COLOR = '#bdbdc1';

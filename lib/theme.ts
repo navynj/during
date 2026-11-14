@@ -174,8 +174,12 @@ export type ThemeColor = (typeof THEMES)[number]['key'];
 export type ThemeMode = 'dark' | 'light' | 'pastel';
 export type Theme = { color: ThemeColor; mode: ThemeMode };
 
-/** What everyone saw before 0032: the blue water. */
-export const DEFAULT_THEME: Theme = { color: 'blue', mode: 'dark' };
+/**
+ * A new account's theme, and what an unknown stored value reads as (H78x):
+ * Dida's own black on the light ground. Blue water was the default until the
+ * rebrand; those who had it keep what they chose.
+ */
+export const DEFAULT_THEME: Theme = { color: 'black', mode: 'light' };
 
 /**
  * What a visitor who is not signed in wears (H78): sign-in, and an invite

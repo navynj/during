@@ -1,5 +1,6 @@
 import type { DuringClient } from '@/lib/queries/profile';
 import { PRESET_CATEGORIES } from '@/features/auth/preset-categories';
+import { DEFAULT_THEME } from '@/lib/theme';
 
 /**
  * First sign-in: create the profile row and seed the preset categories.
@@ -27,6 +28,10 @@ export async function bootstrapProfile(
     display_name: input.displayName,
     avatar_url: input.avatarUrl,
     timezone: input.timezone,
+    // A new account starts on Dida's default (H78x), not the columns' old
+    // blue-water default, which existing rows were created with.
+    theme_color: DEFAULT_THEME.color,
+    theme_mode: DEFAULT_THEME.mode,
   });
 
   if (profileError) throw profileError;

@@ -61,8 +61,10 @@ const AXIS_H = 22;
 const OPENS_ROW_H = 14;
 const BAR_H = 44;
 const BAR_GAP = 14;
-const MUTED = '#6B79A3';
-const FAINT = '#D8DCE8';
+// Black's muted grey and hairline (H78x): an SVG attribute cannot read the
+// ramp's variables, and the old blue-grey read lavender on the light ground.
+const MUTED = '#5b5b5d';
+const FAINT = '#e3e3e6';
 
 const writes = (c: DayCounts): number => c[0] + c[1] + c[2] + c[3];
 
