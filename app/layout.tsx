@@ -1,3 +1,4 @@
+import { FocusModality } from '@/components/ui/focus-modality';
 import type { Metadata, Viewport } from 'next';
 import { Poppins } from 'next/font/google';
 
@@ -109,6 +110,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
       className={`${poppins.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <FocusModality />
         <Providers theme={mine}>{children}</Providers>
       </body>
     </html>

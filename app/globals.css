@@ -813,3 +813,17 @@ body {
     animation: none;
   }
 }
+
+/*
+ * Focus (H78n): no ring on a click, a tap or a sheet opening; for the
+ * keyboard, 2px in the accent with a 2px gap. `data-keyboard` is set by
+ * FocusModality when focus moves by key. A container focused only so a
+ * sheet can take focus (tabindex -1) never rings.
+ */
+:focus {
+  outline: none;
+}
+[data-keyboard] :focus-visible:not([tabindex='-1']) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
