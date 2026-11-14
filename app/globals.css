@@ -122,6 +122,7 @@
   --theme-gray-500: #586386;
   --pastel-tone: #8ba6ff;
   --pastel-text: #5369bd;
+  --pastel-back-title: #475bae;
   --theme-pastel: #d1ddff;
   --pastel-card: #f8fafe;
   --pastel-stack-1: #e6ecfe;
@@ -134,6 +135,8 @@
   --theme-900: #d92d20;
   --pastel-tone: #f58880;
   --pastel-text: #b64f4a;
+  --back-title: #cb1a0f;
+  --pastel-back-title: #ab4541;
   --theme-pastel: #ffd1cd;
   --pastel-card: #fef9f8;
   --pastel-stack-1: #ffe6e4;
@@ -146,6 +149,8 @@
   --theme-900: #d9540f;
   --pastel-tone: #e29942;
   --pastel-text: #9f6205;
+  --back-title: #b54303;
+  --pastel-back-title: #955b05;
   --theme-pastel: #fed6ad;
   --pastel-card: #fff9f3;
   --pastel-stack-1: #fde9d5;
@@ -158,6 +163,8 @@
   --theme-900: #c08600;
   --pastel-tone: #d0a535;
   --pastel-text: #8c6b06;
+  --back-title: #8e6303;
+  --pastel-back-title: #876602;
   --theme-pastel: #f2dca9;
   --pastel-card: #fefaf1;
   --pastel-stack-1: #f7ecd3;
@@ -170,6 +177,8 @@
   --theme-900: #14804a;
   --pastel-tone: #5cc486;
   --pastel-text: #068149;
+  --back-title: #007843;
+  --pastel-back-title: #027843;
   --theme-pastel: #baecca;
   --pastel-card: #f4fdf7;
   --pastel-stack-1: #dbf4e3;
@@ -182,6 +191,8 @@
   --theme-900: #4e8a1a;
   --pastel-tone: #93bb5a;
   --pastel-text: #577b10;
+  --back-title: #3f7702;
+  --pastel-back-title: #517401;
   --theme-pastel: #d1e8b6;
   --pastel-card: #f8fcf3;
   --pastel-stack-1: #e6f2d9;
@@ -194,6 +205,8 @@
   --theme-900: #0b7fc2;
   --pastel-tone: #59b5ef;
   --pastel-text: #0271a5;
+  --back-title: #026da9;
+  --pastel-back-title: #046fa2;
   --theme-pastel: #90c5ea;
   --pastel-card: #f6fafd;
   --pastel-stack-1: #e3f0fa;
@@ -206,6 +219,8 @@
   --theme-900: #14857f;
   --pastel-tone: #4dbcbe;
   --pastel-text: #017b7d;
+  --back-title: #077570;
+  --pastel-back-title: #047476;
   --theme-pastel: #a6e3e3;
   --pastel-card: #f8fdfd;
   --pastel-stack-1: #e9f8f8;
@@ -218,6 +233,7 @@
   --theme-900: #6338d8;
   --pastel-tone: #a18aeb;
   --pastel-text: #775fbc;
+  --pastel-back-title: #6e56b2;
   --theme-pastel: #d6cefc;
   --pastel-card: #faf9ff;
   --pastel-stack-1: #edeafe;
@@ -230,6 +246,8 @@
   --theme-900: #e5318c;
   --pastel-tone: #de8acf;
   --pastel-text: #a25395;
+  --back-title: #c80175;
+  --pastel-back-title: #994b8c;
   --theme-pastel: #fbcdf2;
   --pastel-card: #fff8fd;
   --pastel-stack-1: #fce5f7;
@@ -242,6 +260,7 @@
   --theme-900: #8a5a2b;
   --pastel-tone: #b4967a;
   --pastel-text: #84684e;
+  --pastel-back-title: #7e6248;
   --theme-pastel: #dcc8b4;
   --pastel-card: #faf7f4;
   --pastel-stack-1: #f1e9e1;
@@ -254,6 +273,7 @@
   --theme-900: #161621;
   --pastel-tone: #a6a6a6;
   --pastel-text: #6e6e6e;
+  --pastel-back-title: #616161;
   --theme-pastel: #dadada;
   --pastel-card: #f9f9f9;
   --pastel-stack-1: #f0f0f0;
@@ -607,6 +627,18 @@ body {
  */
 [data-mode='light'] .water-ground .surface-edge {
   box-shadow: 0 0 0 1px oklch(from var(--color-pool-200) l var(--edge-chroma) var(--theme-hue));
+}
+/* A back card's title on the light and pastel grounds (H78y): the accent,
+   or where it falls under 4.5:1 on the darkest step (14%), the accent
+   darkened in its hue until it passes there (--back-title, per theme). One
+   colour on every step, so a title never changes as its card moves. */
+[data-mode='light'] .water-ground [data-card-edge] .text-main-900,
+[data-mode='light'] .water-ground [data-card-edge].text-main-900 {
+  color: var(--back-title, var(--theme-900));
+}
+[data-mode='pastel'] .water-ground [data-card-edge] .text-main-900,
+[data-mode='pastel'] .water-ground [data-card-edge].text-main-900 {
+  color: var(--pastel-back-title, var(--pastel-text));
 }
 /* Secondary surfaces on the light ground (H78h): surface-1, words in the
    text tokens — the colour for what is chosen, muted for the rest. */

@@ -106,6 +106,7 @@ export function CardFace({
       <span
         aria-hidden
         data-card-spine=""
+        data-card-edge=""
         className={`absolute inset-y-0 flex flex-col items-center ${inkClass} ${edge === 'left' ? 'left-0' : 'right-0'}`}
         style={{
           width: SPINE_PX,
@@ -143,6 +144,7 @@ export function CardFace({
     return (
       <span
         aria-hidden
+        data-card-edge=""
         className={`flex h-full flex-col px-5 ${edge === 'top' ? 'justify-start' : 'justify-end'}`}
         style={{ paddingTop: EDGE_PAD_PX.top, paddingBottom: EDGE_PAD_PX.bottom }}
       >
