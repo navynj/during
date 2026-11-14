@@ -18,10 +18,10 @@ let me = '';
 let pool = '';
 let cookie = '';
 
-/** The ground's words: the colour in light mode, its soft tone in pastel (globals.css). */
+/** The ground's words: the colour in light mode, --pastel-text in pastel (H78t, globals.css). */
 const WORDS = {
   light: { pink: 'rgb(229, 49, 140)', sky: 'rgb(11, 127, 194)' },
-  pastel: { pink: 'rgb(222, 138, 207)', sky: 'rgb(89, 181, 239)' },
+  pastel: { pink: 'rgb(162, 83, 149)', sky: 'rgb(2, 113, 165)' },
 };
 
 test.beforeAll(async () => {
