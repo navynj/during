@@ -33,9 +33,11 @@
   --color-joint-face: color-mix(in srgb, var(--theme-900) 50%, #ffffff);
 
   /* Gray ramp — structure */
-  --color-pool-100: #f1f3f7; /* surfaces */
-  --color-pool-200: #d8dce8; /* deeper surfaces, dividers, lane ropes */
-  --color-pool-500: #6b79a3; /* muted and secondary text */
+  /* The grey ramp follows the theme (H78): see [data-theme] below. The
+     fallbacks are Blue's own, the ramp as it was. */
+  --color-pool-100: var(--theme-gray-100, #f1f3f7); /* surfaces */
+  --color-pool-200: var(--theme-gray-200, #d8dce8); /* deeper surfaces, dividers, lane ropes */
+  --color-pool-500: var(--theme-gray-500, #6b79a3); /* muted and secondary text */
 
   /* Ink — body text */
   --color-ink: #161621;
@@ -63,8 +65,23 @@
 
 /* The theme colours (0032): the hexes are lib/theme.ts's, one rule each. */
 :root,
+/*
+ * The grey ramp of a theme (H78): neutral greys with a trace of the theme
+ * colour, so surfaces, hairlines and muted words lean the way the colour
+ * does — and on Black, not at all. It was one blue-grey for every theme,
+ * which read lavender on Black + Light. Blue keeps the ramp it always had.
+ * Muted words clear 4.5:1 on white in every theme.
+ */
+[data-theme] {
+  --theme-gray-100: color-mix(in srgb, var(--theme-900) 4%, #f2f2f2);
+  --theme-gray-200: color-mix(in srgb, var(--theme-900) 8%, #dadada);
+  --theme-gray-500: color-mix(in srgb, var(--theme-900) 18%, #6a6a6a);
+}
 [data-theme='blue'] {
   --theme-900: #0507c9;
+  --theme-gray-100: #f1f3f7;
+  --theme-gray-200: #d8dce8;
+  --theme-gray-500: #6b79a3;
   --pastel-tone: #8ba6ff;
   --theme-pastel: #d1ddff;
   --pastel-card: #f8fafe;

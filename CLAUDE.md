@@ -82,7 +82,7 @@ The database holds records someone actually wrote. Everything below outranks con
 
 - The ONLY custom design tokens are three color ramps plus the typeface. Everything else (spacing, radius, type scale) uses the Tailwind default scale.
   - Main ramp (content vitality): `#0507C9` live/now, `#787BE2` recent, `#D3D7F6` settled/past — **the default theme**. Since H26 (0032) the main ramp follows the person's theme colour (one of eleven, `lib/theme.ts`), set on `<html>` as `data-theme`; `main-400` and `main-100` are mixed from it. Write `main-900`, `white` and `joint` as utilities, never a hex: light mode (`data-mode="light"`) swaps `white` and `main-900` inside the water ground, and a white card or sheet on the ground carries `surface` to stay white with ink.
-  - Gray ramp (structure): `#F1F3F7` surfaces, `#D8DCE8` deeper surfaces / dividers / lane ropes, `#6B79A3` muted text
+  - Gray ramp (structure): `pool-100` surfaces, `pool-200` deeper surfaces / dividers / lane ropes, `pool-500` muted text. Since H78(e) each theme has its own ramp (neutral greys with a trace of the theme colour, `--theme-gray-*`); Blue's is `#F1F3F7` / `#D8DCE8` / `#6B79A3`. Never write a grey as a hex in a component.
   - Ink: `#161621` body text (was `#313338` until the refounding review)
 - Typeface: **Poppins** (weights 300/400/500/600/700), self-hosted via `next/font/google` and exposed as Tailwind's `--font-sans`, so `font-sans` and `body` cannot drift apart. The type size _scale_ is untouched.
 - **The smallest type is 10px** (`text-[10px]`). Nothing smaller, bar a genuine exception that carries an `allow-small-text` comment saying why; `pnpm lint` fails otherwise.

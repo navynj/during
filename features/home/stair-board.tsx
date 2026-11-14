@@ -14,6 +14,7 @@ import { CARD_PX, CardFace, face, SPINE_PX, TINT_STEP } from './card-face';
 import { CardMenu } from './card-menu';
 import { laneOfCard, type Card, type CardLane } from './grid';
 import { FLIP_SPRING, type Flip } from './use-flip';
+import { DEFAULT_THEME, themeHex } from '@/lib/theme';
 
 /** Each step of the lower stair: how far a card peeks below the one in front, its visible edge. */
 export const STEP_PX = 26;
@@ -95,8 +96,8 @@ export function seat(
   d: number,
   stair: Stair,
   frostGlass = true,
-  /** The theme colour the faces step toward (0032). */
-  base = '#0507C9',
+  /** The theme colour the faces step toward (0032); the default theme's when none is given. */
+  base = themeHex(DEFAULT_THEME.color),
   /** The read card's solid (upSolid), when glass is not drawn. */
   solid = upSolid(base, 'dark'),
 ): {

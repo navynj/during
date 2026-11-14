@@ -7,7 +7,12 @@
  * one day at a time and keeps its white ground at every date (H14): a page is
  * not a section, and tinting a whole one reads as disabled rather than deep.
  */
-export const DEPTH_SURFACES = ['#ffffff', '#f1f3f7', '#d8dce8'] as const;
+// The grey ramp's own tokens, so the depth follows the theme (H78).
+export const DEPTH_SURFACES = [
+  '#ffffff',
+  'var(--color-pool-100)',
+  'var(--color-pool-200)',
+] as const;
 
 /**
  * The ground for a section, counted back from the newest one on screen.

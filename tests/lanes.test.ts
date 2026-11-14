@@ -146,7 +146,7 @@ describe('the past sinks, by month (law 1)', () => {
 
   it('steps down once per month back', () => {
     expect(monthsBack('2027-07-08', '2027-06-30')).toBe(1);
-    expect(depthSurface(monthsBack('2027-07-08', '2027-06-30'))).toBe('#f1f3f7');
+    expect(depthSurface(monthsBack('2027-07-08', '2027-06-30'))).toBe('var(--color-pool-100)');
   });
 
   it('stops at the bottom step rather than inventing a fourth tone', () => {

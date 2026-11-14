@@ -18,6 +18,7 @@ import { CardPhotos } from './card-photos';
 import { CardPreview, CardResponseLine } from './card-preview';
 import { cardDate, postIcon, type Card, type CardLane, type CardPhoto } from './grid';
 import { LinkedText } from '@/components/ui/linked-text';
+import { DEFAULT_THEME, themeHex } from '@/lib/theme';
 
 /** The top card's height, fixed so the grid above never moves when the stack changes. */
 export const CARD_PX = 200;
@@ -43,7 +44,7 @@ const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
  * card behind another. Numbers, not a colour-mix, so the stack's spring can
  * carry it.
  */
-export function face(tint: number, base = '#0507C9'): string {
+export function face(tint: number, base = themeHex(DEFAULT_THEME.color)): string {
   const t = clamp01(tint);
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(base.slice(i, i + 2), 16));
   return `rgb(${Math.round(lerp(255, r, t))}, ${Math.round(lerp(255, g, t))}, ${Math.round(lerp(255, b, t))})`;
