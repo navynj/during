@@ -94,7 +94,8 @@
   --edge-chroma: 0.05;
 }
 [data-theme='black'] {
-  --edge-chroma: 0.025;
+  /* Near grey (H78p): at 0.025 Black's edge read violet beside the cards. */
+  --edge-chroma: 0.012;
 }
 /*
  * The accent (H78j): what is chosen, in any control — a selected segment's

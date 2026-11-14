@@ -814,3 +814,5 @@ H67, revised the same day (Yoonji, in the session): 40px between *For a few clos
 **H78(n). The focus ring is the keyboard's (review, 2026-11-13).** The browser's blue outline showed on a clicked settings tab, and a ring drew round a sheet's field the moment it opened. Now no ring on a click, a tap or an opening; for the keyboard, 2px in the accent with a 2px gap. `:focus-visible` alone cannot do it: a browser counts any focused text field as visible focus. `FocusModality` marks `<html data-keyboard>` when Tab or an arrow key moves focus and clears it on any pointer press; a container focused only so a sheet can take focus (tabindex −1) never rings. `e2e/focus-ring.spec.ts` presses Tab for real.
 
 **H78(o). Blue's muted grey is #586386 (review, 2026-11-13).** #6B79A3 was 4.3:1 on white and 3.6:1 on surface-3; #586386 keeps its hue and clears 5.9:1 and 4.9:1 (settles (e)'s open note).
+
+**H78(p). Black's stack edge is near grey (review, 2026-11-13).** At chroma 0.025 (i) the front card's edge on Black + Light read violet, though it passed the lavender test. Black's `--edge-chroma` is 0.012, a cool grey; every other theme keeps 0.05.
