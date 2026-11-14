@@ -58,7 +58,8 @@ export function DidaTile({
       className={`shrink-0 ${className}`}
     >
       <rect width="441" height="441" rx="98" fill="#161622" />
-      <g transform="translate(103 71)">
+      {/* The mark at 58% of the tile, lifted 7.5 as the export is (scripts/make-icons.mjs). */}
+      <g transform="translate(114.2 85.1) scale(0.9006)">
         <path d={BACK} fill="#ffffff" opacity={0.2} />
         <path d={FRONT} fill="#ffffff" />
       </g>

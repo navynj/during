@@ -30,11 +30,18 @@ if (!back || !front) throw new Error('dida-logo-only.svg: expected two paths');
 const MARK_W = 236;
 const MARK_H = 284;
 
-/** The mark centred in a square of `size`, `height` its share of it. */
+// The export sits the mark 7.5/441 above centre: its optical centre, since
+// the front page hangs lower and carries the weight. Kept at every size.
+const LIFT = 7.5 / 441;
+// The mark's height in a tile (review, 2026-11-13): about 58%, the export's
+// padding read by eye; its 284/441 (64%) looked too big at app-icon sizes.
+const TILE_MARK = 0.58;
+
+/** The mark in a square of `size`, `height` its share of it, optically centred. */
 function markIn(size, height, { backFill, backOpacity, frontFill }) {
   const scale = (size * height) / MARK_H;
   const x = (size - MARK_W * scale) / 2;
-  const y = (size - MARK_H * scale) / 2;
+  const y = (size - MARK_H * scale) / 2 - size * LIFT;
   return (
     `<g transform="translate(${x} ${y}) scale(${scale})">` +
     `<path d="${back}" fill="${backFill}" opacity="${backOpacity}"/>` +
@@ -45,11 +52,11 @@ function markIn(size, height, { backFill, backOpacity, frontFill }) {
 const WHITE_MARK = { backFill: '#ffffff', backOpacity: 0.2, frontFill: '#ffffff' };
 
 /**
- * The dark tile. `height` is the mark's share: 284/441 as exported; larger
- * at favicon sizes so 16px still reads; 0.6 in a maskable icon, whose safe
- * zone is the middle 80%.
+ * The dark tile. `height` is the mark's share: TILE_MARK; larger at favicon
+ * sizes so 16px still reads; in a maskable icon TILE_MARK of the middle 80%
+ * the launcher keeps, so it lands the size it does on a tile.
  */
-function tile(size, { rounded, height = MARK_H / 441 }) {
+function tile(size, { rounded, height = TILE_MARK }) {
   const rx = rounded ? Math.round(size * (98 / 441)) : 0;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
@@ -93,7 +100,9 @@ const made = [];
 made.push(await png(tile(180, { rounded: false }), 'dida-apple-touch-icon.png'));
 made.push(await png(tile(192, { rounded: true }), 'dida-icon-192.png'));
 made.push(await png(tile(512, { rounded: true }), 'dida-icon-512.png'));
-made.push(await png(tile(512, { rounded: false, height: 0.6 }), 'dida-icon-maskable-512.png'));
+made.push(
+  await png(tile(512, { rounded: false, height: TILE_MARK * 0.8 }), 'dida-icon-maskable-512.png'),
+);
 // Android's status-bar badge is drawn from alpha alone: the white mark, no tile.
 made.push(
   await png(
