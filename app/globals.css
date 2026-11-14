@@ -433,6 +433,22 @@ body {
 .dida-mark-back {
   fill: #d0d0d4;
 }
+/* Light and pastel (H78k): the front page in the accent, the back in surface-2.
+   Black keeps the exported ink and #D0D0D4. The dark tile never changes. */
+[data-mode='light'] .dida-mark-front,
+[data-mode='pastel'] .dida-mark-front {
+  fill: var(--accent);
+}
+[data-mode='light'] .dida-mark-back,
+[data-mode='pastel'] .dida-mark-back {
+  fill: var(--surface-2);
+}
+[data-theme='black'] .dida-mark-front {
+  fill: #161622;
+}
+[data-theme='black'] .dida-mark-back {
+  fill: #d0d0d4;
+}
 [data-mode='dark'] .water-ground .dida-mark-front {
   fill: #ffffff;
 }
