@@ -92,6 +92,8 @@ function blueIn(page: Page, selector: string): Promise<string[]> {
     const roots = [...document.querySelectorAll(selector)];
     for (const root of roots) {
       for (const el of [root, ...root.querySelectorAll('*')]) {
+        // Google's own logo keeps its brand colours (its button, sign-in).
+        if (el.closest('[data-google-sign-in] svg')) continue;
         const style = getComputedStyle(el);
         for (const prop of [
           'color',
@@ -145,4 +147,12 @@ test('Black + Light: the card stack and a page panel draw no blue', async ({
   await page.goto(splashPath(splashes[1]));
   await expect(page.locator('[data-splash-page]')).toBeVisible({ timeout: 60_000 });
   expect(await blueIn(page, '[data-splash-modal], [data-splash-page]')).toEqual([]);
+});
+
+test('signed out, sign-in draws no blue but Google’s own logo (H78)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone', 'one width is enough');
+  await page.goto('/sign-in');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'black');
+  await expect(page.locator('[data-pool-block]')).toBeVisible({ timeout: 60_000 });
+  expect(await blueIn(page, 'main')).toEqual([]);
 });

@@ -51,7 +51,10 @@ export function PoolBlock({ lanes, splashes }: { lanes: SampleLane[]; splashes: 
   }, [lanes, splashes]);
 
   return (
-    <div data-pool-block className="bg-main-900 w-full overflow-hidden rounded-3xl">
+    <div
+      data-pool-block
+      className="sample-paper sample-frame-line w-full overflow-hidden rounded-3xl"
+    >
       <div className="flex h-64 flex-col pt-3">
         <LaneGrid
           decorative

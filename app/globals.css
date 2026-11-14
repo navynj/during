@@ -405,6 +405,33 @@ body {
 }
 
 /*
+ * The sign-in sample diary (H78): paper — ink words and labels on a light
+ * board, grey lane lines — the light-mode swap inside the block alone. Its
+ * edge is a soft frame, so a label cut at the right still has a boundary:
+ * a faint grey fill, or white with a hairline (review: one to be kept).
+ */
+.sample-paper {
+  --theme-900: #161622;
+  --color-white: #161622;
+  --color-main-900: #ffffff;
+  --color-main-100: color-mix(in srgb, #161622 12%, #ffffff);
+  --color-joint: color-mix(in srgb, #161622 10%, #ffffff);
+  --wave-ink: #161622;
+  background-color: var(--color-main-900);
+  color: #161622;
+}
+.sample-paper.sample-frame-fill {
+  --color-main-900: #f5f5f7;
+}
+.sample-paper.sample-frame-line {
+  border: 1px solid #e4e4e8;
+}
+/* An ink label keeps white words on paper, as on the light ground. */
+.sample-paper .bg-ink {
+  --color-white: #ffffff;
+}
+
+/*
  * Light mode (0032, H26): the ground is white, and what was white on it —
  * labels, marks, ropes, words — takes the theme colour, while the colour
  * that sat inside those labels turns white. One swap of the two variables

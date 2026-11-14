@@ -177,6 +177,13 @@ export type Theme = { color: ThemeColor; mode: ThemeMode };
 /** What everyone saw before 0032: the blue water. */
 export const DEFAULT_THEME: Theme = { color: 'blue', mode: 'dark' };
 
+/**
+ * What a visitor who is not signed in wears (H78): sign-in, and an invite
+ * before it. The brand's own colours, black on the light ground, whatever
+ * the default a new account starts with.
+ */
+export const SIGNED_OUT_THEME: Theme = { color: 'black', mode: 'light' };
+
 export const THEME_COLORS = THEMES.map((t) => t.key) as ThemeColor[];
 export const THEME_MODES: ThemeMode[] = ['dark', 'light', 'pastel'];
 

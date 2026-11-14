@@ -5,6 +5,7 @@ import {
   asThemeColor,
   asThemeMode,
   DEFAULT_THEME,
+  SIGNED_OUT_THEME,
   type MyTheme,
   type PoolColors,
 } from '@/lib/theme';
@@ -17,7 +18,9 @@ import { getAuthUser, getMyProfile, type DuringClient } from '@/lib/queries/prof
  */
 export const getMyTheme = cache(async (supabase: DuringClient): Promise<MyTheme> => {
   const user = await getAuthUser(supabase);
-  if (!user) return { home: DEFAULT_THEME.color, mode: DEFAULT_THEME.mode, everywhere: false };
+  if (!user) {
+    return { home: SIGNED_OUT_THEME.color, mode: SIGNED_OUT_THEME.mode, everywhere: false };
+  }
   const { data } = await supabase
     .from('my_theme_settings')
     .select('home_color, mode, apply_everywhere')
