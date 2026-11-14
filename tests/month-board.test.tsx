@@ -269,15 +269,21 @@ const BUSY: Card[] = [
 ];
 
 describe('the board shows no reactions or replies (review)', () => {
-  it('marks my record shared to no pool with a faint lock beside its words (H75)', () => {
+  it('marks no private record, and names the pools of every shared one (H78)', () => {
     const { container } = board([
-      { ...card('hoppers', 'Hoppers', '2026-10-20'), onlyMe: true },
-      card('lynn', 'Lynn Canyon', '2026-10-20'),
+      card('hoppers', 'Hoppers', '2026-10-20'),
+      {
+        ...card('lynn', 'Lynn Canyon', '2026-10-20'),
+        sharedPools: [{ name: 'Pancake', photo: null }],
+      },
     ]);
-    const lock = container.querySelector('[data-board-piece="hoppers"] [data-only-me]')!;
-    expect(lock.getAttribute('aria-label')).toBe('Only me');
-    expect(lock.className).toContain('opacity-50');
-    expect(container.querySelector('[data-board-piece="lynn"] [data-only-me]')).toBeNull();
+    // Only me is the default: nothing drawn for it, no lock.
+    const hoppers = container.querySelector('[data-board-piece="hoppers"]')!;
+    expect(hoppers.querySelector('[data-board-pool]')).toBeNull();
+    expect(hoppers.querySelector('svg.lucide-lock')).toBeNull();
+    // Shared with nobody invited still names its pool.
+    const lynn = container.querySelector('[data-board-piece="lynn"] [data-board-pool]')!;
+    expect(lynn.textContent).toContain('P');
   });
 
   it('renders no reaction or reply elements on any item, whatever readers left', () => {
@@ -567,6 +573,26 @@ describe('half weeks on a phone (review)', () => {
       // A day opens Week on the half holding it.
       fireEvent.click(container.querySelector('[data-board-day="2026-10-29"]')!);
       expect(shown(container)[0]).toBe('2026-10-28');
+    } finally {
+      restore();
+    }
+  });
+
+  it('dots a shared record in a phone’s month, where no words are drawn (H78)', () => {
+    window.localStorage.setItem('weming.board-span', 'month');
+    const restore = atWidth(PHONE);
+    try {
+      const shared = (c: Card): Card => ({ ...c, sharedPools: [{ name: 'Pancake', photo: null }] });
+      const { container } = board(
+        OCTOBER.map((c) => (c.splash.id === 'hoppers' || c.splash.id === 'trip' ? shared(c) : c)),
+      );
+      const dot = container.querySelector('[data-board-piece="hoppers"] [data-board-shared]')!;
+      expect(dot.getAttribute('aria-label')).toBe('Shared to Pancake');
+      expect(
+        container.querySelector('[data-board-tape="trip"] [data-board-shared]'),
+      ).not.toBeNull();
+      expect(container.querySelectorAll('[data-board-shared]').length).toBeGreaterThanOrEqual(2);
+      expect(container.querySelector('[data-board-piece="four"] [data-board-shared]')).toBeNull();
     } finally {
       restore();
     }

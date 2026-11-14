@@ -1,13 +1,13 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Heart, Lock } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 import { CommitRing } from '@/components/ui/waves';
 import { Monogram } from '@/components/ui/monogram';
 import { Avatar, PersonName } from '@/features/people/avatar';
 
-import { postIcon, type Card, type CardLane } from './grid';
+import { postIcon, shownPools, type Card, type CardLane } from './grid';
 
 /** The icon's room, and the ring's bound around it. */
 const DISC_PX = 28;
@@ -87,15 +87,12 @@ export function PostRow({
       >
         {title}
       </span>
-      {card.onlyMe ? (
-        // Mine and in no pool (H75): faint, the emoji's size.
-        <span role="img" aria-label="Only me" data-only-me className="flex shrink-0 opacity-50">
-          <Lock aria-hidden size={15} />
+      {shownPools(card).map((pool) => (
+        // Where it is shared (H23, H78): a pool's record its pool, my record every
+        // pool it is shared to. No chip is Only me, the default.
+        <span key={pool.name} data-row-pool className="flex shrink-0">
+          <Monogram name={pool.name} size="chip" photo={pool.photo} />
         </span>
-      ) : null}
-      {(card.pools ?? []).map((pool) => (
-        // Shared to a pool (H23), in the lane chip's place on Home.
-        <Monogram key={pool} name={pool} size="chip" photo={card.poolPhoto ?? null} />
       ))}
       {card.authorFace && card.authorId && !(card.joint || card.together) ? (
         // Whose it is, as a face after the title (review), its name beside it.

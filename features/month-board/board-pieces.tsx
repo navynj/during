@@ -9,12 +9,11 @@ import {
   type ReactNode,
 } from 'react';
 
-import { Lock } from 'lucide-react';
-
 import { VideoThumb } from '@/components/ui/video-media';
 import {
   postIcon,
   laneOfCard,
+  shownPools,
   type Card,
   type CardFace,
   type GridColumn,
@@ -231,19 +230,20 @@ const SEPARATOR = '\u2002';
 const NO_INDENT = 'indent-0';
 
 /**
- * My Home record shared to no pool (H75): a lock after its words, the
- * size of the line's emoji and faint, so private reads without shouting.
+ * Shared, where no words are drawn (H78): a phone's month shows a post as
+ * its sticker or its band alone, so a record in a pool carries a small dot.
+ * No dot is Only me, the default.
  */
-function OnlyMeLock() {
+function SharedDot({ card, className }: { card: Card; className: string }) {
+  const pools = shownPools(card);
+  if (pools.length === 0) return null;
   return (
     <span
       role="img"
-      aria-label="Only me"
-      data-only-me
-      className={`ml-1 inline-flex h-[var(--line,13px)] shrink-0 items-center align-top opacity-50 ${NO_INDENT}`}
-    >
-      <Lock aria-hidden className="h-[calc(var(--line,13px)*0.8)] w-[calc(var(--line,13px)*0.8)]" />
-    </span>
+      aria-label={`Shared to ${pools.map((pool) => pool.name).join(', ')}`}
+      data-board-shared
+      className={`ring-main-900 pointer-events-none absolute block h-1.5 w-1.5 rounded-full bg-white ring-1 ${className}`}
+    />
   );
 }
 
@@ -257,10 +257,7 @@ function OnlyMeLock() {
 function Faces({ card, ring }: { card: Card; ring: string }) {
   const { me } = usePeople();
   // A joint splash's pool; else every pool my record is shared to (review).
-  const pools =
-    card.pools?.[0] !== undefined
-      ? [{ name: card.pools[0], photo: card.poolPhoto ?? null }]
-      : (card.sharedPools ?? []);
+  const pools = shownPools(card);
   if (pools.length > 0) {
     return (
       <>
@@ -1015,8 +1012,8 @@ export function BoardPieceView({
                 </span>
               ) : null}
               {caption}
-              {card.onlyMe ? <OnlyMeLock /> : null}
-              {card.joint || card.together || card.side ? (
+              {/* Where it is shared, on every record shared (H78): no marker is Only me. */}
+              {card.joint || card.together || card.side || card.sharedPools?.length ? (
                 // My side on someone's record shows its pool there (review).
                 <Faces card={card} ring={FACE_RING[piece.label]} />
               ) : card.authorFace && card.authorId ? (
@@ -1089,6 +1086,7 @@ export function BoardPieceView({
             }}
           >
             {icon}
+            {piece.compact ? <SharedDot card={card} className="-top-0.5 -right-0.5" /> : null}
           </span>
         ) : piece.compact && piece.stickerBox && !hideIcon ? (
           // No lane to take an emoji from: a compact post is still something to tap.
@@ -1100,6 +1098,7 @@ export function BoardPieceView({
             style={{ ...placed(piece.stickerBox), zIndex: zFor(rankOf('icon'), 'icon') }}
           >
             <span className="block h-2 w-2 rounded-full bg-white" />
+            <SharedDot card={card} className="-top-0.5 -right-0.5" />
           </span>
         ) : null}
         {overlay()}
@@ -1257,10 +1256,12 @@ export function BoardTapeView({
           ) : null}
           {/* A phone's month (review): the band and its icon, no words, no faces. */}
           {tape.compact ? null : <span className="min-w-0 truncate">{caption}</span>}
-          {!tape.compact && card.onlyMe ? <OnlyMeLock /> : null}
           {/* Over the band the water reads as the joint surface: the faces' ring takes it. */}
-          {!tape.compact && (card.joint || card.together) ? (
+          {!tape.compact && (card.joint || card.together || card.sharedPools?.length) ? (
             <Faces card={card} ring="ring-joint" />
+          ) : null}
+          {tape.compact ? (
+            <SharedDot card={card} className="top-1/2 right-1 -translate-y-1/2" />
           ) : null}
           {frameOf('label')}
         </button>

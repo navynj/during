@@ -89,8 +89,6 @@ export type Card = {
   poolPhoto?: string | null;
   /** On Home, my record: every pool it is shared to now, each its monogram or photo (review). */
   sharedPools?: { name: string; photo: string | null }[];
-  /** On Home, my record shared to no pool (H75): a faint lock beside its words says so. */
-  onlyMe?: boolean;
   /**
    * Its calendar layout, set by hand (0025): only the fields someone set,
    * drawn over the automatic recipe; where it comes from ('pool' or 'home');
@@ -233,6 +231,17 @@ export function placeCard(
   const instant =
     onDay.length > 0 ? onDay[onDay.length - 1].instant : Date.parse(splash.latestCreatedAt);
   return { splash, day, instant, body, ripples };
+}
+
+/**
+ * The pools a card names on Home (H78): a pool's own record its pool, else
+ * every pool my record is shared to. Empty is Only me, which carries no
+ * marker: private is the default, so only sharing is drawn.
+ */
+export function shownPools(card: Card): { name: string; photo: string | null }[] {
+  if (card.pools?.[0] !== undefined)
+    return [{ name: card.pools[0], photo: card.poolPhoto ?? null }];
+  return card.sharedPools ?? [];
 }
 
 /** Newest first: the later day, then the later moment, then the later-made post. */

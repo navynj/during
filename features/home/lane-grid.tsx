@@ -53,6 +53,7 @@ import {
   isOrphanCard,
   laneOfCard,
   monthAbbrev,
+  shownPools,
   weekdayOf,
   type Card,
   type GridColumn,
@@ -1125,10 +1126,14 @@ function Mark({
             {icon}
           </span>
         ) : null}
-        {card.pools && card.pools.length > 0 ? (
-          // Shared to a pool (H23): its monogram on the disc's shoulder.
+        {shownPools(card)[0] ? (
+          // Shared to a pool (H23, H78): its monogram on the disc's shoulder.
           <span className="absolute -top-1.5 -right-2.5" data-mark-pool>
-            <Monogram name={card.pools[0]} size="chip" photo={card.poolPhoto ?? null} />
+            <Monogram
+              name={shownPools(card)[0].name}
+              size="chip"
+              photo={shownPools(card)[0].photo}
+            />
           </span>
         ) : null}
       </button>
