@@ -55,7 +55,7 @@ export function NotifyCard() {
         type="button"
         aria-label="Close"
         onClick={close}
-        className="bg-main-900/60 scrim-in absolute inset-0"
+        className="scrim scrim-in absolute inset-0"
       />
       <section
         role="dialog"

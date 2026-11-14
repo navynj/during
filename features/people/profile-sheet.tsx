@@ -104,7 +104,7 @@ export function ProfileSheet({ onClose }: { onClose: () => void }) {
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="bg-main-900/60 scrim-in absolute inset-0"
+        className="scrim scrim-in absolute inset-0"
       />
       <section
         role="dialog"

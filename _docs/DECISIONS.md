@@ -820,3 +820,5 @@ H67, revised the same day (Yoonji, in the session): 40px between *For a few clos
 **H78(q). The light mark's back page is stronger (review, 2026-11-13).** Surface-2 (k) left the back page barely there on Pink and Blue. It is the accent at 20% over white in light and pastel modes, so the two overlapping pages always read; Black keeps #D0D0D4.
 
 **H78(r). The Calendar's shared label is on the surface scale (review, 2026-11-13).** On the light ground a shared record's label — the rule's second fill, drawn as Glass (H55) — and a label set to Glass were the theme colour at 20% over white, heavy grey on Black. Both are surface-1 with the text colour now; dark and pastel grounds are unchanged.
+
+**H78(s). One neutral sheet backdrop (review, 2026-11-13).** Sheets dimmed the page with ink at 40% or the theme colour at 60% (30% on a wide screen), so Pink + Light dimmed it pink. Every backdrop is `.scrim` now: #161622 at 30%, in every theme and mode, never the accent.

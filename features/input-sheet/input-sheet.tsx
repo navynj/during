@@ -152,7 +152,7 @@ export function InputSheet({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="bg-ink/40 scrim-in absolute inset-0"
+        className="scrim scrim-in absolute inset-0"
       />
 
       <section

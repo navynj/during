@@ -290,7 +290,7 @@ export function SplashModal({
             tabIndex={-1}
             data-sheet-scrim
             onClick={close}
-            className={`bg-main-900/60 absolute inset-0 ${fit ? '' : 'lg:bg-main-900/30'}`}
+            className="scrim absolute inset-0"
             initial={handoff === 'adopt' ? false : { opacity: 0 }}
             animate={{ opacity: leaving || handoff === 'dismissed' ? 0 : 1 }}
             transition={{ duration: 0.2 }}

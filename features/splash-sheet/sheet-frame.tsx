@@ -62,7 +62,7 @@ export function SheetFrame({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="bg-main-900/60 scrim-in fixed inset-0"
+        className="scrim scrim-in fixed inset-0"
       />
       <section
         ref={section}

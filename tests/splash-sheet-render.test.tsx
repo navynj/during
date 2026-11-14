@@ -391,7 +391,8 @@ describe('the sheet’s shape', () => {
     expect(SHEET_MAX_HEIGHT).toMatch(/100dvh/);
     expect(SHEET_MAX_HEIGHT).toMatch(/safe-area-inset-top/);
     expect(dialog.className).toContain('bg-white');
-    expect(container.querySelector('[aria-label="Close"]')!.className).toContain('bg-main-900/60');
+    // One neutral backdrop in every theme (H78s).
+    expect(container.querySelector('[aria-label="Close"]')!.className).toContain('scrim');
     expect(getByRole('dialog').querySelector('textarea')!.getAttribute('placeholder')).toBe(
       'Title (optional)',
     );
