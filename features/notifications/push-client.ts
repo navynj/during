@@ -79,7 +79,7 @@ export async function enablePush(): Promise<string | null> {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
     return permission === 'denied'
-      ? 'Notifications are blocked for Weming in this browser’s settings.'
+      ? 'Notifications are blocked for Dida in this browser’s settings.'
       : null;
   }
   const registration = await navigator.serviceWorker.register(WORKER, { scope: '/' });

@@ -52,7 +52,7 @@ export function TurnOnNotifications({ inSheet = false }: { inSheet?: boolean }) 
         </p>
       ) : state === 'blocked' ? (
         <p className="text-pool-500 text-sm">
-          Notifications are blocked for Weming in this browser’s settings.
+          Notifications are blocked for Dida in this browser’s settings.
         </p>
       ) : state === 'unsupported' ? (
         <p className="text-pool-500 text-sm">

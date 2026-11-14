@@ -137,15 +137,14 @@ describe('the shared image’s page (H63)', () => {
       '2026-10-31',
     ]);
     const mark = container.querySelector('[data-export-mark]');
-    expect(mark?.textContent).toContain('Weming');
-    expect(mark?.textContent).toContain('Pool your days.');
+    expect(mark?.textContent).toContain('Dida Diary');
     expect(mark?.textContent).toContain('Oct 25 – 31');
   });
 
   it('is the month’s days, and none of the days around it carry a record', () => {
     const { container } = exported('month', false);
     expect(container.querySelector('h1')?.textContent).toBe('2026 OCT');
-    expect(container.querySelector('[data-export-wordmark]')?.textContent).toContain('Weming');
+    expect(container.querySelector('[data-export-wordmark]')?.textContent).toContain('Dida Diary');
   });
 
   it('wears the place’s ground: the water-ground, its colour from <html>', () => {

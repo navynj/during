@@ -19,9 +19,9 @@ const poppins = Poppins({
   display: 'swap',
 });
 
-// The intro's lines, bold one first (H65); a link preview reads the same.
-const description =
-  "Pool your days. We're swimming side by side, each in our own lane. For a few close friends.";
+// The tagline, where the app is first introduced (H78): sign-in, the invite
+// page, and every link preview.
+const description = 'A digital diary you decorate.';
 
 // Without an og:image a crawler takes the page's first <img>, the intro's
 // shell photo. The query is bumped when the image changes, so a platform's
@@ -30,7 +30,7 @@ const ogImage = {
   url: '/og-image.png?v=2',
   width: 1200,
   height: 630,
-  alt: 'Weming: lanes across, days down, a few days of posts on the water.',
+  alt: 'Dida Diary: a digital diary you decorate.',
   type: 'image/png',
 };
 
@@ -38,13 +38,13 @@ export const metadata: Metadata = {
   // The origin comes from configuration (lib/site.ts), so og:image is absolute
   // on every deployment without a domain in source.
   metadataBase: new URL(siteUrl()),
-  title: 'Weming',
+  title: 'Dida Diary',
   description,
-  openGraph: { title: 'Weming', description, images: [ogImage] },
-  twitter: { card: 'summary_large_image', title: 'Weming', description, images: [ogImage] },
+  openGraph: { title: 'Dida Diary', description, images: [ogImage] },
+  twitter: { card: 'summary_large_image', title: 'Dida Diary', description, images: [ogImage] },
   // Installed on a phone it is an app, so it gets an app's name and an
   // app's status bar rather than a browser's.
-  appleWebApp: { capable: true, title: 'Weming', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'Dida', statusBarStyle: 'default' },
   icons: { apple: '/apple-touch-icon.png' },
   // Next emits only the modern `mobile-web-app-capable`. iOS before 16.4 reads
   // the Apple-prefixed name and nothing else, and 16.4+ ignores it in favour

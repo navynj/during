@@ -24,15 +24,11 @@ export default async function SignInPage({ searchParams }: PageProps<'/sign-in'>
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-10 text-center">
-      {/* The title and the swimming line; then, as one unit, the pool, the
-          note and the button (H65, revised). */}
-      <div className="max-w-xs space-y-3">
-        <h1 className="text-main-900 text-3xl font-semibold">Weming Diary</h1>
-        {/* Breaks only between its halves, never inside one. */}
-        <p className="text-pool-500 text-sm">
-          <span className="whitespace-nowrap">We&rsquo;re swimming side by side,</span>{' '}
-          <span className="whitespace-nowrap">each in our own lane.</span>
-        </p>
+      {/* The dark tile, the name and the tagline (H78); then, as one unit,
+          the sample diary, the note and the button (H65, revised). */}
+      <div className="flex max-w-xs flex-col items-center gap-3">
+        <h1 className="text-main-900 text-3xl font-semibold">Dida Diary</h1>
+        <p className="text-pool-500 text-sm">A digital diary you decorate.</p>
       </div>
 
       <div className="mt-10 flex w-full max-w-sm flex-col items-center">

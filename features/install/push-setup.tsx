@@ -32,11 +32,11 @@ export function usePushState(): [PushState | null, (next: PushState | null) => v
   return [state, setState];
 }
 
-/** iOS Safari in a tab (H32): push needs Weming on the Home Screen first. */
+/** iOS Safari in a tab (H32): push needs Dida on the Home Screen first. */
 export function IosInstallGuide() {
   return (
     <div data-ios-install-guide className="text-ink flex flex-col gap-2 text-sm">
-      <p>To get notifications on iPhone, add Weming to your Home Screen:</p>
+      <p>To get notifications on iPhone, add Dida to your Home Screen:</p>
       <ol className="flex list-decimal flex-col gap-1 pl-5">
         <li>
           Tap <span className="font-semibold">Share</span> in Safari’s toolbar.
@@ -44,7 +44,7 @@ export function IosInstallGuide() {
         <li>
           Choose <span className="font-semibold">Add to Home Screen</span>.
         </li>
-        <li>Open Weming from your Home Screen and turn notifications on here.</li>
+        <li>Open Dida from your Home Screen and turn notifications on here.</li>
       </ol>
     </div>
   );
@@ -56,7 +56,7 @@ export function hasOffer(state: PushState | null, canPrompt: boolean): boolean {
 }
 
 /**
- * Install and notifications for this device (H32): our own *Install Weming*
+ * Install and notifications for this device (H32): our own *Install Dida*
  * where Chromium offers it, the Add to Home Screen steps on iOS Safari, and
  * a button that asks for permission — never asked otherwise.
  */
@@ -94,7 +94,7 @@ export function PushSetup() {
           }
           className="bg-main-900 rounded-full py-2.5 text-base font-semibold text-white disabled:opacity-40"
         >
-          Install Weming
+          Install Dida
         </button>
       ) : null}
 
@@ -129,7 +129,7 @@ export function PushSetup() {
 
       {state === 'blocked' ? (
         <p className="text-pool-500 text-sm">
-          Notifications are blocked for Weming in this browser’s settings.
+          Notifications are blocked for Dida in this browser’s settings.
         </p>
       ) : null}
 

@@ -36,7 +36,7 @@ export function InstallOffer() {
     <PoolSheet label="Get notified" onClose={close}>
       <SheetTitle>Hear when you’re invited</SheetTitle>
       <p className="text-ink mb-5 text-sm">
-        Weming can tell you when someone in your diaries invites you to add your side, or replies to
+        Dida can tell you when someone in your diaries invites you to add your side, or replies to
         you. Only who and where show on your lock screen.
       </p>
       <PushSetup />

@@ -33,7 +33,7 @@ self.addEventListener('push', (event) => {
   }
   event.waitUntil(
     Promise.all([
-      self.registration.showNotification(data.title || 'Weming', {
+      self.registration.showNotification(data.title || 'Dida', {
         body: data.body || '',
         tag: data.tag,
         icon: '/icon-192.png',

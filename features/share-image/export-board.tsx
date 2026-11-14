@@ -238,15 +238,12 @@ function Fit({ room, height, children }: { room: number; height: number; childre
   );
 }
 
-/** Weming, its wave beside it, and its line under it, small. */
+/** The dark tile and the full name, small (H78): the tile reads over any photo. */
 function Wordmark() {
   return (
-    <div data-export-wordmark className="flex flex-col">
-      <span className="flex items-center gap-1.5 text-base font-semibold">
-        <WaveGlyph width={20} stroke="var(--color-white)" strokeWidth={1.6} />
-        Weming
-      </span>
-      <span className="text-[10px] font-medium text-white/70">Pool your days.</span>
+    <div data-export-wordmark className="flex items-center gap-1.5">
+      <WaveGlyph width={20} stroke="var(--color-white)" strokeWidth={1.6} />
+      <span className="text-base font-semibold">Dida Diary</span>
     </div>
   );
 }

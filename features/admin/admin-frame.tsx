@@ -32,7 +32,7 @@ export function AdminFrame({
   return (
     <div className="text-ink min-h-dvh bg-white px-6 py-6 text-sm">
       <header className="border-pool-200 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-b pb-3">
-        <span className="font-semibold">Weming admin</span>
+        <span className="font-semibold">Dida admin</span>
         <nav className="flex gap-4">
           {PAGES.map((p) => (
             <Link

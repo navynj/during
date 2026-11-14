@@ -68,3 +68,10 @@ describe('the status bar belongs to the page, not to a session', () => {
     expect(manifest().background_color?.toLowerCase()).toBe('#ffffff');
   });
 });
+
+describe('Dida on the home screen (H78)', () => {
+  it('is named Dida Diary, Dida under the icon', () => {
+    expect(manifest().name).toBe('Dida Diary');
+    expect(manifest().short_name).toBe('Dida');
+  });
+});

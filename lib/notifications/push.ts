@@ -31,7 +31,7 @@ export function pushPayload(
   facts: { actorName: string; poolName: string; title: string | null; unread: number },
 ): PushPayload {
   return {
-    title: 'Weming',
+    title: 'Dida',
     body: notificationText({
       type: row.type,
       invited: row.invited,

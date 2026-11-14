@@ -13,10 +13,9 @@ import type { MetadataRoute } from 'next';
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Weming',
-    short_name: 'Weming',
-    description:
-      "Pool your days. We're swimming side by side, each in our own lane. For a few close friends.",
+    name: 'Dida Diary',
+    short_name: 'Dida',
+    description: 'A digital diary you decorate.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

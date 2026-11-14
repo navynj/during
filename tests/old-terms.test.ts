@@ -21,7 +21,7 @@ const ROOTS = ['app', 'features', 'components', 'lib'];
 const SKIP_DIRS = ['app/dev', 'lib/queries'];
 const SKIP_FILES = ['lib/database.types.ts'];
 
-const RETIRED = /\b(pools?|lanes?|splash(es)?|ripples?)\b/i;
+const RETIRED = /\b(pools?|lanes?|splash(es)?|ripples?|weming|wemeing)\b/i;
 
 // file:line → why it is not rendered text. Keep each one justified.
 const ALLOWED: Record<string, string> = {
@@ -29,13 +29,6 @@ const ALLOWED: Record<string, string> = {
   'features/auth/welcome-splash.ts:56': 'a failure report tag, never shown',
   'features/month-board/board-handles.tsx:229': 'a DOM selector of data attributes',
   'features/lanes/lane-rows.tsx:120': 'a DOM selector of data attributes',
-  // The old tagline, replaced with the name in the next commit (H78, part 2).
-  'app/layout.tsx:24': 'old tagline',
-  'app/layout.tsx:33': 'old tagline',
-  'app/manifest.ts:19': 'old tagline',
-  'app/sign-in/page.tsx:34': 'old tagline',
-  'features/auth/pool-block.tsx:55': 'old tagline',
-  'features/share-image/export-board.tsx:249': 'old tagline',
 };
 
 function sourceFiles(dir: string): string[] {

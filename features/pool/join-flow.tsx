@@ -72,6 +72,13 @@ export function JoinFlow({
   return (
     // "Join Pool" names the place before anything else: the word a Pool is learnt by (review).
     <StepPage step={null} title="Join this shared diary" onBack={() => router.replace('/')}>
+      {/* Where a first look lands (H78): the dark tile, the name, the tagline. */}
+      <div data-invite-intro className="mb-8 flex items-center gap-3">
+        <div className="flex flex-col">
+          <span className="text-ink text-sm font-semibold">Dida Diary</span>
+          <span className="text-pool-500 text-xs">A digital diary you decorate.</span>
+        </div>
+      </div>
       <p className="text-pool-500 text-sm">You are invited to</p>
       <div className="mt-4 flex items-center gap-4">
         <Monogram name={poolName} size="tile" photo={photo} />
