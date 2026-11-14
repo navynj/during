@@ -56,12 +56,12 @@ const WHITE_MARK = { backFill: '#ffffff', backOpacity: 0.2, frontFill: '#ffffff'
  * sizes so 16px still reads; in a maskable icon TILE_MARK of the middle 80%
  * the launcher keeps, so it lands the size it does on a tile.
  */
-function tile(size, { rounded, height = TILE_MARK }) {
+function tile(size, { rounded, height = TILE_MARK, mark = WHITE_MARK }) {
   const rx = rounded ? Math.round(size * (98 / 441)) : 0;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
     `<rect width="${size}" height="${size}" rx="${rx}" fill="${TILE}"/>` +
-    markIn(size, height, WHITE_MARK) +
+    markIn(size, height, mark) +
     `</svg>`
   );
 }
@@ -94,7 +94,11 @@ function ico(entries) {
   return Buffer.concat([header, ...dir, ...entries.map((e) => e.data)]);
 }
 
-const SMALL = 0.78; // the mark's height at 16 and 32px
+// At 16 and 32px (Yoonji, 2026-11-14, from 62/66/70% with the back page at
+// 20% or 34%): the mark at 62% of the tile, its back page lighter so the two
+// pages still part at 16px. Every larger tile keeps TILE_MARK and 20%.
+const SMALL = 0.62;
+const SMALL_MARK = { ...WHITE_MARK, backOpacity: 0.34 };
 
 const made = [];
 made.push(await png(tile(180, { rounded: false }), 'dida-apple-touch-icon.png'));
@@ -116,7 +120,9 @@ made.push(
 const small = await Promise.all(
   [16, 32].map(async (size) => ({
     size,
-    data: await sharp(Buffer.from(tile(size * 8, { rounded: true, height: SMALL })))
+    data: await sharp(
+      Buffer.from(tile(size * 8, { rounded: true, height: SMALL, mark: SMALL_MARK })),
+    )
       .resize(size, size)
       .png()
       .toBuffer(),
@@ -125,7 +131,10 @@ const small = await Promise.all(
 writeFileSync(join(PUBLIC, 'favicon.ico'), ico(small));
 made.push(join(PUBLIC, 'favicon.ico'));
 // The vector favicon: the same small-size tile, for browsers that take SVG.
-writeFileSync(join(PUBLIC, 'dida-favicon.svg'), tile(64, { rounded: true, height: SMALL }));
+writeFileSync(
+  join(PUBLIC, 'dida-favicon.svg'),
+  tile(64, { rounded: true, height: SMALL, mark: SMALL_MARK }),
+);
 made.push(join(PUBLIC, 'dida-favicon.svg'));
 
 // The link preview: 1200 × 630, the tile and the name on the light ground.
