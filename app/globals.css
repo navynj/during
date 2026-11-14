@@ -94,6 +94,22 @@
 [data-theme='black'] {
   --edge-chroma: 0.025;
 }
+/*
+ * The accent (H78j): what is chosen, in any control — a selected segment's
+ * fill and the words on it, a tab's underline, the focus ring. The theme
+ * colour with white on it; in pastel, its pastel with the soft grey on it
+ * and its tone for lines, as Home's own tabs draw them. Black's is ink.
+ */
+:root {
+  --accent: var(--theme-900);
+  --accent-fill: var(--theme-900);
+  --accent-contrast: #ffffff;
+}
+[data-mode='pastel'] {
+  --accent: var(--pastel-tone);
+  --accent-fill: var(--theme-pastel);
+  --accent-contrast: #45424d;
+}
 [data-theme='blue'] {
   --theme-hue: 264.7;
   --theme-900: #0507c9;

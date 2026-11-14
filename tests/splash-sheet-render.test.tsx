@@ -397,10 +397,10 @@ describe('the sheet’s shape', () => {
     );
   });
 
-  it('fills the selected lane chip with ink, never blue, and declares it (H20f, H21f)', async () => {
+  it('fills the selected lane chip with the accent and declares it (H21f, H78j)', async () => {
     const view = sheet();
     fireEvent.click(view.getByText('Place'));
-    expect(view.getByText('Place').className).toContain('bg-ink');
+    expect(view.getByText('Place').className).toContain('bg-(--accent-fill)');
     expect(view.getByText('Place').className).not.toContain('bg-main-900');
     // A chip alone is a valid post: the zero-character diary (E1).
     expect(view.drop().disabled).toBe(false);

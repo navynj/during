@@ -41,7 +41,7 @@ export function CategoryChip({
         onInk
           ? 'bg-white/20 text-white hover:bg-white/30'
           : selected
-            ? 'bg-ink text-white'
+            ? 'bg-(--accent-fill) text-(--accent-contrast)'
             : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
       } ${className}`}
     >

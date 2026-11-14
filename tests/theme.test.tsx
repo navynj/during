@@ -98,13 +98,15 @@ function picker(pool: PoolColors | null = null) {
 }
 
 describe('the Theme tab on Home (0059)', () => {
-  it('shows the twelve swatches and the mode, the current one chosen in ink', () => {
+  it('shows the twelve swatches and the mode, the current one in the accent (H78j)', () => {
     const { container } = picker();
     expect(container.querySelectorAll('[data-theme-swatch]')).toHaveLength(12);
     expect(
       container.querySelector('[data-theme-swatch="blue"]')!.getAttribute('aria-checked'),
     ).toBe('true');
-    expect(container.querySelector('[data-theme-mode="dark"]')!.className).toContain('bg-ink');
+    expect(container.querySelector('[data-theme-mode="dark"]')!.className).toContain(
+      'bg-(--accent-fill)',
+    );
   });
 
   it('stands the swatches and the mode on their own: no "My color" or "Mode" label (H43)', () => {

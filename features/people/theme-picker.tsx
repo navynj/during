@@ -240,7 +240,7 @@ function Modes({
             disabled={disabled}
             data-theme-mode={mode}
             onClick={() => onPick(mode)}
-            className={`flex-1 rounded-full py-1.5 ${on ? 'bg-ink text-white' : 'text-pool-500'}`}
+            className={`flex-1 rounded-full py-1.5 ${on ? 'bg-(--accent-fill) text-(--accent-contrast)' : 'text-pool-500'}`}
           >
             {label}
           </button>
@@ -308,7 +308,7 @@ function Colours({
               aria-label={t.name}
               data-theme-swatch={t.key}
               onClick={() => onPick(t.key)}
-              className={`h-9 w-9 justify-self-center rounded-full ${on ? 'ring-ink ring-2 ring-offset-2' : ''}`}
+              className={`h-9 w-9 justify-self-center rounded-full ${on ? 'ring-ink ring-2 ring-offset-2 ring-offset-white' : ''}`}
               // In pastel mode each swatch shows its pastel (0036).
               style={{ backgroundColor: mode === 'pastel' ? t.pastel.fill : t.hex }}
             />
@@ -324,7 +324,7 @@ function Colours({
             data-theme-clear={data}
             onClick={() => onPick(null)}
             className={`border-pool-200 relative h-9 w-9 justify-self-center overflow-hidden rounded-full border ${
-              value === null ? 'ring-ink ring-2 ring-offset-2' : ''
+              value === null ? 'ring-ink ring-2 ring-offset-2 ring-offset-white' : ''
             }`}
             // White on any ground, whatever a mode makes of `white` there.
             style={{ backgroundColor: '#ffffff' }}

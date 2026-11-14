@@ -94,7 +94,9 @@ export function FilingChips({
         onClick={() => file(null)}
         // Selection is ink (H20f), as a lane chip's.
         className={`flex shrink-0 items-center gap-1 rounded-full py-1 pr-2.5 pl-1.5 text-xs transition-colors ${
-          filed === null ? 'bg-ink text-white' : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
+          filed === null
+            ? 'bg-(--accent-fill) text-(--accent-contrast)'
+            : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
         }`}
       >
         <Monogram name={filing.pool.name} size="chip" photo={filing.pool.photo} />

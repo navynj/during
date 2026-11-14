@@ -317,8 +317,9 @@ describe('the pool settings sheet’s shape (review)', () => {
       pool.container.querySelector<HTMLElement>(`[data-settings-tab="${key}"]`)!;
     expect(tab('pool').getAttribute('role')).toBe('tab');
     expect(tab('pool').getAttribute('aria-selected')).toBe('true');
-    expect(tab('pool').className).toContain('text-ink');
-    expect(tab('pool').querySelector('.bg-ink')).not.toBeNull();
+    // The chosen tab in the accent (H78j).
+    expect(tab('pool').className).toContain('text-(--accent)');
+    expect(tab('pool').querySelector('.bg-\\(--accent\\)')).not.toBeNull();
     expect(tab('theme').className).toContain('text-pool-500');
     // Photo and name narrow at the left, the lanes wide at the right.
     const columns = pool.container.querySelector<HTMLElement>('[data-settings-pool]')!;

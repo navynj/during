@@ -37,12 +37,15 @@ export function UnderlineTabs<K extends string>({
             {...{ [`data-${data}`]: tab.key }}
             onClick={() => onSelect(tab.key)}
             className={`relative flex h-10 shrink-0 items-center px-3 text-sm font-semibold ${
-              on ? 'text-ink' : 'text-pool-500'
+              on ? 'text-(--accent)' : 'text-pool-500'
             }`}
           >
             {tab.label}
             {on ? (
-              <span aria-hidden className="bg-ink absolute inset-x-2 bottom-0 h-0.5 rounded-full" />
+              <span
+                aria-hidden
+                className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-(--accent)"
+              />
             ) : null}
           </button>
         );

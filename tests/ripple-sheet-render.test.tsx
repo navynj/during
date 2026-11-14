@@ -372,17 +372,19 @@ describe('a board in the sheet (H20d, H20e)', () => {
   });
 });
 
-describe('the chip row (H20f)', () => {
-  it('fills the selected chip with ink, never blue', () => {
+describe('the chip row (H20f, revised by H78j)', () => {
+  it('fills the selected chip with the accent, its words in accent-contrast', () => {
     const view = sheet();
     fireEvent.click(view.getByText('Mood'));
     const chip = view.getByText('Mood').closest('button')!;
 
     expect(chip.getAttribute('aria-pressed')).toBe('true');
-    expect(chip.className).toContain('bg-ink');
-    expect(chip.className).toContain('text-white');
+    expect(chip.className).toContain('bg-(--accent-fill)');
+    expect(chip.className).toContain('text-(--accent-contrast)');
     expect(chip.className).not.toContain('bg-main-900');
-    expect(view.getByText('Place').closest('button')!.className).not.toContain('bg-ink');
+    expect(view.getByText('Place').closest('button')!.className).not.toContain(
+      'bg-(--accent-fill)',
+    );
   });
 
   it('shows a search field only past the lane threshold, never on mere overflow', () => {

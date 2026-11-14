@@ -90,8 +90,8 @@ export function ShareSheet({
             aria-checked={span === option.span}
             data-share-span={option.span}
             onClick={() => setSpan(option.span)}
-            // Selection is ink (H20f).
-            className={`rounded-full px-4 py-2 text-sm font-medium ${span === option.span ? 'bg-ink text-white' : 'bg-pool-100 text-pool-500'}`}
+            // Selection takes the accent (H78j).
+            className={`rounded-full px-4 py-2 text-sm font-medium ${span === option.span ? 'bg-(--accent-fill) text-(--accent-contrast)' : 'bg-pool-100 text-pool-500'}`}
           >
             {option.name}
           </button>
