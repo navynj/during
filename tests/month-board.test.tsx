@@ -20,7 +20,6 @@ vi.mock('@/lib/media', () => ({
 
 import { placeCard, type Card, type CardPhoto } from '@/features/home/grid';
 import type { Ring } from '@/features/home/lane-grid';
-import { WaveMark, WAVE_GLYPH_PATH } from '@/components/ui/waves';
 import {
   COLUMNS,
   C_TUCK_PX,
@@ -364,10 +363,6 @@ describe('the week board (the default)', () => {
     );
   });
 
-  it('counts a day’s records for its waves, three lines at most', () => {
-    expect(layout.weeks[0].cells.map((c) => c.count)).toEqual([0, 0, 4, 1, 2, 2, 1]);
-  });
-
   it('fits seven lanes at a phone’s width, every label the lane wide, flush or offset', () => {
     expect(layout.width).toBe(358);
     expect(layout.metrics.column * COLUMNS).toBe(358);
@@ -408,10 +403,8 @@ describe('the week board, drawn', () => {
       );
       const header = container.querySelector('[data-board-header="2026-10-20"]')!;
       expect(header.textContent).toBe('TUE20');
-      expect(header.querySelector('[data-board-waves]')!.getAttribute('data-lines')).toBe('3');
-      expect(
-        container.querySelector('[data-board-header="2026-10-19"] [data-board-waves]'),
-      ).toBeNull();
+      // No per-day count beneath the number (H78: the wave motif is retired).
+      expect(header.querySelector('[data-board-waves], svg')).toBeNull();
       expect(container.querySelector('[data-board-tick]')).toBeNull();
     } finally {
       delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
@@ -1068,39 +1061,14 @@ describe('labels, photos and bands, drawn', () => {
     expect(laid.w).toBe(5 * (728 / 7));
   });
 
-  it('draws the day’s waves with the pill’s own glyph — the given path — at the reference’s size, one per record, three at most', () => {
-    const { container } = board();
-    const header = container.querySelector('[data-board-header="2026-10-20"]')!;
-    const glyphs = header.querySelectorAll('[data-wave-glyph]');
-    expect(glyphs).toHaveLength(3);
-    const pill = render(<WaveMark count={1} />).container.querySelector('[data-wave-glyph] path')!;
-    expect(pill.getAttribute('d')).toBe(
-      'M0.75 1.79321C2.02503 3.18416 3.30007 3.18416 4.5751 1.79321C5.85014 0.402263 7.12517 0.402263 8.40021 1.79321C9.67524 3.18416 10.9503 3.18416 12.2253 1.79321C13.5003 0.402263 14.7754 0.402263 16.0504 1.79321',
-    );
-    for (const glyph of glyphs) {
-      expect(glyph.querySelector('path')!.getAttribute('d')).toBe(pill.getAttribute('d'));
-      // 26px on a desktop (22 on a phone), the export's box, a finer pen, white at 80%.
-      expect(glyph.getAttribute('width')).toBe('26');
-      expect(glyph.getAttribute('viewBox')).toBe('0 0 17 4');
-    }
-    const path = glyphs[0].querySelector('path')!;
-    expect(path.getAttribute('d')).toBe(WAVE_GLYPH_PATH);
-    expect(path.getAttribute('stroke-width')).toBe('1.2');
-    expect(path.getAttribute('stroke-linecap')).toBe('round');
-    expect(path.getAttribute('stroke-opacity')).toBe('0.8');
-    // Stacked with no gap (review).
-    expect(header.querySelector('[data-board-waves]')!.className).not.toMatch(/gap-/);
-    cleanup();
+  it('draws no waves under a week’s dates, on a phone or a wide screen (H78)', () => {
+    expect(board().container.querySelector('[data-board-waves], [data-wave-glyph]')).toBeNull();
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
       configurable: true,
       get: () => 358,
     });
     try {
-      // A phone opens on today's half, Wed 21 – Sat 24 (review).
-      const phone = board().container.querySelector(
-        '[data-board-header="2026-10-22"] [data-wave-glyph]',
-      )!;
-      expect(phone.getAttribute('width')).toBe('22');
+      expect(board().container.querySelector('[data-board-waves], [data-wave-glyph]')).toBeNull();
     } finally {
       delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
     }

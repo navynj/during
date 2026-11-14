@@ -35,16 +35,15 @@ export const COLUMNS = 7;
 /** The first column's weekday: 0 is Sunday. */
 export const WEEK_START = 0;
 /**
- * A week's column header: the weekday over the day number, centred, and
- * the day's waves beneath — one per record, three at most.
+ * A week's column header: the weekday over the day number, centred, and a
+ * breath before the day's records. No count beneath (H78: the per-day
+ * waves are retired with the wave motif).
  */
-export const HEADER_PX = 96;
+export const HEADER_PX = 64;
 /** A month's column header carries only the weekday names. */
 export const MONTH_HEADER_PX = 28;
 /** A month cell's day number, at the top of the cell (no waves in a month, review): nothing is placed over it. */
 export const DAY_NUMBER_PX = 28;
-/** How many waves a day shows at most. */
-export const DAY_WAVES_MAX = 3;
 const FOOT_PX = 24;
 /**
  * A phone's board (review): under this width the week shows half of
@@ -204,7 +203,6 @@ export type BoardCell = {
   inMonth: boolean;
   col: number;
   x: number;
-  count: number;
 };
 
 /** A cell to lay out: the key its cards are placed by, and the day it is. */
@@ -1213,12 +1211,6 @@ function layoutBoard(
   const numberBand = span === 'month' ? DAY_NUMBER_PX : 0;
   // The Lane view's headers and date rail are its own: its rows start at the top.
   let y = span === 'month' ? MONTH_HEADER_PX : span === 'week' ? HEADER_PX : 0;
-  // A cell's records: its posts and every range crossing its day, for its waves.
-  const countOf = (cell: CellSpec): number =>
-    (byDay.get(cell.key)?.length ?? 0) +
-    ranged.filter((c) => c.splash.range!.start <= cell.day && c.splash.range!.end >= cell.day)
-      .length;
-
   rows.forEach((specs, index) => {
     const cells: BoardCell[] = specs.map((spec, col) => ({
       day: spec.day,
@@ -1226,7 +1218,6 @@ function layoutBoard(
       inMonth: inScope(spec.day),
       col,
       x: col * m.column,
-      count: countOf(spec),
     }));
 
     // Bands: the range's days within this row and this scope, packed into lanes.

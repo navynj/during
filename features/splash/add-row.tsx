@@ -3,7 +3,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 
-import { WaveRule } from '@/components/ui/waves/wave-rule';
 import { MediaPreviews, useMediaAttach } from '@/features/input-sheet/media-field';
 import { Avatar } from '@/features/people/avatar';
 import { videosIn } from '@/lib/youtube';
@@ -113,8 +112,9 @@ export function AddRow({
 
   return (
     <div data-add-slot className="mt-2 pb-10">
-      <div data-add-wave className="py-3 opacity-25">
-        <WaveRule anchor="left" />
+      {/* A flat hairline sets the add row apart (H78: the wave motif is retired). */}
+      <div data-add-rule className="py-3">
+        <div className="border-pool-200 border-t" />
       </div>
       <div
         ref={row}

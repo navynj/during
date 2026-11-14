@@ -16,7 +16,6 @@ import { AXIS_LOCK_PX } from '@/components/ui/use-axis-lock';
 import { usePrefersReducedMotion } from '@/components/ui/waves/use-reduced-motion';
 import type { Card, GridColumn } from '@/features/home/grid';
 import type { Ring } from '@/features/home/lane-grid';
-import { WaveGlyph } from '@/components/ui/waves';
 import { monthKey } from '@/features/splash/summary';
 import type { SignedMedia } from '@/lib/media';
 import type { IsoDate } from '@/lib/time';
@@ -31,7 +30,6 @@ import {
   addDays,
   COLUMNS,
   DAY_NUMBER_PX,
-  DAY_WAVES_MAX,
   HALF_WEEK_BELOW_PX,
   halfOf,
   HEADER_PX,
@@ -51,34 +49,6 @@ import { storedAspects, usePhotoAspects, withAspects } from './photo-aspects';
 
 /** A sideways swipe this long turns the page, once its axis is decided (the first 8px). */
 const SWIPE_PX = 48;
-
-/**
- * A day's waves (review): the pill's own glyph — the exported SVG, its pen
- * scaling with it — 26px wide on a desktop and 22 on a phone, a touch
- * finer than the export's pen, white at 80%; one per record, three at
- * most, stacked with no gap (review).
- */
-const DAY_WAVE_W = { wide: 26, narrow: 22 } as const;
-const DAY_WAVE_STROKE = 1.2;
-
-export function DayWaves({ count, narrow }: { count: number; narrow: boolean }) {
-  const lines = Math.min(DAY_WAVES_MAX, count);
-  if (lines === 0) return null;
-  return (
-    <span aria-hidden data-board-waves data-lines={lines} className="flex flex-col items-center">
-      {Array.from({ length: lines }, (_, at) => (
-        <WaveGlyph
-          key={at}
-          width={narrow ? DAY_WAVE_W.narrow : DAY_WAVE_W.wide}
-          // What reads as white on the ground in every mode (0032, 0036).
-          stroke="var(--color-white)"
-          opacity={0.8}
-          strokeWidth={DAY_WAVE_STROKE}
-        />
-      ))}
-    </span>
-  );
-}
 
 /** The board's room in the grid's place: a phone's side gutter, a breath above the stack. */
 export function BoardFrame({ children }: { children: ReactNode }) {
@@ -565,7 +535,6 @@ export function MonthBoard({
               <span
                 key={header.day}
                 data-board-header={header.day}
-                // Each line at a fixed height, so the waves beneath never move the number (review).
                 className="absolute flex flex-col items-center justify-start pt-2"
                 style={{
                   left: col * metrics.column,
@@ -575,19 +544,12 @@ export function MonthBoard({
               >
                 {span === 'week' ? (
                   <>
-                    {/* The weekday over the day number, centred (the mockup); the day's waves beneath. */}
+                    {/* The weekday over the day number, centred (the mockup); no count beneath (H78). */}
                     <span className="h-3.5 text-[10px]/3.5 font-medium text-white/80">
                       {header.weekday}
                     </span>
                     <span className="h-6 text-base/6 font-semibold tabular-nums">
                       {header.number}
-                    </span>
-                    <span className="flex items-start pt-1.5">
-                      <DayWaves
-                        count={layout.weeks[0].cells[col].count}
-                        // A phone's glyph, though its half week's columns are wide.
-                        narrow={metrics.narrow || phone}
-                      />
                     </span>
                   </>
                 ) : (

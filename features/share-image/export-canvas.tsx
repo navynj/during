@@ -15,7 +15,6 @@ import {
   MONTH_HEADER_PX,
   type BoardLayout,
 } from '@/features/month-board/layout';
-import { DayWaves } from '@/features/month-board/month-board';
 import { stackingOf } from '@/features/month-board/stacking';
 import type { SignedMedia } from '@/lib/media';
 
@@ -64,9 +63,6 @@ export function Canvas({
                 {header.weekday}
               </span>
               <span className="h-6 text-base/6 font-semibold tabular-nums">{header.number}</span>
-              <span className="flex items-start pt-1.5">
-                <DayWaves count={board.weeks[0].cells[col].count} narrow={metrics.narrow} />
-              </span>
             </>
           ) : (
             <span className="text-xs font-medium">{header.weekday}</span>

@@ -3,8 +3,6 @@
 import { useState, useTransition, type ReactNode } from 'react';
 
 import { OutlineChip } from '@/components/ui/chips/category-chip';
-import { WaveRule } from '@/components/ui/waves/wave-rule';
-import { impressionLineCount } from '@/components/ui/waves';
 import { AnnotationControl, QuietAffordance } from '@/features/input-sheet/annotation-control';
 import { LaneChips } from '@/features/input-sheet/lane-chips';
 import { EmojiInput } from '@/features/lanes/emoji-input';
@@ -103,7 +101,6 @@ export function SplashHeader({
   const tags = splash.laneIds
     .map((id) => categories.find((c) => c.id === id))
     .filter((c): c is MyCategory => Boolean(c));
-  const lines = Math.max(1, impressionLineCount(splash.count));
   const displayRange: DateRange | null = splash.range;
 
   return (
@@ -235,15 +232,6 @@ export function SplashHeader({
           )}
         </div>
       </div>
-
-      {/* Sized by the title's width, never sizing it. */}
-      <span data-wave-underline data-lines={lines} className="flex w-fit max-w-full flex-col">
-        {Array.from({ length: lines }, (_, index) => (
-          <span key={index} className="block w-40">
-            <WaveRule anchor="left" />
-          </span>
-        ))}
-      </span>
 
       {/* The range: declared (its own to edit), else derived from the blocks. */}
       {editLevel === 'none' ? (

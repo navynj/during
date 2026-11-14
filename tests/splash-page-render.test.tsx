@@ -206,7 +206,8 @@ describe('the white page above the water (SPEC 5, H21c)', () => {
       'Whistler, two nights',
     );
     expect(container.querySelector('[data-range]')!.textContent).toBe('2026. 8. 17 ~ 2026. 8. 20');
-    expect(container.querySelector('[data-wave-underline]')!.getAttribute('data-lines')).toBe('2');
+    // No wave under the title (H78).
+    expect(container.querySelector('[data-wave-underline], [data-wave-rule]')).toBeNull();
   });
 
   it('writes who wrote it under the date, and where it sits in a pool on the line under it', () => {
@@ -420,10 +421,11 @@ describe('writing on the page, in place', () => {
     expect(document.activeElement).toBe(row.querySelector('[data-add-field]'));
   });
 
-  it('is one quiet row under a faint wave: my face, a field that says what it does, a photo button (H75)', () => {
+  it('is one quiet row under a flat hairline: my face, a field that says what it does, a photo button (H75, H78)', () => {
     const { container } = page({ initials: 'YL' });
     const slot = container.querySelector('[data-add-slot]')!;
-    expect(slot.querySelector('[data-add-wave]')!.className).toContain('opacity-25');
+    expect(slot.querySelector('[data-add-rule] > div')!.className).toContain('border-pool-200');
+    expect(slot.querySelector('[data-add-wave], [data-wave-rule]')).toBeNull();
     const row = slot.querySelector('[data-add-row]')!;
     expect(row.hasAttribute('data-open')).toBe(false);
     expect(row.querySelector<HTMLTextAreaElement>('[data-add-field]')!.placeholder).toBe(
