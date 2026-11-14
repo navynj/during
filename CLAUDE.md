@@ -83,7 +83,7 @@ The database holds records someone actually wrote. Everything below outranks con
 
 - The ONLY custom design tokens are three color ramps plus the typeface. Everything else (spacing, radius, type scale) uses the Tailwind default scale.
   - Main ramp (content vitality): `#0507C9` live/now, `#787BE2` recent, `#D3D7F6` settled/past — **the default theme**. Since H26 (0032) the main ramp follows the person's theme colour (one of eleven, `lib/theme.ts`), set on `<html>` as `data-theme`; `main-400` and `main-100` are mixed from it. Write `main-900`, `white` and `joint` as utilities, never a hex: light mode (`data-mode="light"`) swaps `white` and `main-900` inside the water ground, and a white card or sheet on the ground carries `surface` to stay white with ink.
-  - Gray ramp (structure): `pool-100` surfaces, `pool-200` deeper surfaces / dividers / lane ropes, `pool-500` muted text. Since H78(e) each theme has its own ramp (neutral greys with a trace of the theme colour, `--theme-gray-*`); Blue's is `#F2F3FC` / `#D8DCE8` / `#6B79A3`. Never write a grey as a hex in a component.
+  - Gray ramp (structure): `pool-100` surfaces, `pool-200` deeper surfaces / dividers / lane ropes, `pool-500` muted text. Since H78(e) each theme has its own ramp (neutral greys with a trace of the theme colour, `--theme-gray-*`); Blue's is `#F2F3FC` / `#D8DCE8` / `#586386` (H78o). Never write a grey as a hex in a component.
   - Secondary surfaces (H78h): `--surface-1/2/3`, the theme colour at 5% / 7% / 9% in white; `pool-100` is surface-1. Tracks, pinned cards, faces with no photo and the stack's back cards use the scale, never white at an alpha on the light ground.
   - The card stack's edge (H78i) is the border's lightness at the theme's hue and chroma 0.05 (Black 0.025); every other hairline is the plain `pool-200`.
   - Ink: `#161621` body text (was `#313338` until the refounding review)
@@ -97,7 +97,7 @@ The database holds records someone actually wrote. Everything below outranks con
 - Text colors, in full:
   - Default text: `#161621` (ink).
   - Emphasis / accent text: `#0507C9` (`main-900`).
-  - Muted or secondary text, only where the hierarchy needs it: `#6B79A3` (`pool-500`).
+  - Muted or secondary text, only where the hierarchy needs it: `pool-500` (Blue's `#586386`).
   - An inactive label in a tab bar, a segmented control or an unchosen chip: `--text-inactive` (H78l), never `pool-500`.
   - `#D3D7F6` is never text.
   - Active or selected states in chrome (pagers) use `#0507C9` (`main-900`) with weight; inactive is the same color faded by `opacity-20` on the item wrapper, never per-element alpha — one fade for the whole item, so icon and label can never drift apart. This is chrome, not content: SPEC 7 law 1 reserves the opacity channel for _time_ on Ripples, and nav state is neither.

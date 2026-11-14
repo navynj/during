@@ -37,7 +37,7 @@
      fallbacks are Blue's own, the ramp as it was. */
   --color-pool-100: var(--theme-gray-100, #f2f3fc); /* surfaces */
   --color-pool-200: var(--theme-gray-200, #d8dce8); /* deeper surfaces, dividers, lane ropes */
-  --color-pool-500: var(--theme-gray-500, #6b79a3); /* muted and secondary text */
+  --color-pool-500: var(--theme-gray-500, #586386); /* muted and secondary text */
 
   /* Ink — body text */
   --color-ink: #161621;
@@ -117,7 +117,8 @@
   --theme-hue: 264.7;
   --theme-900: #0507c9;
   --theme-gray-200: #d8dce8;
-  --theme-gray-500: #6b79a3;
+  /* Darkened from #6b79a3 (4.3:1 on white) to clear 4.5:1 on surface-3 (H78o). */
+  --theme-gray-500: #586386;
   --pastel-tone: #8ba6ff;
   --theme-pastel: #d1ddff;
   --pastel-card: #f8fafe;
