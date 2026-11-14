@@ -652,14 +652,17 @@ body {
 .water-ground .label-pale {
   background-color: color-mix(in srgb, #ffffff 20%, var(--theme-900));
 }
+/* Glass on the light ground, and the shared label drawn as it (H78r): the
+   surface scale's first step with the text colour, not 20% of the theme. */
 [data-mode='light'] .water-ground .label-ink.label-second {
-  background-color: color-mix(in srgb, var(--theme-900) 20%, #ffffff);
+  background-color: var(--surface-1);
   box-shadow: none;
-  color: var(--theme-900);
+  color: var(--color-ink);
 }
 /* Glass has no edge on any ground (H66): the tint alone. */
 [data-mode='light'] .water-ground .label-glass {
-  background-color: color-mix(in srgb, var(--theme-900) 20%, #ffffff);
+  background-color: var(--surface-1);
+  color: var(--color-ink);
 }
 /*
  * Pastel swaps three styles' faces (H72): Pale, ink's old face here, is

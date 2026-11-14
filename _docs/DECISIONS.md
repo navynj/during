@@ -818,3 +818,5 @@ H67, revised the same day (Yoonji, in the session): 40px between *For a few clos
 **H78(p). Black's stack edge is near grey (review, 2026-11-13).** At chroma 0.025 (i) the front card's edge on Black + Light read violet, though it passed the lavender test. Black's `--edge-chroma` is 0.012, a cool grey; every other theme keeps 0.05.
 
 **H78(q). The light mark's back page is stronger (review, 2026-11-13).** Surface-2 (k) left the back page barely there on Pink and Blue. It is the accent at 20% over white in light and pastel modes, so the two overlapping pages always read; Black keeps #D0D0D4.
+
+**H78(r). The Calendar's shared label is on the surface scale (review, 2026-11-13).** On the light ground a shared record's label — the rule's second fill, drawn as Glass (H55) — and a label set to Glass were the theme colour at 20% over white, heavy grey on Black. Both are surface-1 with the text colour now; dark and pastel grounds are unchanged.
