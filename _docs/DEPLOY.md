@@ -203,6 +203,15 @@ retry, with no change in between. They are not fixed yet; retry the push
 - `e2e/sheet-keyboard.spec.ts`: timed out once (2026-11-03); passed alone twice and on the retried push.
 - `e2e/fast-switch.spec.ts`: `page.waitForEvent: Timeout 30000ms exceeded while waiting for event "console"` once (2026-11-04); passed on the retried push.
 
+**Known flaky commit-gate test, not yet named.** One test among the 540
+the pre-commit gate ran for the sheet-backdrop commit (H78s, 2026-11-14:
+the seven sheet files and `tests/splash-sheet-render.test.tsx`) failed
+once (`1 failed | 539 passed`) and passed on an identical retry. The gate
+kept only its summary, so the test is unknown; 17 reruns of the same set
+(8 alone, 9 three at a time) all passed. Since then the gate keeps a
+failing run's whole output in `.git/gate-last-failure.log`: when it
+happens again, name the test here.
+
 ### Environment variables — Production and Preview
 
 | Name | Value | Reaches |

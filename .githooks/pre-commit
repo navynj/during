@@ -49,7 +49,10 @@ if [ ${#code[@]} -gt 0 ]; then
   pnpm -s exec vitest related "${code[@]}" --run --passWithNoTests \
     --project unit --project unit-iso --project dom > "$out" 2>&1 || {
     grep -E '×|FAIL|Tests ' "$out" | head -20 >&2
-    echo '✖ tests failed' >&2
+    # The whole run, kept: a failure that passes on retry must still be
+    # nameable afterwards (DEPLOY.md, known flaky checks).
+    cp "$out" "$(git rev-parse --git-dir)/gate-last-failure.log"
+    echo "✖ tests failed (full output: $(git rev-parse --git-dir)/gate-last-failure.log)" >&2
     exit 1
   }
   grep -E 'Tests ' "$out" || echo 'no related tests'
