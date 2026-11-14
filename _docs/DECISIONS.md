@@ -816,3 +816,5 @@ H67, revised the same day (Yoonji, in the session): 40px between *For a few clos
 **H78(o). Blue's muted grey is #586386 (review, 2026-11-13).** #6B79A3 was 4.3:1 on white and 3.6:1 on surface-3; #586386 keeps its hue and clears 5.9:1 and 4.9:1 (settles (e)'s open note).
 
 **H78(p). Black's stack edge is near grey (review, 2026-11-13).** At chroma 0.025 (i) the front card's edge on Black + Light read violet, though it passed the lavender test. Black's `--edge-chroma` is 0.012, a cool grey; every other theme keeps 0.05.
+
+**H78(q). The light mark's back page is stronger (review, 2026-11-13).** Surface-2 (k) left the back page barely there on Pink and Blue. It is the accent at 20% over white in light and pastel modes, so the two overlapping pages always read; Black keeps #D0D0D4.
