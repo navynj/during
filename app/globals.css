@@ -109,7 +109,7 @@
   --accent-contrast: #ffffff;
 }
 [data-mode='pastel'] {
-  --accent: var(--pastel-tone);
+  --accent: var(--pastel-text);
   --accent-fill: var(--theme-pastel);
   --accent-contrast: #45424d;
 }
@@ -121,6 +121,7 @@
   /* Darkened from #6b79a3 (4.3:1 on white) to clear 4.5:1 on surface-3 (H78o). */
   --theme-gray-500: #586386;
   --pastel-tone: #8ba6ff;
+  --pastel-text: #5369bd;
   --theme-pastel: #d1ddff;
   --pastel-card: #f8fafe;
   --pastel-stack-1: #e6ecfe;
@@ -132,6 +133,7 @@
   --theme-hue: 29.5;
   --theme-900: #d92d20;
   --pastel-tone: #f58880;
+  --pastel-text: #b64f4a;
   --theme-pastel: #ffd1cd;
   --pastel-card: #fef9f8;
   --pastel-stack-1: #ffe6e4;
@@ -143,6 +145,7 @@
   --theme-hue: 41.7;
   --theme-900: #d9540f;
   --pastel-tone: #e29942;
+  --pastel-text: #9f6205;
   --theme-pastel: #fed6ad;
   --pastel-card: #fff9f3;
   --pastel-stack-1: #fde9d5;
@@ -154,6 +157,7 @@
   --theme-hue: 78.1;
   --theme-900: #c08600;
   --pastel-tone: #d0a535;
+  --pastel-text: #8c6b06;
   --theme-pastel: #f2dca9;
   --pastel-card: #fefaf1;
   --pastel-stack-1: #f7ecd3;
@@ -165,6 +169,7 @@
   --theme-hue: 154.8;
   --theme-900: #14804a;
   --pastel-tone: #5cc486;
+  --pastel-text: #068149;
   --theme-pastel: #baecca;
   --pastel-card: #f4fdf7;
   --pastel-stack-1: #dbf4e3;
@@ -176,6 +181,7 @@
   --theme-hue: 134.4;
   --theme-900: #4e8a1a;
   --pastel-tone: #93bb5a;
+  --pastel-text: #577b10;
   --theme-pastel: #d1e8b6;
   --pastel-card: #f8fcf3;
   --pastel-stack-1: #e6f2d9;
@@ -187,6 +193,7 @@
   --theme-hue: 243.3;
   --theme-900: #0b7fc2;
   --pastel-tone: #59b5ef;
+  --pastel-text: #0271a5;
   --theme-pastel: #90c5ea;
   --pastel-card: #f6fafd;
   --pastel-stack-1: #e3f0fa;
@@ -198,6 +205,7 @@
   --theme-hue: 189.1;
   --theme-900: #14857f;
   --pastel-tone: #4dbcbe;
+  --pastel-text: #017b7d;
   --theme-pastel: #a6e3e3;
   --pastel-card: #f8fdfd;
   --pastel-stack-1: #e9f8f8;
@@ -209,6 +217,7 @@
   --theme-hue: 287.3;
   --theme-900: #6338d8;
   --pastel-tone: #a18aeb;
+  --pastel-text: #775fbc;
   --theme-pastel: #d6cefc;
   --pastel-card: #faf9ff;
   --pastel-stack-1: #edeafe;
@@ -220,6 +229,7 @@
   --theme-hue: 355.6;
   --theme-900: #e5318c;
   --pastel-tone: #de8acf;
+  --pastel-text: #a25395;
   --theme-pastel: #fbcdf2;
   --pastel-card: #fff8fd;
   --pastel-stack-1: #fce5f7;
@@ -231,6 +241,7 @@
   --theme-hue: 62.8;
   --theme-900: #8a5a2b;
   --pastel-tone: #b4967a;
+  --pastel-text: #84684e;
   --theme-pastel: #dcc8b4;
   --pastel-card: #faf7f4;
   --pastel-stack-1: #f1e9e1;
@@ -242,6 +253,7 @@
   --theme-hue: 284.1;
   --theme-900: #161621;
   --pastel-tone: #a6a6a6;
+  --pastel-text: #6e6e6e;
   --theme-pastel: #dadada;
   --pastel-card: #f9f9f9;
   --pastel-stack-1: #f0f0f0;
@@ -535,8 +547,9 @@ body {
 
 /*
  * Pastel mode (0036, Yoonji's mockups): a white ground. What was white on
- * it splits in two: words and marks take the colour's soft tone
- * (--pastel-tone), and fills — selected chips, the compose disc, a label's
+ * it splits in two: marks take the colour's soft tone (--pastel-tone), words
+ * the same hue darkened to 4.5:1 on white and surface-1 (--pastel-text,
+ * H78t), and fills — selected chips, the compose disc, a label's
  * fill — take its pastel (--theme-pastel), with grey words on them
  * (--pastel-ink). Lane rules are the faintest tint (--pastel-rule).
  */
@@ -550,13 +563,13 @@ body {
   --color-joint-face: var(--theme-pastel);
   --color-pool-200: var(--pastel-rule);
   background-color: #ffffff;
-  color: var(--pastel-tone);
+  color: var(--pastel-text);
   --wave-ink: var(--pastel-tone);
 }
-/* Words and marks on the ground: the soft tone; an ink fill (a menu) keeps
-   its white words, and cards set their own. */
+/* Words on the ground: the darkened tone; an ink fill (a menu) keeps its
+   white words, and cards set their own. */
 [data-mode='pastel'] .water-ground [class*='text-white']:not(.bg-ink):not(.surface *) {
-  color: var(--pastel-tone);
+  color: var(--pastel-text);
 }
 /* Words on a fill (a selected chip, the compose disc): the soft grey. */
 [data-mode='pastel'] .water-ground [class*='text-main-900']:not(.surface *) {
@@ -578,7 +591,7 @@ body {
 /* Pastel mode's cards: title and date in the tone, body text dark, the
    pastel for their accents; the cards beneath deepen through the stack. */
 [data-mode='pastel'] .water-ground .surface {
-  --color-main-900: var(--pastel-tone);
+  --color-main-900: var(--pastel-text);
   --color-main-100: var(--theme-pastel);
   --color-joint: var(--theme-pastel);
   --wave-ink: var(--pastel-tone);
@@ -616,7 +629,7 @@ body {
  * pointer.
  */
 [data-mode='light'] .water-ground .tint-1 [aria-selected='false'],
-[data-mode='pastel'] .water-ground .tint-1 [aria-selected='false'] {
+[data-mode='pastel'] .water-ground .tint-1 [aria-selected='false'][aria-selected] {
   color: var(--text-inactive);
 }
 @media (hover: hover) {
