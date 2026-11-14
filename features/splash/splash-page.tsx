@@ -694,7 +694,7 @@ export function SplashPage({
                   data-off={t.off ? '' : undefined}
                   onClick={() => setTab(t.poolId)}
                   className={`relative shrink-0 px-3 py-2.5 text-sm/5 whitespace-nowrap ${
-                    on ? 'text-ink font-medium' : 'text-pool-500'
+                    on ? 'text-ink font-medium' : 'hover:text-ink text-(--text-inactive)'
                   } ${t.off ? 'opacity-50' : ''}`}
                 >
                   {t.poolId === ALL_TAB

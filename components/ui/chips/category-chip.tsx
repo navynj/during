@@ -42,7 +42,7 @@ export function CategoryChip({
           ? 'bg-white/20 text-white hover:bg-white/30'
           : selected
             ? 'bg-(--accent-fill) text-(--accent-contrast)'
-            : 'text-pool-500 hover:bg-pool-200 bg-pool-100'
+            : 'bg-pool-100 hover:text-ink text-(--text-inactive)'
       } ${className}`}
     >
       {icon ? <span aria-hidden>{icon}</span> : null}

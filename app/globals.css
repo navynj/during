@@ -88,6 +88,8 @@
   /* The grey ramp's surface step is surface-1 (H78h): every secondary fill — the
      splash sheet, settings, profile, admin rows — on the one light scale. */
   --theme-gray-100: var(--surface-1);
+  /* Each theme sets its own (H78l): a lighter, more coloured muted for inactive labels. */
+  --text-inactive: var(--color-pool-500);
   /* The card stack's edge chroma (H78i): Black's stays under the lavender test's 0.03. */
   --edge-chroma: 0.05;
 }
@@ -111,6 +113,7 @@
   --accent-contrast: #45424d;
 }
 [data-theme='blue'] {
+  --text-inactive: oklch(0.541 0.08 264.7);
   --theme-hue: 264.7;
   --theme-900: #0507c9;
   --theme-gray-200: #d8dce8;
@@ -123,6 +126,7 @@
   --pastel-rule: #edf2fe;
 }
 [data-theme='red'] {
+  --text-inactive: oklch(0.552 0.08 29.5);
   --theme-hue: 29.5;
   --theme-900: #d92d20;
   --pastel-tone: #f58880;
@@ -133,6 +137,7 @@
   --pastel-rule: #ffedeb;
 }
 [data-theme='orange'] {
+  --text-inactive: oklch(0.556 0.08 41.7);
   --theme-hue: 41.7;
   --theme-900: #d9540f;
   --pastel-tone: #e29942;
@@ -143,6 +148,7 @@
   --pastel-rule: #fbf0e4;
 }
 [data-theme='yellow'] {
+  --text-inactive: oklch(0.553 0.08 78.1);
   --theme-hue: 78.1;
   --theme-900: #c08600;
   --pastel-tone: #d0a535;
@@ -153,6 +159,7 @@
   --pastel-rule: #f8f1e3;
 }
 [data-theme='green'] {
+  --text-inactive: oklch(0.539 0.08 154.8);
   --theme-hue: 154.8;
   --theme-900: #14804a;
   --pastel-tone: #5cc486;
@@ -163,6 +170,7 @@
   --pastel-rule: #e8f6ec;
 }
 [data-theme='lime'] {
+  --text-inactive: oklch(0.541 0.08 134.4);
   --theme-hue: 134.4;
   --theme-900: #4e8a1a;
   --pastel-tone: #93bb5a;
@@ -173,6 +181,7 @@
   --pastel-rule: #eef5e6;
 }
 [data-theme='sky'] {
+  --text-inactive: oklch(0.541 0.08 243.3);
   --theme-hue: 243.3;
   --theme-900: #0b7fc2;
   --pastel-tone: #59b5ef;
@@ -183,6 +192,7 @@
   --pastel-rule: #eef6fc;
 }
 [data-theme='mint'] {
+  --text-inactive: oklch(0.538 0.08 189.1);
   --theme-hue: 189.1;
   --theme-900: #14857f;
   --pastel-tone: #4dbcbe;
@@ -193,6 +203,7 @@
   --pastel-rule: #f2fbfb;
 }
 [data-theme='purple'] {
+  --text-inactive: oklch(0.549 0.08 287.3);
   --theme-hue: 287.3;
   --theme-900: #6338d8;
   --pastel-tone: #a18aeb;
@@ -203,6 +214,7 @@
   --pastel-rule: #f2f0ff;
 }
 [data-theme='pink'] {
+  --text-inactive: oklch(0.557 0.08 355.6);
   --theme-hue: 355.6;
   --theme-900: #e5318c;
   --pastel-tone: #de8acf;
@@ -213,6 +225,7 @@
   --pastel-rule: #fbedf8;
 }
 [data-theme='brown'] {
+  --text-inactive: oklch(0.552 0.08 62.8);
   --theme-hue: 62.8;
   --theme-900: #8a5a2b;
   --pastel-tone: #b4967a;
@@ -223,6 +236,7 @@
   --pastel-rule: #f6f1ec;
 }
 [data-theme='black'] {
+  --text-inactive: oklch(0.527 0.025 284.3);
   --theme-hue: 284.1;
   --theme-900: #161621;
   --pastel-tone: #a6a6a6;
@@ -583,9 +597,24 @@ body {
 [data-mode='light'] .water-ground .tint-1 {
   background-color: var(--surface-1);
 }
-[data-mode='light'] .water-ground .tint-1 [aria-selected='false'],
 [data-mode='light'] .water-ground .tint-1 [class*='text-white/'] {
   color: var(--color-pool-500);
+}
+/*
+ * An inactive label in a tab bar or a segmented control (H78l): the accent's
+ * hue at more chroma than muted text, a little lighter, 4.5:1 on surface-1
+ * and on pastel's track in every theme; the text colour under a hovering
+ * pointer.
+ */
+[data-mode='light'] .water-ground .tint-1 [aria-selected='false'],
+[data-mode='pastel'] .water-ground .tint-1 [aria-selected='false'] {
+  color: var(--text-inactive);
+}
+@media (hover: hover) {
+  [data-mode='light'] .water-ground .tint-1 [aria-selected='false']:hover,
+  [data-mode='pastel'] .water-ground .tint-1 [aria-selected='false']:hover {
+    color: var(--color-ink);
+  }
 }
 /* A face with no photo: surface-1, muted initials — white on a surface-1
    card, so it keeps its circle. */

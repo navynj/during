@@ -97,6 +97,7 @@ The database holds records someone actually wrote. Everything below outranks con
   - Default text: `#161621` (ink).
   - Emphasis / accent text: `#0507C9` (`main-900`).
   - Muted or secondary text, only where the hierarchy needs it: `#6B79A3` (`pool-500`).
+  - An inactive label in a tab bar, a segmented control or an unchosen chip: `--text-inactive` (H78l), never `pool-500`.
   - `#D3D7F6` is never text.
   - Active or selected states in chrome (pagers) use `#0507C9` (`main-900`) with weight; inactive is the same color faded by `opacity-20` on the item wrapper, never per-element alpha — one fade for the whole item, so icon and label can never drift apart. This is chrome, not content: SPEC 7 law 1 reserves the opacity channel for _time_ on Ripples, and nav state is neither.
 - `pnpm lint` fails on `main-400` or `#787BE2` used outside `components/ui/chips/` and `components/ui/waves/` (see `scripts/check-tokens.sh`). If a new directory legitimately renders chips or waves, add it to that allowlist rather than working around the check.
